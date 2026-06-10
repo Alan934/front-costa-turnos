@@ -1,0 +1,211 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/* El modo oscuro se activa con la clase .dark en <html> (ThemeProvider). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * COSTA TURNOS — Identidad "Urbano" (turquesa), con modo claro y oscuro.
+ * Dirección: moderno, cálido, minimalista y elegante. Un solo acento (terracota);
+ * los tonos de estado de turno aparecen apagados. Ver design-system.md.
+ * No hardcodear colores: usar siempre estos tokens.
+ */
+
+@theme inline {
+  --font-display: var(--font-space);
+  --font-body: var(--font-body);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Estados de turno (texto/punto sobre fondo suave del mismo tono) */
+  --color-status-waiting: var(--status-waiting);
+  --color-status-waiting-foreground: var(--status-waiting-foreground);
+  --color-status-serving: var(--status-serving);
+  --color-status-serving-foreground: var(--status-serving-foreground);
+  --color-status-done: var(--status-done);
+  --color-status-done-foreground: var(--status-done-foreground);
+  --color-status-noshow: var(--status-noshow);
+  --color-status-noshow-foreground: var(--status-noshow-foreground);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-foreground: var(--status-cancelled-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.06);
+  --shadow-md: 0 4px 16px -6px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 16px 40px -16px oklch(0 0 0 / 0.16);
+}
+
+/* ---------- CLARO (por defecto) ---------- */
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(1 0 0); /* blanco */
+  --foreground: oklch(0.2 0.004 60); /* negro mate */
+
+  --card: oklch(0.995 0.002 80);
+  --card-foreground: oklch(0.2 0.004 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.004 60);
+
+  --primary: oklch(0.6 0.09 195); /* turquesa */
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.96 0.006 70);
+  --secondary-foreground: oklch(0.28 0.006 60);
+
+  --muted: oklch(0.965 0.005 70);
+  --muted-foreground: oklch(0.52 0.008 60);
+
+  --accent: oklch(0.6 0.09 195); /* = primary; un solo acento de marca */
+  --accent-foreground: oklch(1 0 0);
+
+  --destructive: oklch(0.55 0.17 28);
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.52 0.08 165);
+  --success-foreground: oklch(1 0 0);
+
+  --warning: oklch(0.7 0.1 70);
+  --warning-foreground: oklch(0.28 0.04 60);
+
+  --border: oklch(0.92 0.004 70);
+  --input: oklch(0.92 0.004 70);
+  --ring: oklch(0.6 0.09 195);
+
+  /* Estados de turno — claro (tono apagado y elegante).
+     "En atención" en verde franco (hue 150) para no confundirse con el turquesa de marca. */
+  --status-serving: oklch(0.93 0.045 150);
+  --status-serving-foreground: oklch(0.46 0.08 150);
+  --status-waiting: oklch(0.93 0.04 70);
+  --status-waiting-foreground: oklch(0.5 0.08 65);
+  --status-done: oklch(0.93 0.04 128);
+  --status-done-foreground: oklch(0.46 0.07 128);
+  --status-noshow: oklch(0.94 0.003 60);
+  --status-noshow-foreground: oklch(0.5 0.006 60);
+  --status-cancelled: oklch(0.93 0.04 5);
+  --status-cancelled-foreground: oklch(0.5 0.12 15);
+}
+
+/* ---------- OSCURO (carbón cálido) ---------- */
+.dark {
+  --background: oklch(0.2 0.006 55); /* carbón cálido, no negro puro */
+  --foreground: oklch(0.94 0.005 70);
+
+  --card: oklch(0.24 0.007 55);
+  --card-foreground: oklch(0.94 0.005 70);
+  --popover: oklch(0.24 0.007 55);
+  --popover-foreground: oklch(0.94 0.005 70);
+
+  --primary: oklch(0.74 0.08 195); /* turquesa claro que brilla en dark */
+  --primary-foreground: oklch(0.2 0.01 55);
+
+  --secondary: oklch(0.28 0.008 55);
+  --secondary-foreground: oklch(0.9 0.005 70);
+
+  --muted: oklch(0.28 0.008 55);
+  --muted-foreground: oklch(0.7 0.008 65);
+
+  --accent: oklch(0.74 0.08 195);
+  --accent-foreground: oklch(0.2 0.01 55);
+
+  --destructive: oklch(0.62 0.16 28);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --success: oklch(0.7 0.1 165);
+  --success-foreground: oklch(0.2 0.01 55);
+
+  --warning: oklch(0.78 0.1 70);
+  --warning-foreground: oklch(0.2 0.02 60);
+
+  --border: oklch(0.32 0.008 55);
+  --input: oklch(0.32 0.008 55);
+  --ring: oklch(0.74 0.08 195);
+
+  /* Estados de turno — oscuro (fondo translúcido del tono + texto claro).
+     "En atención" en verde franco (150); "Atendido" en oliva (128) para diferenciarse
+     entre sí y del turquesa de marca. */
+  --status-serving: oklch(0.36 0.06 150);
+  --status-serving-foreground: oklch(0.84 0.1 150);
+  --status-waiting: oklch(0.37 0.05 65);
+  --status-waiting-foreground: oklch(0.84 0.09 70);
+  --status-done: oklch(0.35 0.05 128);
+  --status-done-foreground: oklch(0.84 0.08 128);
+  --status-noshow: oklch(0.3 0.004 60);
+  --status-noshow-foreground: oklch(0.72 0.006 60);
+  --status-cancelled: oklch(0.36 0.06 15);
+  --status-cancelled-foreground: oklch(0.82 0.1 15);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-rise { animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .delay-1 { animation-delay: 50ms; }
+  .delay-2 { animation-delay: 100ms; }
+  .delay-3 { animation-delay: 150ms; }
+  .delay-4 { animation-delay: 220ms; }
+  .delay-5 { animation-delay: 290ms; }
+  .delay-6 { animation-delay: 360ms; }
+}
