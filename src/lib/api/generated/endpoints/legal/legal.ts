@@ -48,7 +48,7 @@ export const recordConsent = (
       
       
       return customInstance<Consent>(
-      {url: `/consent`, method: 'POST',
+      {url: `/v1/consent`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: recordConsentDto, signal
     },
@@ -112,7 +112,7 @@ export const myConsents = (
       
       
       return customInstance<Consent[]>(
-      {url: `/consent/mine`, method: 'GET', signal
+      {url: `/v1/consent/mine`, method: 'GET', signal
     },
       options);
     }
@@ -122,7 +122,7 @@ export const myConsents = (
 
 export const getMyConsentsQueryKey = () => {
     return [
-    `/consent/mine`
+    `/v1/consent/mine`
     ] as const;
     }
 
@@ -204,7 +204,7 @@ export const audit = (
       
       
       return customInstance<AuditLog[]>(
-      {url: `/audit-log`, method: 'GET', signal
+      {url: `/v1/audit-log`, method: 'GET', signal
     },
       options);
     }
@@ -214,7 +214,7 @@ export const audit = (
 
 export const getAuditQueryKey = () => {
     return [
-    `/audit-log`
+    `/v1/audit-log`
     ] as const;
     }
 

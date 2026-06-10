@@ -7,6 +7,8 @@
  */
 import type { DepositMode } from './depositMode';
 import type { ProfessionalPublicPageSettings } from './professionalPublicPageSettings';
+import type { ProfessionalMpUserId } from './professionalMpUserId';
+import type { ProfessionalMpPublicKey } from './professionalMpPublicKey';
 
 export interface Professional {
   id: string;
@@ -19,4 +21,12 @@ export interface Professional {
   defaultDepositMode: DepositMode;
   cancellationWindowHours: number;
   publicPageSettings: ProfessionalPublicPageSettings;
+  /** @nullable */
+  mpUserId?: ProfessionalMpUserId;
+  /** @nullable */
+  mpPublicKey?: ProfessionalMpPublicKey;
+  /** @nullable */
+  mpTokenExpiresAt?: string | null;
+  /** @nullable */
+  mpConnectedAt?: string | null;
 }

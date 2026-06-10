@@ -11,7 +11,7 @@ export function useProfessional() {
   return useQuery({
     queryKey: ["professional-me"],
     queryFn: ({ signal }) =>
-      customInstance<Professional>({ url: "/professionals/me", method: "GET", signal }),
+      customInstance<Professional>({ url: "/v1/professionals/me", method: "GET", signal }),
   });
 }
 
@@ -19,7 +19,7 @@ export function useUpdateProfessional() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: UpdateProfessionalDto & { publicPageSettings?: Record<string, unknown> }) =>
-      customInstance<Professional>({ url: "/professionals/me", method: "PATCH", data }),
+      customInstance<Professional>({ url: "/v1/professionals/me", method: "PATCH", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["professional-me"] }),
   });
 }
@@ -28,6 +28,6 @@ export function useSubscription() {
   return useQuery({
     queryKey: ["subscription"],
     queryFn: ({ signal }) =>
-      customInstance<Subscription>({ url: "/subscription", method: "GET", signal }),
+      customInstance<Subscription>({ url: "/v1/subscription", method: "GET", signal }),
   });
 }

@@ -1,6 +1,8 @@
 "use client";
 
-import { Check, Play, UserX, Ban, CalendarClock } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +19,11 @@ import {
   useNoShow,
   useCancel,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
+import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { personDisplayName } from "@/lib/agenda";
 import { formatDateLong, formatTime, formatMoney } from "@/lib/format";
+import type { AxiosError } from "axios";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 
@@ -91,6 +95,7 @@ export function AppointmentDetail({
               Turno provisional: sin seña, puede ser tomado por quien abone.
             </p>
           )}
+          <DepositSection appointmentId={appointment.id} onChanged={onChanged} />
         </div>
 
         {/* Acciones según estado */}
@@ -162,6 +167,80 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-start justify-between gap-4 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
+/**
+ * Cobro de la seña del turno. Busca un pago pendiente asociado y deja cobrarlo en efectivo
+ * (mark-paid) o generar un link de MercadoPago (mp-preference). Si MP no está conectado, el
+ * back responde 400 y guiamos al profesional a Cobros.
+ */
+function DepositSection({ appointmentId, onChanged }: { appointmentId: string; onChanged: () => void }) {
+  const { data: payments } = usePayments();
+  const markPaid = useMarkPaymentPaid();
+  const preference = useCreatePaymentPreference();
+  const [notConnected, setNotConnected] = useState(false);
+
+  const payment = payments?.find(
+    (p) => (p.appointmentId as unknown as string) === appointmentId,
+  );
+  if (!payment) return null;
+
+  if (payment.status === "paid") {
+    return (
+      <p className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 p-3 text-xs text-success">
+        <Check className="size-3.5" />
+        Seña de {formatMoney(payment.amountCents)} cobrada.
+      </p>
+    );
+  }
+
+  function genLink() {
+    setNotConnected(false);
+    preference.mutate(
+      { id: payment!.id },
+      {
+        onSuccess: (res) => {
+          if (res?.initPoint) window.open(res.initPoint, "_blank", "noopener");
+        },
+        onError: (err) => {
+          if ((err as AxiosError).response?.status === 400) setNotConnected(true);
+        },
+      },
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/40 p-3">
+      <p className="text-xs font-medium">
+        Seña pendiente · {formatMoney(payment.amountCents)}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => markPaid.mutate(payment.id, { onSuccess: onChanged })}
+          disabled={markPaid.isPending}
+        >
+          {markPaid.isPending ? <Spinner /> : <Banknote className="size-4" />}
+          Cobré en efectivo
+        </Button>
+        <Button size="sm" variant="outline" onClick={genLink} disabled={preference.isPending}>
+          {preference.isPending ? <Spinner /> : <Link2 className="size-4" />}
+          Link de pago
+        </Button>
+      </div>
+      {notConnected && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-warning-foreground">
+          <CircleAlert className="size-3.5" />
+          Conectá MercadoPago en{" "}
+          <Link href="/ajustes/pagos" className="font-medium underline">
+            Cobros
+          </Link>{" "}
+          para generar links.
+        </p>
+      )}
     </div>
   );
 }

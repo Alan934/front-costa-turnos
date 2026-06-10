@@ -51,7 +51,7 @@ export const onboard = (
       
       
       return customInstance<Professional>(
-      {url: `/professionals/onboard`, method: 'POST',
+      {url: `/v1/professionals/onboard`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: onboardProfessionalDto, signal
     },
@@ -114,7 +114,7 @@ export const updateMine = (
       
       
       return customInstance<Professional>(
-      {url: `/professionals/me`, method: 'PATCH',
+      {url: `/v1/professionals/me`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateProfessionalDto
     },
@@ -178,7 +178,7 @@ export const listStaff = (
       
       
       return customInstance<Staff[]>(
-      {url: `/professionals/staff`, method: 'GET', signal
+      {url: `/v1/professionals/staff`, method: 'GET', signal
     },
       options);
     }
@@ -188,7 +188,7 @@ export const listStaff = (
 
 export const getListStaffQueryKey = () => {
     return [
-    `/professionals/staff`
+    `/v1/professionals/staff`
     ] as const;
     }
 
@@ -270,7 +270,7 @@ export const createStaff = (
       
       
       return customInstance<Staff>(
-      {url: `/professionals/staff`, method: 'POST',
+      {url: `/v1/professionals/staff`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createStaffDto, signal
     },
@@ -334,7 +334,7 @@ export const updateStaff = (
       
       
       return customInstance<Staff>(
-      {url: `/professionals/staff/${id}`, method: 'PATCH',
+      {url: `/v1/professionals/staff/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateStaffDto
     },
@@ -397,7 +397,7 @@ export const deactivateStaff = (
       
       
       return customInstance<void>(
-      {url: `/professionals/staff/${id}`, method: 'DELETE'
+      {url: `/v1/professionals/staff/${id}`, method: 'DELETE'
     },
       options);
     }

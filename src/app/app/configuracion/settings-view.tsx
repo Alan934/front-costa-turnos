@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Link2, Save, Check, ExternalLink, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
+import { ImageUpload } from "@/components/image-upload";
 import { useProfessional, useUpdateProfessional, useSubscription } from "@/lib/api/professional";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
@@ -117,7 +119,11 @@ function BusinessSection({ professional }: { professional: { businessName: strin
   );
 }
 
-function BrandingSection({ professional }: { professional: { slug: string; publicPageSettings: Record<string, unknown> } }) {
+function BrandingSection({
+  professional,
+}: {
+  professional: { id: string; slug: string; publicPageSettings: Record<string, unknown> };
+}) {
   const update = useUpdateProfessional();
   const initial = professional.publicPageSettings as PublicPageBranding;
   const [bio, setBio] = useState(initial.bio ?? "");
@@ -160,6 +166,24 @@ function BrandingSection({ professional }: { professional: { slug: string; publi
       </div>
 
       <div className="space-y-4">
+        <div>
+          <Label>Logo del negocio</Label>
+          <ImageUpload
+            className="mt-1.5"
+            ownerType="professional_logo"
+            ownerId={professional.id}
+            fileId={initial.logoFileId}
+            label="Subir logo"
+            onUploaded={(file) =>
+              update.mutate({ publicPageSettings: { ...initial, logoFileId: file.id } })
+            }
+            onRemoved={() => {
+              const rest = { ...initial };
+              delete rest.logoFileId;
+              update.mutate({ publicPageSettings: rest });
+            }}
+          />
+        </div>
         <div>
           <Label htmlFor="br-bio">Descripción</Label>
           <textarea
@@ -229,9 +253,14 @@ function SubscriptionSection() {
           <p className="text-sm text-muted-foreground">
             Próximo cobro: <span className="font-medium capitalize text-foreground">{formatDateLong(sub.data.currentPeriodEnd)}</span>
           </p>
-          <Button variant="outline" size="sm" className="mt-4">
-            Administrar pago
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/app/suscripcion">Administrar suscripción</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/ajustes/pagos">Cobros (MercadoPago)</Link>
+            </Button>
+          </div>
         </div>
       )}
     </section>

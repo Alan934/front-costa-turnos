@@ -9,6 +9,10 @@
 import type { Service } from "@/lib/api/generated/model/service";
 import type { DepositMode } from "@/lib/api/generated/model/depositMode";
 import type { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
+import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { Payment } from "@/lib/api/generated/model/payment";
+import type { Professional } from "@/lib/api/generated/model/professional";
+import type { Subscription } from "@/lib/api/generated/model/subscription";
 
 /** Marca de branding/configuración de la página pública (hoy `{ [k]: unknown }`). */
 export interface PublicPageBranding {
@@ -16,6 +20,8 @@ export interface PublicPageBranding {
   accentColor?: string;
   /** URL del logo/foto de portada. */
   coverImageUrl?: string;
+  /** Id del archivo de logo subido a `/files`. */
+  logoFileId?: string;
   /** Bio / descripción corta. */
   bio?: string;
   /** Dirección legible del local. */
@@ -79,8 +85,52 @@ export interface WaitingRoom {
 
 /** Respuesta de `POST /payments/{id}/mp-preference` (API-GAPS §1). */
 export interface MpPreference {
-  preferenceId: string;
+  preferenceId?: string;
   initPoint: string;
+}
+
+/** Respuesta de `POST /subscription/checkout` (sin schema en el contrato). */
+export interface CheckoutResponse {
+  initPoint: string;
+}
+
+/** Respuesta de `GET /payments/mp/oauth/connect` (sin schema). */
+export interface MpConnectResponse {
+  url: string;
+}
+
+/** Respuesta de `GET /payments/mp/oauth/status` (sin schema). */
+export interface MpOauthStatus {
+  connected: boolean;
+  mpUserId?: string | null;
+  connectedAt?: string | null;
+}
+
+/** Respuesta de `GET /files/{id}/url` (sin schema). */
+export interface SignedUrlResponse {
+  url: string;
+}
+
+/**
+ * Fila de `GET /admin/professionals` (sin schema): el contrato la describe como
+ * "Array de { professional, subscription }".
+ */
+export interface AdminProfessionalRow {
+  professional: Professional;
+  subscription: Subscription;
+}
+
+/**
+ * Respuesta de la reserva con seña (`POST /r/{slug}/book-with-deposit` y
+ * `POST /appointments/with-deposit`): el contrato la describe como `{ appointment, payment }`.
+ * `mpInitPoint` es una extensión del front para la página pública (ver API-GAPS): permite
+ * redirigir a MercadoPago sin que el cliente anónimo llame al endpoint autenticado
+ * `/payments/{id}/mp-preference`.
+ */
+export interface BookWithDepositResult {
+  appointment: Appointment;
+  payment?: Payment;
+  mpInitPoint?: string | null;
 }
 
 /** Roles del usuario autenticado (`GET /auth/me`, API-GAPS §1). */

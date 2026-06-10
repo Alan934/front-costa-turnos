@@ -47,7 +47,7 @@ export const waitingRoom = (
       
       
       return customInstance<void>(
-      {url: `/appointments/waiting-room/${staffId}`, method: 'GET', signal
+      {url: `/v1/appointments/waiting-room/${staffId}`, method: 'GET', signal
     },
       options);
     }
@@ -57,7 +57,7 @@ export const waitingRoom = (
 
 export const getWaitingRoomQueryKey = (staffId?: string,) => {
     return [
-    `/appointments/waiting-room/${staffId}`
+    `/v1/appointments/waiting-room/${staffId}`
     ] as const;
     }
 
@@ -139,7 +139,7 @@ export const confirm = (
       
       
       return customInstance<Appointment>(
-      {url: `/appointments/${id}/confirm`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/confirm`, method: 'POST', signal
     },
       options);
     }
@@ -201,7 +201,7 @@ export const start = (
       
       
       return customInstance<Appointment>(
-      {url: `/appointments/${id}/start`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/start`, method: 'POST', signal
     },
       options);
     }
@@ -263,7 +263,7 @@ export const complete = (
       
       
       return customInstance<Appointment>(
-      {url: `/appointments/${id}/complete`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/complete`, method: 'POST', signal
     },
       options);
     }
@@ -325,7 +325,7 @@ export const noShow = (
       
       
       return customInstance<Appointment>(
-      {url: `/appointments/${id}/no-show`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/no-show`, method: 'POST', signal
     },
       options);
     }
@@ -388,7 +388,7 @@ export const cancel = (
       
       
       return customInstance<Appointment>(
-      {url: `/appointments/${id}/cancel`, method: 'POST',
+      {url: `/v1/appointments/${id}/cancel`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: cancelAppointmentDto, signal
     },

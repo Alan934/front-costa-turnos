@@ -6,16 +6,20 @@
  * OpenAPI spec version: 1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
@@ -43,7 +47,7 @@ export const getMine = (
       
       
       return customInstance<Subscription>(
-      {url: `/subscription`, method: 'GET', signal
+      {url: `/v1/subscription`, method: 'GET', signal
     },
       options);
     }
@@ -53,7 +57,7 @@ export const getMine = (
 
 export const getGetMineQueryKey = () => {
     return [
-    `/subscription`
+    `/v1/subscription`
     ] as const;
     }
 
@@ -135,7 +139,7 @@ export const payments = (
       
       
       return customInstance<SubscriptionPayment[]>(
-      {url: `/subscription/payments`, method: 'GET', signal
+      {url: `/v1/subscription/payments`, method: 'GET', signal
     },
       options);
     }
@@ -145,7 +149,7 @@ export const payments = (
 
 export const getPaymentsQueryKey = () => {
     return [
-    `/subscription/payments`
+    `/v1/subscription/payments`
     ] as const;
     }
 
@@ -217,3 +221,66 @@ export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError
 
 
 
+/**
+ * @summary Crear el checkout de MercadoPago para pagar la suscripcion
+ */
+export const checkout = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/subscription/checkout`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getCheckoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext> => {
+
+const mutationKey = ['checkout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkout>>, void> = () => {
+          
+
+          return  checkout(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof checkout>>>
+    
+    export type CheckoutMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear el checkout de MercadoPago para pagar la suscripcion
+ */
+export const useCheckout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkout>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getCheckoutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

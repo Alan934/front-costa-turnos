@@ -4,9 +4,10 @@
  * adaptamos los hooks generados a los tipos provisionales (PublicPage, Slot) para que
  * las pantallas trabajen tipadas. Cuando el back tipe el spec, esto se simplifica.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
-import type { PublicPage, Slot } from "@/mocks/contract-extensions";
+import type { BookWithDepositDto } from "@/lib/api/generated/model/bookWithDepositDto";
+import type { PublicPage, Slot, BookWithDepositResult } from "@/mocks/contract-extensions";
 
 export function usePublicPage(slug: string) {
   return useQuery({
@@ -35,5 +36,20 @@ export function usePublicSlots(slug: string, params: SlotsQuery | null) {
         signal,
       }),
     enabled: !!slug && !!params,
+  });
+}
+
+/**
+ * Reserva con seña desde la página pública. Devuelve `{ appointment, payment, mpInitPoint? }`.
+ * orval tipa la respuesta como `void` (el contrato no la describe), así que la tipamos acá.
+ */
+export function useBookPublicWithDeposit(slug: string) {
+  return useMutation({
+    mutationFn: (data: BookWithDepositDto) =>
+      customInstance<BookWithDepositResult>({
+        url: `/r/${slug}/book-with-deposit`,
+        method: "POST",
+        data,
+      }),
   });
 }

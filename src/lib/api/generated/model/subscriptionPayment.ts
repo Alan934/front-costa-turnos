@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { SubscriptionPaymentStatus } from './subscriptionPaymentStatus';
+import type { SubscriptionPaymentMethod } from './subscriptionPaymentMethod';
 import type { SubscriptionPaymentMercadopagoRef } from './subscriptionPaymentMercadopagoRef';
 
 export interface SubscriptionPayment {
@@ -16,6 +17,8 @@ export interface SubscriptionPayment {
   status: SubscriptionPaymentStatus;
   periodStart: string;
   periodEnd: string;
+  /** @nullable */
+  method?: SubscriptionPaymentMethod;
   /** @nullable */
   mercadopagoRef?: SubscriptionPaymentMercadopagoRef;
   /** @nullable */

@@ -6,7 +6,12 @@ import { env } from "@/lib/env";
 /** Botón "Continuar con Google". Redirige al endpoint OAuth del backend. */
 export function GoogleButton({ label = "Continuar con Google" }: { label?: string }) {
   function go() {
-    // En producción el backend maneja el flujo OAuth y redirige de vuelta.
+    if (env.mockingEnabled) {
+      // En mock no hay OAuth real: simulamos el retorno del backend al /auth/callback.
+      window.location.href = "/auth/callback?access_token=mock.client.token&refresh_token=mock.refresh";
+      return;
+    }
+    // En producción el backend maneja el flujo OAuth y redirige de vuelta a /auth/callback.
     window.location.href = `${env.apiUrl}/auth/google`;
   }
   return (

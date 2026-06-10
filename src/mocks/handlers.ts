@@ -17,17 +17,43 @@ import {
   scheduleRules,
   timeOffs,
   subscription,
+  subscriptionPayments,
+  payments,
   adminProfessionals,
   adminMetrics,
   SLUG,
 } from "./seed";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
+import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
+import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
+import type { Payment } from "@/lib/api/generated/model/payment";
 import type { Slot, MeResponse, AccountRole } from "./contract-extensions";
 
-/** Construye una URL absoluta contra la baseURL del API para que MSW intercepte. */
-const url = (path: string) => new URL(path, env.apiUrl).toString();
+/** Estado de conexión MercadoPago del profesional (mock en memoria). */
+let mpConnected = false;
+
+/**
+ * Rutas servidas SIN prefijo de versión (igual que el backend / cliente generado).
+ * El resto se sirve bajo `/v1`.
+ */
+const VERSION_NEUTRAL = [
+  /^\/auth(\/|$)/,
+  /^\/health(\/|$)/,
+  /^\/r(\/|$)/,
+  /^\/payments\/mp\/oauth/,
+];
+
+/**
+ * Construye una URL absoluta contra la baseURL del API para que MSW intercepte, agregando
+ * el prefijo `/v1` a las rutas versionadas (el contrato ya lo trae; acá lo replicamos).
+ */
+const url = (path: string) => {
+  const versioned =
+    path.startsWith("/") && !VERSION_NEUTRAL.some((re) => re.test(path)) ? `/v1${path}` : path;
+  return new URL(versioned, env.apiUrl).toString();
+};
 
 /**
  * Genera slots disponibles para un rango [from, to], un staff y un servicio.
@@ -300,11 +326,29 @@ export const handlers: RequestHandler[] = [
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const appointment = createBooking(body, { provisional: false });
     const method = String(body.method ?? "mercadopago");
+    const svc = services.find((s) => s.id === appointment.serviceId);
+    const payment: Payment = {
+      id: `pay_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      professionalId: professional.id,
+      appointmentId: appointment.id as unknown as Payment["appointmentId"],
+      personId: appointment.personId,
+      type: "deposit",
+      amountCents: svc?.depositAmountCents ?? 0,
+      method: method === "cash" ? "cash" : "mercadopago",
+      status: PaymentStatus.pending,
+      mercadopagoRef: null,
+      paidAt: null,
+    };
+    payments.push(payment);
     return HttpResponse.json({
       appointment,
+      payment,
+      // Extensión del front: punto de pago directo para el cliente anónimo (ver API-GAPS).
       mpInitPoint:
         method === "mercadopago"
-          ? "https://www.mercadopago.com.ar/checkout/mock"
+          ? `https://www.mercadopago.com.ar/checkout/dep-mock/${payment.id}`
           : null,
     });
   }),
@@ -440,7 +484,79 @@ export const handlers: RequestHandler[] = [
 
   // ---- Suscripción ----
   http.get(url("/subscription"), () => HttpResponse.json(subscription)),
-  http.get(url("/subscription/payments"), () => HttpResponse.json([])),
+  http.get(url("/subscription/payments"), () => HttpResponse.json(subscriptionPayments)),
+  http.post(url("/subscription/checkout"), () =>
+    HttpResponse.json({ initPoint: "https://www.mercadopago.com.ar/checkout/sub-mock" }),
+  ),
+
+  // ---- Cobros (señas/turnos) ----
+  http.get(url("/payments"), () => HttpResponse.json(payments)),
+  http.post(url("/payments/:id/mark-paid"), ({ params }) => {
+    const p = payments.find((x) => x.id === params.id);
+    if (!p) return new HttpResponse(null, { status: 404 });
+    p.status = PaymentStatus.paid;
+    p.method = "cash";
+    p.paidAt = new Date().toISOString();
+    return HttpResponse.json(p);
+  }),
+  http.post(url("/payments/:id/mp-preference"), ({ params }) => {
+    const p = payments.find((x) => x.id === params.id);
+    if (!p) return new HttpResponse(null, { status: 404 });
+    if (!mpConnected) {
+      return HttpResponse.json(
+        { message: "El profesional no conecto su cuenta de MercadoPago." },
+        { status: 400 },
+      );
+    }
+    return HttpResponse.json({
+      preferenceId: `pref_${params.id}`,
+      initPoint: `https://www.mercadopago.com.ar/checkout/pay-mock/${params.id}`,
+    });
+  }),
+
+  // ---- Conexión MercadoPago (OAuth del profesional) ----
+  http.get(url("/payments/mp/oauth/connect"), () => {
+    // Simulamos que al pedir la URL ya quedó autorizado (al volver, status=connected).
+    mpConnected = true;
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    return HttpResponse.json({ url: `${origin}/ajustes/pagos?mp=connected` });
+  }),
+  http.get(url("/payments/mp/oauth/status"), () =>
+    HttpResponse.json({
+      connected: mpConnected,
+      mpUserId: mpConnected ? "MP-123456" : null,
+      connectedAt: mpConnected ? new Date().toISOString() : null,
+    }),
+  ),
+  http.delete(url("/payments/mp/oauth"), () => {
+    mpConnected = false;
+    return HttpResponse.json({ ok: true });
+  }),
+
+  // ---- Archivos (subida + URL firmada) ----
+  http.post(url("/files"), ({ request }) => {
+    const u = new URL(request.url);
+    return HttpResponse.json(
+      {
+        id: `file_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        professionalId: professional.id,
+        ownerType: u.searchParams.get("ownerType") ?? "generic",
+        ownerId: u.searchParams.get("ownerId") ?? "",
+        objectKey: `mock/${Date.now()}.webp`,
+        mime: "image/webp",
+        sizeBytes: "204800",
+      },
+      { status: 201 },
+    );
+  }),
+  http.get(url("/files/:id/url"), ({ params }) => {
+    // SVG data-URL: muestra algo sin depender de red en modo mock.
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><rect width='100%' height='100%' fill='%2316707A'/><text x='50%' y='52%' font-size='14' fill='white' text-anchor='middle' font-family='sans-serif'>archivo</text></svg>`;
+    return HttpResponse.json({ url: `data:image/svg+xml;utf8,${svg}`, id: params.id });
+  }),
+  http.delete(url("/files/:id"), () => new HttpResponse(null, { status: 204 })),
 
   // ---- Métricas (agregadas — API-GAPS §2, mock) ----
   http.get(url("/metrics/overview"), ({ request }) => {
@@ -449,39 +565,20 @@ export const handlers: RequestHandler[] = [
     return HttpResponse.json(buildMetrics(range));
   }),
 
-  // ---- Admin de plataforma (API-GAPS §2e, mock) ----
+  // ---- Admin de plataforma ----
   http.get(url("/admin/professionals"), () => HttpResponse.json(adminProfessionals)),
-  http.post(url("/admin/professionals"), async ({ request }) => {
-    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const name = String(body.businessName ?? "Nuevo negocio");
-    const pro = {
-      id: `pro_${Date.now()}`,
-      businessName: name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-      ownerName: String(body.ownerName ?? "Dueño"),
-      ownerEmail: String(body.ownerEmail ?? ""),
-      createdAt: new Date().toISOString(),
-      status: "active" as const,
-      subscriptionStatus: "trial" as const,
-      monthlyCents: 1500000,
-      nextChargeAt: new Date(Date.now() + 14 * 86400000).toISOString(),
-      appointmentsLast30: 0,
-    };
-    adminProfessionals.unshift(pro);
-    return HttpResponse.json(pro, { status: 201 });
+  http.post(url("/admin/subscriptions/:professionalId/mark-cash-paid"), ({ params }) => {
+    const row = adminProfessionals.find((r) => r.professional.id === params.professionalId);
+    if (!row) return new HttpResponse(null, { status: 404 });
+    const periodEnd = new Date(Date.now() + 30 * 86400000).toISOString();
+    row.subscription.status = SubscriptionStatus.active;
+    row.subscription.currentPeriodStart = new Date().toISOString();
+    row.subscription.currentPeriodEnd = periodEnd;
+    row.subscription.graceEndsAt = null;
+    row.subscription.trialEndsAt = null;
+    return HttpResponse.json(row.subscription, { status: 201 });
   }),
-  http.post(url("/admin/professionals/:id/block"), ({ params }) => {
-    const p = adminProfessionals.find((x) => x.id === params.id);
-    if (!p) return new HttpResponse(null, { status: 404 });
-    p.status = "blocked";
-    return HttpResponse.json(p);
-  }),
-  http.post(url("/admin/professionals/:id/activate"), ({ params }) => {
-    const p = adminProfessionals.find((x) => x.id === params.id);
-    if (!p) return new HttpResponse(null, { status: 404 });
-    p.status = "active";
-    return HttpResponse.json(p);
-  }),
+  // Métricas de plataforma: el contrato no las expone (API-GAPS §2e), mock.
   http.get(url("/admin/metrics"), () => HttpResponse.json(adminMetrics)),
 
   // ---- Turnos ----

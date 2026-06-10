@@ -46,7 +46,7 @@ export const remove = (
       
       
       return customInstance<void>(
-      {url: `/files/${id}`, method: 'DELETE'
+      {url: `/v1/files/${id}`, method: 'DELETE'
     },
       options);
     }
@@ -99,7 +99,8 @@ export const useRemove = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Subir un archivo
+ * Imagenes hasta 10MB (se comprimen a webp); PDFs hasta 3MB. Tipos no permitidos o archivos que superen el tope se rechazan con 400/413.
+ * @summary Subir un archivo (imagen jpeg/png/webp o PDF)
  */
 export const upload = (
     params: UploadParams,
@@ -108,7 +109,7 @@ export const upload = (
       
       
       return customInstance<FileObject>(
-      {url: `/files`, method: 'POST',
+      {url: `/v1/files`, method: 'POST',
         params, signal
     },
       options);
@@ -146,7 +147,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UploadMutationError = ErrorType<void>
 
     /**
- * @summary Subir un archivo
+ * @summary Subir un archivo (imagen jpeg/png/webp o PDF)
  */
 export const useUpload = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upload>>, TError,{params: UploadParams}, TContext>, request?: SecondParameter<typeof customInstance>}
@@ -171,7 +172,7 @@ export const signedUrl = (
       
       
       return customInstance<void>(
-      {url: `/files/${id}/url`, method: 'GET', signal
+      {url: `/v1/files/${id}/url`, method: 'GET', signal
     },
       options);
     }
@@ -181,7 +182,7 @@ export const signedUrl = (
 
 export const getSignedUrlQueryKey = (id?: string,) => {
     return [
-    `/files/${id}/url`
+    `/v1/files/${id}/url`
     ] as const;
     }
 

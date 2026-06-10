@@ -10,7 +10,7 @@ export function useMetrics(range: "week" | "month") {
     queryKey: ["metrics", range],
     queryFn: ({ signal }) =>
       customInstance<MetricsOverview>({
-        url: "/metrics/overview",
+        url: "/v1/metrics/overview",
         method: "GET",
         params: { range },
         signal,

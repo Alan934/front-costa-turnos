@@ -16,7 +16,7 @@ export function useClients(q?: string) {
     queryKey: ["clients", q ?? ""],
     queryFn: ({ signal }) =>
       customInstance<EnrichedClient[]>({
-        url: "/clients",
+        url: "/v1/clients",
         method: "GET",
         params: q ? { q } : undefined,
         signal,
@@ -28,7 +28,7 @@ export function useClient(id: string) {
   return useQuery({
     queryKey: ["client", id],
     queryFn: ({ signal }) =>
-      customInstance<EnrichedClient>({ url: `/clients/${id}`, method: "GET", signal }),
+      customInstance<EnrichedClient>({ url: `/v1/clients/${id}`, method: "GET", signal }),
     enabled: !!id,
   });
 }
@@ -37,7 +37,7 @@ export function useFichaFields() {
   return useQuery({
     queryKey: ["ficha-fields"],
     queryFn: ({ signal }) =>
-      customInstance<FichaField[]>({ url: "/clients/ficha-fields", method: "GET", signal }),
+      customInstance<FichaField[]>({ url: "/v1/clients/ficha-fields", method: "GET", signal }),
   });
 }
 
@@ -45,7 +45,7 @@ export function useClientNotes(id: string) {
   return useQuery({
     queryKey: ["client-notes", id],
     queryFn: ({ signal }) =>
-      customInstance<ClientNote[]>({ url: `/clients/${id}/notes`, method: "GET", signal }),
+      customInstance<ClientNote[]>({ url: `/v1/clients/${id}/notes`, method: "GET", signal }),
     enabled: !!id,
   });
 }
@@ -54,7 +54,7 @@ export function useCreateClient() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: { fullName: string; email?: string; phone?: string }) =>
-      customInstance<EnrichedClient>({ url: "/clients", method: "POST", data }),
+      customInstance<EnrichedClient>({ url: "/v1/clients", method: "POST", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 }
@@ -64,7 +64,7 @@ export function useAddClientNote(clientId: string) {
   return useMutation({
     mutationFn: (body: string) =>
       customInstance<ClientNote>({
-        url: `/clients/${clientId}/notes`,
+        url: `/v1/clients/${clientId}/notes`,
         method: "POST",
         data: { body },
       }),
@@ -77,7 +77,7 @@ export function useUpdateFicha(clientId: string) {
   return useMutation({
     mutationFn: (fichaValues: Record<string, unknown>) =>
       customInstance<EnrichedClient>({
-        url: `/clients/${clientId}/ficha`,
+        url: `/v1/clients/${clientId}/ficha`,
         method: "PATCH",
         data: { fichaValues },
       }),
@@ -89,7 +89,7 @@ export function useArchiveClient() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      customInstance({ url: `/clients/${id}`, method: "DELETE" }),
+      customInstance({ url: `/v1/clients/${id}`, method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
   });
 }

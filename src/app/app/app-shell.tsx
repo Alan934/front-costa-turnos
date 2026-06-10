@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarClock, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SubscriptionBanner } from "@/components/subscription-banner";
 import { APP_NAV } from "./nav";
 import { cn } from "@/lib/utils";
 
@@ -71,7 +72,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main className="min-w-0">{children}</main>
+      <main className="min-w-0">
+        <SubscriptionBanner />
+        {children}
+      </main>
     </div>
   );
 }

@@ -6,13 +6,22 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
@@ -39,7 +48,7 @@ export const markPaid = (
       
       
       return customInstance<Payment>(
-      {url: `/payments/${id}/mark-paid`, method: 'POST', signal
+      {url: `/v1/payments/${id}/mark-paid`, method: 'POST', signal
     },
       options);
     }
@@ -102,7 +111,7 @@ export const createPreference = (
       
       
       return customInstance<void>(
-      {url: `/payments/${id}/mp-preference`, method: 'POST',
+      {url: `/v1/payments/${id}/mp-preference`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createPreferenceDto, signal
     },
@@ -166,7 +175,7 @@ export const webhook = (
       
       
       return customInstance<void>(
-      {url: `/payments/mp/webhook`, method: 'POST',
+      {url: `/v1/payments/mp/webhook`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: webhookBody, signal
     },
@@ -217,6 +226,251 @@ export const useWebhook = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getWebhookMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Obtener la URL para conectar la cuenta de MercadoPago
+ */
+export const connect = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/payments/mp/oauth/connect`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getConnectQueryKey = () => {
+    return [
+    `/payments/mp/oauth/connect`
+    ] as const;
+    }
+
+    
+export const getConnectQueryOptions = <TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getConnectQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof connect>>> = ({ signal }) => connect(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ConnectQueryResult = NonNullable<Awaited<ReturnType<typeof connect>>>
+export type ConnectQueryError = ErrorType<unknown>
+
+
+export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof connect>>,
+          TError,
+          Awaited<ReturnType<typeof connect>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof connect>>,
+          TError,
+          Awaited<ReturnType<typeof connect>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Obtener la URL para conectar la cuenta de MercadoPago
+ */
+
+export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getConnectQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Estado de conexion de MercadoPago
+ */
+export const status = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/payments/mp/oauth/status`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getStatusQueryKey = () => {
+    return [
+    `/payments/mp/oauth/status`
+    ] as const;
+    }
+
+    
+export const getStatusQueryOptions = <TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getStatusQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof status>>> = ({ signal }) => status(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type StatusQueryResult = NonNullable<Awaited<ReturnType<typeof status>>>
+export type StatusQueryError = ErrorType<unknown>
+
+
+export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof status>>,
+          TError,
+          Awaited<ReturnType<typeof status>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof status>>,
+          TError,
+          Awaited<ReturnType<typeof status>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Estado de conexion de MercadoPago
+ */
+
+export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Desconectar la cuenta de MercadoPago
+ */
+export const disconnect = (
+    
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/payments/mp/oauth`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getDisconnectMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext> => {
+
+const mutationKey = ['disconnect'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disconnect>>, void> = () => {
+          
+
+          return  disconnect(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisconnectMutationResult = NonNullable<Awaited<ReturnType<typeof disconnect>>>
+    
+    export type DisconnectMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Desconectar la cuenta de MercadoPago
+ */
+export const useDisconnect = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disconnect>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getDisconnectMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

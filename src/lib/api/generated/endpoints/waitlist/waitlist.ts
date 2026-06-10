@@ -37,7 +37,7 @@ export const notify = (
       
       
       return customInstance<WaitlistEntry>(
-      {url: `/waitlist/${id}/notify`, method: 'POST', signal
+      {url: `/v1/waitlist/${id}/notify`, method: 'POST', signal
     },
       options);
     }
@@ -99,7 +99,7 @@ export const convert = (
       
       
       return customInstance<WaitlistEntry>(
-      {url: `/waitlist/${id}/convert`, method: 'POST', signal
+      {url: `/v1/waitlist/${id}/convert`, method: 'POST', signal
     },
       options);
     }

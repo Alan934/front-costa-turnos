@@ -38,7 +38,7 @@ export const update = (
       
       
       return customInstance<Service>(
-      {url: `/services/${id}`, method: 'PATCH',
+      {url: `/v1/services/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateServiceDto
     },
@@ -101,7 +101,7 @@ export const deactivate = (
       
       
       return customInstance<Service>(
-      {url: `/services/${id}`, method: 'DELETE'
+      {url: `/v1/services/${id}`, method: 'DELETE'
     },
       options);
     }

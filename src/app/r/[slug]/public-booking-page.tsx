@@ -19,9 +19,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { usePublicPage, usePublicSlots } from "@/lib/api/public-booking";
-import { useBook, useBookWithDeposit } from "@/lib/api/generated/endpoints/public-booking/public-booking";
+import { usePublicPage, usePublicSlots, useBookPublicWithDeposit } from "@/lib/api/public-booking";
+import { useBook } from "@/lib/api/generated/endpoints/public-booking/public-booking";
 import { getDepositInfo } from "@/lib/deposit";
+import { env } from "@/lib/env";
 import {
   formatMoney,
   formatDuration,
@@ -498,7 +499,7 @@ function ConfirmStep({
   const deposit = getDepositInfo(service);
 
   const book = useBook();
-  const bookWithDeposit = useBookWithDeposit();
+  const bookWithDeposit = useBookPublicWithDeposit(slug);
   const submitting = book.isPending || bookWithDeposit.isPending;
   const failed = book.isError || bookWithDeposit.isError;
 
@@ -515,8 +516,18 @@ function ConfirmStep({
     };
     if (payDeposit && deposit.amountCents) {
       bookWithDeposit.mutate(
-        { slug, data: { ...base, method: "mercadopago" } },
-        { onSuccess: () => onConfirmed(false) },
+        { ...base, method: "mercadopago" },
+        {
+          onSuccess: (res) => {
+            // El back devuelve el punto de pago de MercadoPago: redirigimos para abonar.
+            // En modo mock no salimos a MP: confirmamos el turno asegurado directamente.
+            if (!env.mockingEnabled && res?.mpInitPoint) {
+              window.location.href = res.mpInitPoint;
+              return;
+            }
+            onConfirmed(false);
+          },
+        },
       );
     } else {
       book.mutate(

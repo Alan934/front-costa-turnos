@@ -50,7 +50,7 @@ export function NewAppointmentDialog({
   const create = useMutation({
     mutationFn: () =>
       customInstance({
-        url: "/appointments",
+        url: "/v1/appointments",
         method: "POST",
         data: {
           fullName: fullName.trim() || "Cliente sin nombre",

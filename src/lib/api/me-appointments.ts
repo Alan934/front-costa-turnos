@@ -9,13 +9,13 @@ export function useMyAppointments() {
   return useQuery({
     queryKey: ["my-appointments"],
     queryFn: ({ signal }) =>
-      customInstance<MyAppointment[]>({ url: "/me/appointments", method: "GET", signal }),
+      customInstance<MyAppointment[]>({ url: "/v1/me/appointments", method: "GET", signal }),
   });
 }
 
 export function useCancelMyAppointment() {
   return useMutation({
     mutationFn: (id: string) =>
-      customInstance({ url: `/me/appointments/${id}/cancel`, method: "POST" }),
+      customInstance({ url: `/v1/me/appointments/${id}/cancel`, method: "POST" }),
   });
 }

@@ -4,6 +4,7 @@ import axios, {
   type AxiosResponse,
 } from "axios";
 import { env } from "@/lib/env";
+import { emitSubscriptionBlocked, isSubscriptionForbidden } from "@/lib/billing-events";
 
 /**
  * Instancia de axios usada por TODO el cliente generado por orval.
@@ -43,9 +44,31 @@ axiosInstance.interceptors.request.use((config) => {
 });
 
 /**
+ * Detecta el 403 de "suscripción vencida" (distinto del 403 de permisos) y avisa a la UI
+ * para mostrar un CTA de pago en vez de un error genérico. Re-lanza el error igual.
+ */
+axiosInstance.interceptors.response.use(
+  (res) => res,
+  (error: AxiosError<{ message?: string }>) => {
+    const status = error.response?.status;
+    const message = error.response?.data?.message;
+    if (isSubscriptionForbidden(status, message)) {
+      emitSubscriptionBlocked(
+        message ?? "Tu prueba o suscripción venció. Aboná para seguir usando el sistema.",
+      );
+    }
+    return Promise.reject(error);
+  },
+);
+
+/**
  * Mutator que orval invoca por cada operación. Devuelve `response.data`
  * para que los hooks tipados resuelvan al payload, no al AxiosResponse.
  * Se le adjunta `.cancel()` para soportar cancelación de queries.
+ *
+ * Nota: el contrato ya trae el prefijo `/v1` en cada path versionado (y deja `auth/*`,
+ * `health`, `r/:slug/*` y `payments/mp/oauth/*` sin prefijo). Por eso la baseURL es la raíz
+ * del backend, sin `/v1`.
  */
 export const customInstance = <T>(
   config: AxiosRequestConfig,

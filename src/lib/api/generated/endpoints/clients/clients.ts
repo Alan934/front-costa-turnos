@@ -53,7 +53,7 @@ export const listFichaFields = (
       
       
       return customInstance<FichaField[]>(
-      {url: `/clients/ficha-fields`, method: 'GET', signal
+      {url: `/v1/clients/ficha-fields`, method: 'GET', signal
     },
       options);
     }
@@ -63,7 +63,7 @@ export const listFichaFields = (
 
 export const getListFichaFieldsQueryKey = () => {
     return [
-    `/clients/ficha-fields`
+    `/v1/clients/ficha-fields`
     ] as const;
     }
 
@@ -145,7 +145,7 @@ export const createFichaField = (
       
       
       return customInstance<FichaField>(
-      {url: `/clients/ficha-fields`, method: 'POST',
+      {url: `/v1/clients/ficha-fields`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createFichaFieldDto, signal
     },
@@ -209,7 +209,7 @@ export const updateFichaField = (
       
       
       return customInstance<FichaField>(
-      {url: `/clients/ficha-fields/${id}`, method: 'PATCH',
+      {url: `/v1/clients/ficha-fields/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateFichaFieldDto
     },
@@ -272,7 +272,7 @@ export const deleteFichaField = (
       
       
       return customInstance<void>(
-      {url: `/clients/ficha-fields/${id}`, method: 'DELETE'
+      {url: `/v1/clients/ficha-fields/${id}`, method: 'DELETE'
     },
       options);
     }
@@ -334,7 +334,7 @@ export const listClients = (
       
       
       return customInstance<ProfessionalClient[]>(
-      {url: `/clients`, method: 'GET', signal
+      {url: `/v1/clients`, method: 'GET', signal
     },
       options);
     }
@@ -344,7 +344,7 @@ export const listClients = (
 
 export const getListClientsQueryKey = () => {
     return [
-    `/clients`
+    `/v1/clients`
     ] as const;
     }
 
@@ -426,7 +426,7 @@ export const createClient = (
       
       
       return customInstance<ProfessionalClient>(
-      {url: `/clients`, method: 'POST',
+      {url: `/v1/clients`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createClientDto, signal
     },
@@ -490,7 +490,7 @@ export const getClient = (
       
       
       return customInstance<ProfessionalClient>(
-      {url: `/clients/${id}`, method: 'GET', signal
+      {url: `/v1/clients/${id}`, method: 'GET', signal
     },
       options);
     }
@@ -500,7 +500,7 @@ export const getClient = (
 
 export const getGetClientQueryKey = (id?: string,) => {
     return [
-    `/clients/${id}`
+    `/v1/clients/${id}`
     ] as const;
     }
 
@@ -581,7 +581,7 @@ export const archiveClient = (
       
       
       return customInstance<ProfessionalClient>(
-      {url: `/clients/${id}`, method: 'DELETE'
+      {url: `/v1/clients/${id}`, method: 'DELETE'
     },
       options);
     }
@@ -643,7 +643,7 @@ export const updateFicha = (
       
       
       return customInstance<ProfessionalClient>(
-      {url: `/clients/${id}/ficha`, method: 'PATCH',
+      {url: `/v1/clients/${id}/ficha`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateClientFichaDto
     },
@@ -707,7 +707,7 @@ export const listNotes = (
       
       
       return customInstance<ClientNote[]>(
-      {url: `/clients/${id}/notes`, method: 'GET', signal
+      {url: `/v1/clients/${id}/notes`, method: 'GET', signal
     },
       options);
     }
@@ -717,7 +717,7 @@ export const listNotes = (
 
 export const getListNotesQueryKey = (id?: string,) => {
     return [
-    `/clients/${id}/notes`
+    `/v1/clients/${id}/notes`
     ] as const;
     }
 
@@ -800,7 +800,7 @@ export const addNote = (
       
       
       return customInstance<ClientNote>(
-      {url: `/clients/${id}/notes`, method: 'POST',
+      {url: `/v1/clients/${id}/notes`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createClientNoteDto, signal
     },

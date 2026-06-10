@@ -19,7 +19,7 @@ export function useAppointments(params: AppointmentsQuery) {
     queryKey: ["appointments", params],
     queryFn: ({ signal }) =>
       customInstance<Appointment[]>({
-        url: "/appointments",
+        url: "/v1/appointments",
         method: "GET",
         params,
         signal,

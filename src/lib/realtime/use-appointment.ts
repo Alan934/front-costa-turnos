@@ -13,7 +13,7 @@ export function useAppointment(appointmentId: string) {
     queryKey: ["appointment", appointmentId],
     queryFn: ({ signal }) =>
       customInstance<Appointment>({
-        url: `/appointments/${appointmentId}`,
+        url: `/v1/appointments/${appointmentId}`,
         method: "GET",
         signal,
       }),

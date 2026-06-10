@@ -52,7 +52,7 @@ export const list = (
       
       
       return customInstance<Raffle[]>(
-      {url: `/raffles`, method: 'GET', signal
+      {url: `/v1/raffles`, method: 'GET', signal
     },
       options);
     }
@@ -62,7 +62,7 @@ export const list = (
 
 export const getListQueryKey = () => {
     return [
-    `/raffles`
+    `/v1/raffles`
     ] as const;
     }
 
@@ -144,7 +144,7 @@ export const create = (
       
       
       return customInstance<Raffle>(
-      {url: `/raffles`, method: 'POST',
+      {url: `/v1/raffles`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createRaffleDto, signal
     },
@@ -208,7 +208,7 @@ export const get = (
       
       
       return customInstance<Raffle>(
-      {url: `/raffles/${id}`, method: 'GET', signal
+      {url: `/v1/raffles/${id}`, method: 'GET', signal
     },
       options);
     }
@@ -218,7 +218,7 @@ export const get = (
 
 export const getGetQueryKey = (id?: string,) => {
     return [
-    `/raffles/${id}`
+    `/v1/raffles/${id}`
     ] as const;
     }
 
@@ -301,7 +301,7 @@ export const addPrize = (
       
       
       return customInstance<RafflePrize>(
-      {url: `/raffles/${id}/prizes`, method: 'POST',
+      {url: `/v1/raffles/${id}/prizes`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createPrizeDto, signal
     },
@@ -365,7 +365,7 @@ export const listEntries = (
       
       
       return customInstance<RaffleEntry[]>(
-      {url: `/raffles/${id}/entries`, method: 'GET', signal
+      {url: `/v1/raffles/${id}/entries`, method: 'GET', signal
     },
       options);
     }
@@ -375,7 +375,7 @@ export const listEntries = (
 
 export const getListEntriesQueryKey = (id?: string,) => {
     return [
-    `/raffles/${id}/entries`
+    `/v1/raffles/${id}/entries`
     ] as const;
     }
 
@@ -458,7 +458,7 @@ export const addEntry = (
       
       
       return customInstance<RaffleEntry>(
-      {url: `/raffles/${id}/entries`, method: 'POST',
+      {url: `/v1/raffles/${id}/entries`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: addEntryDto, signal
     },
@@ -523,7 +523,7 @@ export const addByEmail = (
       
       
       return customInstance<RaffleEntry[]>(
-      {url: `/raffles/${id}/participants-by-email`, method: 'POST',
+      {url: `/v1/raffles/${id}/participants-by-email`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: addParticipantsByEmailDto, signal
     },
@@ -587,7 +587,7 @@ export const draw = (
       
       
       return customInstance<Raffle>(
-      {url: `/raffles/${id}/draw`, method: 'POST', signal
+      {url: `/v1/raffles/${id}/draw`, method: 'POST', signal
     },
       options);
     }

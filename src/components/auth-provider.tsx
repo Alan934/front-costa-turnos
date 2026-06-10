@@ -35,10 +35,51 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * `GET /auth/me` no tiene schema en el contrato (devuelve `void`, ver API-GAPS §1) y el
+ * backend lo describe como "{ sub, email, rol, tenant }". Normalizamos las variantes de
+ * nombre más probables para que el ruteo por rol funcione contra el back real.
+ */
+function normalizeMe(raw: Record<string, unknown>): MeResponse {
+  const roleAlias: Record<string, AccountRole> = {
+    admin: "admin",
+    platform_admin: "admin",
+    superadmin: "admin",
+    professional: "professional",
+    owner: "professional",
+    staff: "professional",
+    client: "client",
+    customer: "client",
+  };
+  const rawRoles = Array.isArray(raw.roles)
+    ? (raw.roles as unknown[])
+    : raw.role != null
+      ? [raw.role]
+      : [];
+  const roles = rawRoles
+    .map((r) => roleAlias[String(r).toLowerCase()] ?? (String(r) as AccountRole))
+    .filter((r, i, a) => a.indexOf(r) === i);
+
+  const professionalId =
+    (raw.professionalId as string) ??
+    (raw.tenantId as string) ??
+    (raw.tenant as string) ??
+    null;
+
+  return {
+    id: String(raw.id ?? raw.sub ?? ""),
+    email: String(raw.email ?? ""),
+    fullName: String(raw.fullName ?? raw.name ?? ""),
+    roles,
+    professionalId,
+  };
+}
+
 async function fetchMe(): Promise<MeResponse | null> {
   if (!getAccessToken()) return null;
   try {
-    return await customInstance<MeResponse>({ url: "/auth/me", method: "GET" });
+    const raw = await customInstance<Record<string, unknown>>({ url: "/auth/me", method: "GET" });
+    return normalizeMe(raw ?? {});
   } catch {
     return null;
   }

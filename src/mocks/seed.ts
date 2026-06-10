@@ -16,8 +16,14 @@ import type { ClientNote } from "@/lib/api/generated/model/clientNote";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
+import type { SubscriptionPayment } from "@/lib/api/generated/model/subscriptionPayment";
+import type { Payment } from "@/lib/api/generated/model/payment";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
+import { PaymentType } from "@/lib/api/generated/model/paymentType";
+import { PaymentMethod } from "@/lib/api/generated/model/paymentMethod";
+import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
+import { SubscriptionPaymentStatus } from "@/lib/api/generated/model/subscriptionPaymentStatus";
 import type {
   PublicPage,
   StaffPublic,
@@ -166,6 +172,17 @@ export const fichaFields: FichaField[] = [
     isRequired: false,
     isVisibleToClient: true,
     displayOrder: 2,
+  },
+  {
+    id: "ff_foto_referencia",
+    createdAt: iso(now),
+    updatedAt: iso(now),
+    professionalId: PROFESSIONAL_ID,
+    label: "Foto de referencia",
+    type: "photo",
+    isRequired: false,
+    isVisibleToClient: false,
+    displayOrder: 3,
   },
 ];
 
@@ -336,73 +353,52 @@ export const adminUser: MeResponse = {
   professionalId: null,
 };
 
-/** Profesionales de la plataforma (vista de admin — ver API-GAPS §2e). */
-export const adminProfessionals: import("./contract-extensions").AdminProfessional[] = [
-  {
-    id: PROFESSIONAL_ID,
-    businessName: "Peluquería del Pueblo",
-    slug: SLUG,
-    ownerName: "Lucía Fernández",
-    ownerEmail: "lucia@peluqueriadelpueblo.com.ar",
-    createdAt: iso(at(9, 0, -120)),
-    status: "active",
-    subscriptionStatus: "active",
-    monthlyCents: 1500000,
-    nextChargeAt: iso(at(0, 0, 20)),
-    appointmentsLast30: 142,
-  },
-  {
-    id: "pro_2",
-    businessName: "Barbería Don Carlos",
-    slug: "barberia-don-carlos",
-    ownerName: "Carlos Méndez",
-    ownerEmail: "carlos@barberiadoncarlos.com.ar",
-    createdAt: iso(at(9, 0, -200)),
-    status: "active",
-    subscriptionStatus: "active",
-    monthlyCents: 1500000,
-    nextChargeAt: iso(at(0, 0, 12)),
-    appointmentsLast30: 98,
-  },
-  {
-    id: "pro_3",
-    businessName: "Estudio de Uñas Bril",
-    slug: "estudio-bril",
-    ownerName: "Daniela Ríos",
-    ownerEmail: "dani@estudiobril.com.ar",
-    createdAt: iso(at(9, 0, -45)),
-    status: "active",
-    subscriptionStatus: "trial",
-    monthlyCents: 1500000,
-    nextChargeAt: iso(at(0, 0, 5)),
-    appointmentsLast30: 31,
-  },
-  {
-    id: "pro_4",
-    businessName: "Kinesiología Vértice",
-    slug: "kine-vertice",
-    ownerName: "Pablo Sosa",
-    ownerEmail: "pablo@vertice.com.ar",
-    createdAt: iso(at(9, 0, -300)),
-    status: "active",
-    subscriptionStatus: "past_due",
-    monthlyCents: 1500000,
-    nextChargeAt: iso(at(0, 0, -3)),
-    appointmentsLast30: 64,
-  },
-  {
-    id: "pro_5",
-    businessName: "Spa Serena",
-    slug: "spa-serena",
-    ownerName: "Marina Quiroga",
-    ownerEmail: "marina@spaserena.com.ar",
-    createdAt: iso(at(9, 0, -400)),
-    status: "blocked",
-    subscriptionStatus: "cancelled",
-    monthlyCents: 1500000,
-    nextChargeAt: null,
-    appointmentsLast30: 0,
-  },
+/** Profesionales de la plataforma (vista de admin). Forma real: { professional, subscription }. */
+function adminRow(args: {
+  id: string;
+  businessName: string;
+  slug: string;
+  accountId: string;
+  createdDayOffset: number;
+  status: SubscriptionStatus;
+  periodEndOffset: number;
+  trialEndOffset?: number;
+  graceEndOffset?: number;
+}): import("./contract-extensions").AdminProfessionalRow {
+  const pro: Professional = {
+    id: args.id,
+    createdAt: iso(at(9, 0, args.createdDayOffset)),
+    updatedAt: iso(now),
+    accountId: args.accountId,
+    businessName: args.businessName,
+    slug: args.slug,
+    timezone: "America/Argentina/Buenos_Aires",
+    defaultDepositMode: DepositMode.hybrid,
+    cancellationWindowHours: 24,
+    publicPageSettings: {},
+  };
+  const sub: Subscription = {
+    id: `sub_${args.id}`,
+    createdAt: iso(at(9, 0, args.createdDayOffset)),
+    updatedAt: iso(now),
+    professionalId: args.id,
+    status: args.status,
+    trialEndsAt: args.trialEndOffset != null ? iso(at(0, 0, args.trialEndOffset)) : null,
+    currentPeriodStart: iso(at(0, 0, args.periodEndOffset - 30)),
+    currentPeriodEnd: iso(at(0, 0, args.periodEndOffset)),
+    graceEndsAt: args.graceEndOffset != null ? iso(at(0, 0, args.graceEndOffset)) : null,
+    amountCents: 1500000,
+    mercadopagoPreapprovalId: null,
+  };
+  return { professional: pro, subscription: sub };
+}
+
+export const adminProfessionals: import("./contract-extensions").AdminProfessionalRow[] = [
+  adminRow({ id: PROFESSIONAL_ID, businessName: "Peluquería del Pueblo", slug: SLUG, accountId: "acc_owner", createdDayOffset: -120, status: SubscriptionStatus.active, periodEndOffset: 20 }),
+  adminRow({ id: "pro_2", businessName: "Barbería Don Carlos", slug: "barberia-don-carlos", accountId: "acc_2", createdDayOffset: -200, status: SubscriptionStatus.active, periodEndOffset: 12 }),
+  adminRow({ id: "pro_3", businessName: "Estudio de Uñas Bril", slug: "estudio-bril", accountId: "acc_3", createdDayOffset: -10, status: SubscriptionStatus.trial, periodEndOffset: 5, trialEndOffset: 5 }),
+  adminRow({ id: "pro_4", businessName: "Kinesiología Vértice", slug: "kine-vertice", accountId: "acc_4", createdDayOffset: -300, status: SubscriptionStatus.grace, periodEndOffset: -3, graceEndOffset: 1 }),
+  adminRow({ id: "pro_5", businessName: "Spa Serena", slug: "spa-serena", accountId: "acc_5", createdDayOffset: -400, status: SubscriptionStatus.cancelled, periodEndOffset: -40 }),
 ];
 
 /** Métricas de plataforma (vista admin). */
@@ -573,6 +569,52 @@ export const subscription: Subscription = {
   amountCents: 1500000,
   mercadopagoPreapprovalId: null,
 };
+
+/** Pagos de la suscripción (historial del plan). */
+export const subscriptionPayments: SubscriptionPayment[] = [
+  {
+    id: "subpay_1",
+    createdAt: iso(at(9, 0, -40)),
+    subscriptionId: "sub_1",
+    amountCents: 1500000,
+    status: SubscriptionPaymentStatus.paid,
+    periodStart: iso(at(0, 0, -40)),
+    periodEnd: iso(at(0, 0, -10)),
+    method: PaymentMethod.mercadopago,
+    mercadopagoRef: null,
+    paidAt: iso(at(10, 0, -40)),
+  },
+  {
+    id: "subpay_2",
+    createdAt: iso(at(9, 0, -10)),
+    subscriptionId: "sub_1",
+    amountCents: 1500000,
+    status: SubscriptionPaymentStatus.paid,
+    periodStart: iso(at(0, 0, -10)),
+    periodEnd: iso(at(0, 0, 20)),
+    method: PaymentMethod.mercadopago,
+    mercadopagoRef: null,
+    paidAt: iso(at(10, 0, -10)),
+  },
+];
+
+/** Cobros del tenant (señas/turnos). Uno pendiente sobre el turno provisional apt_3. */
+export const payments: Payment[] = [
+  {
+    id: "pay_apt3",
+    createdAt: iso(at(9, 0)),
+    updatedAt: iso(now),
+    professionalId: PROFESSIONAL_ID,
+    appointmentId: "apt_3" as unknown as Payment["appointmentId"],
+    personId: "per_juan",
+    type: PaymentType.deposit,
+    amountCents: 400000,
+    method: PaymentMethod.mercadopago,
+    status: PaymentStatus.pending,
+    mercadopagoRef: null,
+    paidAt: null,
+  },
+];
 
 /** Notas privadas por clientId (NUNCA se muestran al cliente). */
 export const clientNotes: Record<string, ClientNote[]> = {

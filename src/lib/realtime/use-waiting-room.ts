@@ -14,7 +14,7 @@ const queryKey = (staffId: string) => ["waiting-room", staffId];
 
 function fetchRoom(staffId: string, signal?: AbortSignal) {
   return customInstance<WaitingRoom>({
-    url: `/appointments/waiting-room/${staffId}`,
+    url: `/v1/appointments/waiting-room/${staffId}`,
     method: "GET",
     signal,
   });

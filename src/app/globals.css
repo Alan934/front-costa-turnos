@@ -181,6 +181,20 @@
     font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
+  /* Manito en todo lo accionable, para que se note que es interactivo. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]),
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;

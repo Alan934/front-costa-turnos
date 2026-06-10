@@ -50,7 +50,7 @@ export const computeSlots = (
       
       
       return customInstance<void>(
-      {url: `/availability/slots`, method: 'GET',
+      {url: `/v1/availability/slots`, method: 'GET',
         params, signal
     },
       options);
@@ -61,7 +61,7 @@ export const computeSlots = (
 
 export const getComputeSlotsQueryKey = (params?: ComputeSlotsParams,) => {
     return [
-    `/availability/slots`, ...(params ? [params]: [])
+    `/v1/availability/slots`, ...(params ? [params]: [])
     ] as const;
     }
 
@@ -143,7 +143,7 @@ export const listSchedule = (
       
       
       return customInstance<ScheduleRule[]>(
-      {url: `/availability/staff/${staffId}/schedule`, method: 'GET', signal
+      {url: `/v1/availability/staff/${staffId}/schedule`, method: 'GET', signal
     },
       options);
     }
@@ -153,7 +153,7 @@ export const listSchedule = (
 
 export const getListScheduleQueryKey = (staffId?: string,) => {
     return [
-    `/availability/staff/${staffId}/schedule`
+    `/v1/availability/staff/${staffId}/schedule`
     ] as const;
     }
 
@@ -236,7 +236,7 @@ export const createScheduleRule = (
       
       
       return customInstance<ScheduleRule>(
-      {url: `/availability/staff/${staffId}/schedule`, method: 'POST',
+      {url: `/v1/availability/staff/${staffId}/schedule`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createScheduleRuleDto, signal
     },
@@ -300,7 +300,7 @@ export const deleteScheduleRule = (
       
       
       return customInstance<void>(
-      {url: `/availability/staff/${staffId}/schedule/${id}`, method: 'DELETE'
+      {url: `/v1/availability/staff/${staffId}/schedule/${id}`, method: 'DELETE'
     },
       options);
     }
@@ -362,7 +362,7 @@ export const listTimeOff = (
       
       
       return customInstance<TimeOff[]>(
-      {url: `/availability/staff/${staffId}/time-off`, method: 'GET', signal
+      {url: `/v1/availability/staff/${staffId}/time-off`, method: 'GET', signal
     },
       options);
     }
@@ -372,7 +372,7 @@ export const listTimeOff = (
 
 export const getListTimeOffQueryKey = (staffId?: string,) => {
     return [
-    `/availability/staff/${staffId}/time-off`
+    `/v1/availability/staff/${staffId}/time-off`
     ] as const;
     }
 
@@ -455,7 +455,7 @@ export const createTimeOff = (
       
       
       return customInstance<TimeOff>(
-      {url: `/availability/staff/${staffId}/time-off`, method: 'POST',
+      {url: `/v1/availability/staff/${staffId}/time-off`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createTimeOffDto, signal
     },
@@ -519,7 +519,7 @@ export const deleteTimeOff = (
       
       
       return customInstance<void>(
-      {url: `/availability/staff/${staffId}/time-off/${id}`, method: 'DELETE'
+      {url: `/v1/availability/staff/${staffId}/time-off/${id}`, method: 'DELETE'
     },
       options);
     }

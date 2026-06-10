@@ -20,6 +20,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ErrorState, EmptyState } from "@/components/state-views";
+import { ImageUpload } from "@/components/image-upload";
 import {
   useClient,
   useClientNotes,
@@ -163,7 +164,7 @@ function FichaSection({
             .slice()
             .sort((a, b) => a.displayOrder - b.displayOrder)
             .map((f) => (
-              <FichaInput key={f.id} field={f} value={values[f.id]} onChange={(v) => set(f.id, v)} />
+              <FichaInput key={f.id} field={f} clientId={clientId} value={values[f.id]} onChange={(v) => set(f.id, v)} />
             ))}
           {dirty && (
             <Button size="sm" onClick={() => update.mutate(values, { onSuccess: () => setDirty(false) })} disabled={update.isPending}>
@@ -179,14 +180,32 @@ function FichaSection({
 
 function FichaInput({
   field,
+  clientId,
   value,
   onChange,
 }: {
   field: FichaField;
+  clientId: string;
   value: unknown;
   onChange: (v: unknown) => void;
 }) {
   const id = `ficha-${field.id}`;
+  if (field.type === FichaFieldType.photo) {
+    return (
+      <div>
+        <Label>{field.label}</Label>
+        <ImageUpload
+          className="mt-1.5"
+          ownerType="client_ficha"
+          ownerId={clientId}
+          fileId={(value as string) || null}
+          label="Subir foto"
+          onUploaded={(file) => onChange(file.id)}
+          onRemoved={() => onChange(null)}
+        />
+      </div>
+    );
+  }
   if (field.type === FichaFieldType.boolean) {
     return (
       <label className="flex items-center gap-2.5 text-sm">

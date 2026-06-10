@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MailCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AuthShell } from "@/components/auth-shell";
@@ -128,9 +129,8 @@ export function ClaimAccount() {
         </div>
         <div>
           <Label htmlFor="password">Elegí tu contraseña</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             className="mt-1.5"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

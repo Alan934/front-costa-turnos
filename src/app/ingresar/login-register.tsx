@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AuthShell } from "@/components/auth-shell";
@@ -132,9 +133,8 @@ export function LoginRegister() {
               </Link>
             )}
           </div>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             className="mt-1.5"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -152,12 +152,6 @@ export function LoginRegister() {
           {tab === "login" ? "Ingresar" : "Crear cuenta"}
         </Button>
       </form>
-
-      {/* Ayuda de demo */}
-      <p className="mt-4 rounded-lg bg-muted/60 p-2.5 text-center text-xs text-muted-foreground">
-        Demo: usá un email con <strong>“peluqueria”</strong> para entrar como profesional;
-        cualquier otro entra como cliente.
-      </p>
     </AuthShell>
   );
 }

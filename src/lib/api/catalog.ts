@@ -14,7 +14,7 @@ export function useServices() {
   return useQuery({
     queryKey: ["services"],
     queryFn: ({ signal }) =>
-      customInstance<Service[]>({ url: "/services", method: "GET", signal }),
+      customInstance<Service[]>({ url: "/v1/services", method: "GET", signal }),
   });
 }
 
@@ -22,7 +22,7 @@ export function useCreateService() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateServiceDto) =>
-      customInstance<Service>({ url: "/services", method: "POST", data }),
+      customInstance<Service>({ url: "/v1/services", method: "POST", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
   });
 }
@@ -31,7 +31,7 @@ export function useUpdateService(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: UpdateServiceDto) =>
-      customInstance<Service>({ url: `/services/${id}`, method: "PATCH", data }),
+      customInstance<Service>({ url: `/v1/services/${id}`, method: "PATCH", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
   });
 }
@@ -40,7 +40,7 @@ export function useDeactivateService() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      customInstance({ url: `/services/${id}`, method: "DELETE" }),
+      customInstance({ url: `/v1/services/${id}`, method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
   });
 }
