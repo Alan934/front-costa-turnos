@@ -426,6 +426,16 @@ export const handlers: RequestHandler[] = [
   }),
 
   // ---- Profesional / staff ----
+  http.post(url("/professionals/onboard"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    Object.assign(professional, {
+      businessName: String(body.businessName ?? professional.businessName),
+      slug: String(body.slug ?? professional.slug),
+      timezone: String(body.timezone ?? professional.timezone),
+      updatedAt: new Date().toISOString(),
+    });
+    return HttpResponse.json(professional, { status: 201 });
+  }),
   http.get(url("/professionals/me"), () => HttpResponse.json(professional)),
   http.patch(url("/professionals/me"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;

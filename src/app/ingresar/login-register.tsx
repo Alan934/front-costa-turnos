@@ -28,9 +28,14 @@ export function LoginRegister() {
   const [submitting, setSubmitting] = useState(false);
 
   function routeByRole(user: MeResponse) {
-    if (user.roles.includes("professional")) router.replace("/app");
-    else if (user.roles.includes("admin")) router.replace("/admin/profesionales");
-    else router.replace("/mis-turnos");
+    if (user.roles.includes("professional")) {
+      // Profesional sin tenant todavía: completa el onboarding primero.
+      router.replace(user.professionalId ? "/app" : "/onboarding");
+    } else if (user.roles.includes("admin")) {
+      router.replace("/admin/profesionales");
+    } else {
+      router.replace("/mis-turnos");
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -38,10 +43,13 @@ export function LoginRegister() {
     setError(null);
     setSubmitting(true);
     try {
-      const user =
-        tab === "login"
-          ? await login({ email, password })
-          : await register({ email, password, fullName });
+      if (tab === "registro") {
+        // Registrarse acá = crear tu cuenta para gestionar turnos → onboarding del negocio.
+        await register({ email, password, fullName });
+        router.replace("/onboarding");
+        return;
+      }
+      const user = await login({ email, password });
       routeByRole(user);
     } catch {
       setError(

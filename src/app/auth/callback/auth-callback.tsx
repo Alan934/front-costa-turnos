@@ -38,9 +38,13 @@ export function AuthCallback() {
 
   useEffect(() => {
     if (!user) return;
-    if (user.roles.includes("professional")) router.replace("/app");
-    else if (user.roles.includes("admin")) router.replace("/admin/profesionales");
-    else router.replace("/mis-turnos");
+    if (user.roles.includes("professional")) {
+      router.replace(user.professionalId ? "/app" : "/onboarding");
+    } else if (user.roles.includes("admin")) {
+      router.replace("/admin/profesionales");
+    } else {
+      router.replace("/mis-turnos");
+    }
   }, [user, router]);
 
   return (
