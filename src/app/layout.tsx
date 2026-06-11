@@ -38,7 +38,7 @@ export default function RootLayout({
         {/* Aplica el tema antes de pintar para evitar flash de color. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-dvh antialiased">
+      <body className="min-h-dvh antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <MswProvider>
             <Providers>{children}</Providers>
