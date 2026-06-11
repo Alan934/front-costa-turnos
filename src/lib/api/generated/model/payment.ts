@@ -9,7 +9,6 @@ import type { PaymentAppointmentId } from './paymentAppointmentId';
 import type { PaymentType } from './paymentType';
 import type { PaymentMethod } from './paymentMethod';
 import type { PaymentStatus } from './paymentStatus';
-import type { PaymentMercadopagoRef } from './paymentMercadopagoRef';
 
 export interface Payment {
   id: string;
@@ -24,7 +23,7 @@ export interface Payment {
   method: PaymentMethod;
   status: PaymentStatus;
   /** @nullable */
-  mercadopagoRef?: PaymentMercadopagoRef;
+  mercadopagoRef?: string | null;
   /** @nullable */
   paidAt?: string | null;
 }

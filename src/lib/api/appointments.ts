@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { CancelAppointmentDto } from "@/lib/api/generated/model/cancelAppointmentDto";
 
 export interface AppointmentsQuery {
   staffId?: string;
@@ -23,6 +24,21 @@ export function useAppointments(params: AppointmentsQuery) {
         method: "GET",
         params,
         signal,
+      }),
+  });
+}
+
+/**
+ * Cancela un turno. orval dejó de generar `useCancel` (su operationId `cancel` colisiona con
+ * `me.cancel`), así que lo escribimos a mano. `POST /v1/appointments/{id}/cancel`.
+ */
+export function useCancelAppointment() {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: CancelAppointmentDto }) =>
+      customInstance<Appointment>({
+        url: `/v1/appointments/${id}/cancel`,
+        method: "POST",
+        data: data ?? {},
       }),
   });
 }

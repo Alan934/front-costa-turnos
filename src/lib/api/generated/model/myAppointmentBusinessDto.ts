@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface OnboardProfessionalDto {
-  businessName: string;
-  /** slug unico para /r/:slug */
+export interface MyAppointmentBusinessDto {
+  name: string;
   slug: string;
-  timezone?: string;
-  address?: string;
+  /** @nullable */
+  address?: string | null;
+  cancellationWindowHours: number;
 }

@@ -221,15 +221,19 @@ export interface MetricsOverview {
 export interface EnrichedClient {
   id: string;
   personId: string;
-  fullName: string;
+  /**
+   * Datos de la persona. Hoy el backend NO los embebe en ProfessionalClient (ver
+   * API-GAPS §2c / ENDPOINTS-PENDIENTES), por eso son opcionales: la UI tolera su ausencia.
+   */
+  fullName?: string;
   email?: string;
   phone?: string;
   status: "active" | "archived";
   /** valores de ficha indexados por ficha_field.id */
   fichaValues: Record<string, unknown>;
-  createdAt: string;
-  /** Resumen para la lista. */
-  visitCount: number;
+  createdAt?: string;
+  /** Resumen para la lista (también de enriquecimiento; opcional). */
+  visitCount?: number;
   lastVisitAt?: string | null;
 }
 

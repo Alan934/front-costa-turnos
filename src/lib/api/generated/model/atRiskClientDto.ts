@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type AuditLogEntity = { [key: string]: unknown } | null;
+export interface AtRiskClientDto {
+  id: string;
+  fullName: string;
+  lastVisitLabel: string;
+}

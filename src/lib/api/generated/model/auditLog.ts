@@ -7,10 +7,8 @@
  */
 import type { AuditLogAccountId } from './auditLogAccountId';
 import type { AuditLogProfessionalId } from './auditLogProfessionalId';
-import type { AuditLogEntity } from './auditLogEntity';
 import type { AuditLogEntityId } from './auditLogEntityId';
 import type { AuditLogMetadata } from './auditLogMetadata';
-import type { AuditLogIp } from './auditLogIp';
 
 export interface AuditLog {
   id: string;
@@ -21,10 +19,10 @@ export interface AuditLog {
   professionalId?: AuditLogProfessionalId;
   action: string;
   /** @nullable */
-  entity?: AuditLogEntity;
+  entity?: string | null;
   /** @nullable */
   entityId?: AuditLogEntityId;
   metadata: AuditLogMetadata;
   /** @nullable */
-  ip?: AuditLogIp;
+  ip?: string | null;
 }

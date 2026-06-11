@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type PaymentMercadopagoRef = { [key: string]: unknown } | null;
+export interface IncomeByDayDto {
+  label: string;
+  /** Ingreso del periodo en centavos */
+  cents: number;
+}

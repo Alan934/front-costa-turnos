@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type RaffleEntryLabel = { [key: string]: unknown } | null;
+export interface NewVsReturningDto {
+  nuevos: number;
+  recurrentes: number;
+}

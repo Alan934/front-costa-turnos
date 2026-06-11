@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { RaffleEntryPersonId } from './raffleEntryPersonId';
-import type { RaffleEntryLabel } from './raffleEntryLabel';
 
 export interface RaffleEntry {
   id: string;
@@ -16,5 +15,5 @@ export interface RaffleEntry {
   personId?: RaffleEntryPersonId;
   number: number;
   /** @nullable */
-  label?: RaffleEntryLabel;
+  label?: string | null;
 }

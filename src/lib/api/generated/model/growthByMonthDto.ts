@@ -6,4 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ProfessionalClientFichaValues = { [key: string]: unknown };
+export interface GrowthByMonthDto {
+  label: string;
+  altas: number;
+  bajas: number;
+}

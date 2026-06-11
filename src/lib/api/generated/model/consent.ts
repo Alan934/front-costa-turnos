@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { ConsentType } from './consentType';
-import type { ConsentIp } from './consentIp';
 
 export interface Consent {
   id: string;
@@ -16,5 +15,5 @@ export interface Consent {
   version: string;
   acceptedAt: string;
   /** @nullable */
-  ip?: ConsentIp;
+  ip?: string | null;
 }

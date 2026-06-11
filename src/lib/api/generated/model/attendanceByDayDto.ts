@@ -6,7 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type ConsentIp = { [key: string]: unknown } | null;
+export interface AttendanceByDayDto {
+  label: string;
+  atendidos: number;
+  cancelados: number;
+  noShow: number;
+}

@@ -5,7 +5,6 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { TimeOffReason } from './timeOffReason';
 
 export interface TimeOff {
   id: string;
@@ -15,5 +14,5 @@ export interface TimeOff {
   startAt: string;
   endAt: string;
   /** @nullable */
-  reason?: TimeOffReason;
+  reason?: string | null;
 }

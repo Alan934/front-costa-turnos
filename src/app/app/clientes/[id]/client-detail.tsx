@@ -62,11 +62,11 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           <div>
             <div className="flex items-start gap-3">
               <span className="grid size-14 shrink-0 place-items-center rounded-full bg-muted font-display text-xl font-semibold">
-                {client.data.fullName.charAt(0)}
+                {(client.data.fullName?.trim()?.charAt(0) ?? "?").toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
                 <h1 className="font-display text-2xl font-semibold tracking-tight">
-                  {client.data.fullName}
+                  {client.data.fullName?.trim() || "Cliente sin nombre"}
                 </h1>
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   {client.data.phone && (
@@ -82,9 +82,11 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                     </span>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {client.data.visitCount} visitas
-                </p>
+                {client.data.visitCount != null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {client.data.visitCount} visitas
+                  </p>
+                )}
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -114,7 +116,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           <Separator />
 
           {/* Ficha dinámica */}
-          <FichaSection clientId={clientId} fichaValues={client.data.fichaValues} />
+          <FichaSection clientId={clientId} fichaValues={client.data.fichaValues ?? {}} />
 
           <Separator />
 

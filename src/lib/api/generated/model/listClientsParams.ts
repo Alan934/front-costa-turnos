@@ -6,7 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+export type ListClientsParams = {
 /**
- * @nullable
+ * Busca por nombre, email o telefono
  */
-export type ProfessionalMpPublicKey = { [key: string]: unknown } | null;
+q?: string;
+};

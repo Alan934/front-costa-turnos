@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { CreditCard, Check, Sparkles, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { CreditCard, Check, Sparkles, AlertTriangle, CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -24,13 +25,44 @@ const BADGE: Record<SubSeverity, "success" | "warning" | "default" | "muted"> = 
   danger: "warning",
 };
 
+/** Normaliza el estado que devuelve MercadoPago al volver del checkout. */
+type PayResult = "approved" | "pending" | "rejected";
+function readPaymentResult(value: string | null): PayResult | null {
+  if (!value) return null;
+  const v = value.toLowerCase();
+  if (["approved", "success", "paid", "ok"].includes(v)) return "approved";
+  if (["pending", "in_process", "in_progress"].includes(v)) return "pending";
+  if (["rejected", "failure", "failed", "error", "cancelled", "null"].includes(v)) return "rejected";
+  return null;
+}
+
 export function SubscriptionView() {
   const sub = useSubscription();
+  const params = useSearchParams();
+  const [payResult, setPayResult] = useState<PayResult | null>(null);
+
+  // MercadoPago vuelve con ?status= / ?collection_status= / ?payment= según cómo el back
+  // arme las back_urls. Tomamos el primero que aparezca.
+  useEffect(() => {
+    const result = readPaymentResult(
+      params.get("status") ??
+        params.get("collection_status") ??
+        params.get("payment") ??
+        params.get("mp"),
+    );
+    if (result) {
+      setPayResult(result);
+      sub.refetch(); // el estado pudo cambiar server-side tras el pago
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-6 sm:px-8">
       <h1 className="font-display text-2xl font-semibold tracking-tight">Suscripción</h1>
       <p className="text-sm text-muted-foreground">Tu plan de Costa Turnos y tus pagos</p>
+
+      {payResult && <PaymentResultBanner result={payResult} onDismiss={() => setPayResult(null)} />}
 
       {sub.isLoading && <Skeleton className="mt-6 h-44 w-full rounded-2xl" />}
       {sub.isError && (
@@ -42,6 +74,47 @@ export function SubscriptionView() {
           <PaymentsHistory />
         </div>
       )}
+    </div>
+  );
+}
+
+function PaymentResultBanner({ result, onDismiss }: { result: PayResult; onDismiss: () => void }) {
+  const cfg = {
+    approved: {
+      cls: "border-success/40 bg-success/10 text-success",
+      icon: <CheckCircle2 className="size-5 shrink-0" />,
+      title: "¡Pago acreditado!",
+      text: "Tu suscripción quedó al día. Gracias.",
+    },
+    pending: {
+      cls: "border-warning/45 bg-warning/10 text-warning-foreground",
+      icon: <Clock className="size-5 shrink-0" />,
+      title: "Pago pendiente",
+      text: "MercadoPago está procesando el pago. Te avisamos cuando se acredite.",
+    },
+    rejected: {
+      cls: "border-destructive/45 bg-destructive/10 text-destructive",
+      icon: <XCircle className="size-5 shrink-0" />,
+      title: "Pago rechazado",
+      text: "No se pudo procesar el pago. Probá de nuevo o con otro medio.",
+    },
+  }[result];
+
+  return (
+    <div className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 ${cfg.cls}`} role="status">
+      {cfg.icon}
+      <div className="min-w-0 flex-1">
+        <p className="font-display text-sm font-semibold">{cfg.title}</p>
+        <p className="text-sm opacity-90">{cfg.text}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Cerrar aviso"
+        className="rounded-md p-1 opacity-70 transition-opacity hover:opacity-100"
+      >
+        <X className="size-4" />
+      </button>
     </div>
   );
 }

@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type TimeOffReason = { [key: string]: unknown } | null;
+export interface PeakHourDto {
+  hour: string;
+  turnos: number;
+}

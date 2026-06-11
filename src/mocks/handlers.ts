@@ -630,7 +630,7 @@ export const handlers: RequestHandler[] = [
     if (q) {
       list = list.filter(
         (c) =>
-          c.fullName.toLowerCase().includes(q) ||
+          (c.fullName ?? "").toLowerCase().includes(q) ||
           (c.email ?? "").toLowerCase().includes(q) ||
           (c.phone ?? "").includes(q),
       );

@@ -95,6 +95,8 @@ export function ClientsList() {
 }
 
 function ClientRow({ client }: { client: EnrichedClient }) {
+  const name = client.fullName?.trim() || "Cliente sin nombre";
+  const initial = (client.fullName?.trim()?.charAt(0) ?? "?").toUpperCase();
   return (
     <li>
       <Link
@@ -102,10 +104,10 @@ function ClientRow({ client }: { client: EnrichedClient }) {
         className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-accent"
       >
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted font-display text-sm font-semibold">
-          {client.fullName.charAt(0)}
+          {initial}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{client.fullName}</p>
+          <p className="truncate font-medium">{name}</p>
           <p className="flex items-center gap-3 truncate text-xs text-muted-foreground">
             {client.phone && (
               <span className="inline-flex items-center gap-1">
@@ -122,7 +124,7 @@ function ClientRow({ client }: { client: EnrichedClient }) {
           </p>
         </div>
         <div className="hidden text-right text-xs text-muted-foreground sm:block">
-          <Badge variant="muted">{client.visitCount} visitas</Badge>
+          {client.visitCount != null && <Badge variant="muted">{client.visitCount} visitas</Badge>}
           {client.lastVisitAt && (
             <p className="mt-1">Últ.: {formatDateShort(client.lastVisitAt)}</p>
           )}

@@ -5,8 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { MetricsRange } from './metricsRange';
 
-/**
- * @nullable
- */
-export type AuditLogIp = { [key: string]: unknown } | null;
+export type OverviewParams = {
+range?: MetricsRange;
+};

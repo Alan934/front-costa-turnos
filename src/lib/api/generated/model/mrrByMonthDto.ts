@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type ProfessionalMpUserId = { [key: string]: unknown } | null;
+export interface MrrByMonthDto {
+  label: string;
+  cents: number;
+}

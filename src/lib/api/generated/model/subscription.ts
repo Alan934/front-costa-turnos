@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { SubscriptionStatus } from './subscriptionStatus';
-import type { SubscriptionMercadopagoPreapprovalId } from './subscriptionMercadopagoPreapprovalId';
 
 export interface Subscription {
   id: string;
@@ -22,5 +21,5 @@ export interface Subscription {
   graceEndsAt?: string | null;
   amountCents: number;
   /** @nullable */
-  mercadopagoPreapprovalId?: SubscriptionMercadopagoPreapprovalId;
+  mercadopagoPreapprovalId?: string | null;
 }

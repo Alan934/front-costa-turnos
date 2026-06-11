@@ -25,12 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  Appointment,
-  CancelAppointmentDto
+  Appointment
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
-import type { ErrorType , BodyType } from '../../../axios-instance';
+import type { ErrorType } from '../../../axios-instance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -374,71 +373,6 @@ export const useNoShow = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getNoShowMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
- * @summary Cancelar un turno
- */
-export const cancel = (
-    id: string,
-    cancelAppointmentDto: BodyType<CancelAppointmentDto>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<Appointment>(
-      {url: `/v1/appointments/${id}/cancel`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: cancelAppointmentDto, signal
-    },
-      options);
-    }
-  
-
-
-export const getCancelMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string;data: BodyType<CancelAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string;data: BodyType<CancelAppointmentDto>}, TContext> => {
-
-const mutationKey = ['cancel'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancel>>, {id: string;data: BodyType<CancelAppointmentDto>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  cancel(id,data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CancelMutationResult = NonNullable<Awaited<ReturnType<typeof cancel>>>
-    export type CancelMutationBody = BodyType<CancelAppointmentDto>
-    export type CancelMutationError = ErrorType<void>
-
-    /**
- * @summary Cancelar un turno
- */
-export const useCancel = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string;data: BodyType<CancelAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof cancel>>,
-        TError,
-        {id: string;data: BodyType<CancelAppointmentDto>},
-        TContext
-      > => {
-
-      const mutationOptions = getCancelMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

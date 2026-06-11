@@ -10,6 +10,7 @@ import type { UpdateProfessionalDtoDefaultDepositMode } from './updateProfession
 export interface UpdateProfessionalDto {
   businessName?: string;
   timezone?: string;
+  address?: string;
   defaultDepositMode?: UpdateProfessionalDtoDefaultDepositMode;
   cancellationWindowHours?: number;
 }

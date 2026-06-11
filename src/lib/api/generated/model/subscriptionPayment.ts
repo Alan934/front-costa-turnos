@@ -7,7 +7,6 @@
  */
 import type { SubscriptionPaymentStatus } from './subscriptionPaymentStatus';
 import type { SubscriptionPaymentMethod } from './subscriptionPaymentMethod';
-import type { SubscriptionPaymentMercadopagoRef } from './subscriptionPaymentMercadopagoRef';
 
 export interface SubscriptionPayment {
   id: string;
@@ -20,7 +19,7 @@ export interface SubscriptionPayment {
   /** @nullable */
   method?: SubscriptionPaymentMethod;
   /** @nullable */
-  mercadopagoRef?: SubscriptionPaymentMercadopagoRef;
+  mercadopagoRef?: string | null;
   /** @nullable */
   paidAt?: string | null;
 }

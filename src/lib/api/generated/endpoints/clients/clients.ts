@@ -29,8 +29,9 @@ import type {
   CreateClientDto,
   CreateClientNoteDto,
   CreateFichaFieldDto,
+  EnrichedClientDto,
   FichaField,
-  ProfessionalClient,
+  ListClientsParams,
   UpdateClientFichaDto,
   UpdateFichaFieldDto
 } from '../../model';
@@ -325,16 +326,17 @@ export const useDeleteFichaField = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Listar clientes
+ * @summary Listar clientes (con datos de la persona)
  */
 export const listClients = (
-    
+    params?: ListClientsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<ProfessionalClient[]>(
-      {url: `/v1/clients`, method: 'GET', signal
+      return customInstance<EnrichedClientDto[]>(
+      {url: `/v1/clients`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -342,23 +344,23 @@ export const listClients = (
 
 
 
-export const getListClientsQueryKey = () => {
+export const getListClientsQueryKey = (params?: ListClientsParams,) => {
     return [
-    `/v1/clients`
+    `/v1/clients`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListClientsQueryOptions = <TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListClientsQueryOptions = <TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListClientsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListClientsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClients>>> = ({ signal }) => listClients(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClients>>> = ({ signal }) => listClients(params, requestOptions, signal);
 
       
 
@@ -372,7 +374,7 @@ export type ListClientsQueryError = ErrorType<void>
 
 
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+ params: undefined |  ListClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listClients>>,
           TError,
@@ -382,7 +384,7 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listClients>>,
           TError,
@@ -392,19 +394,19 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar clientes
+ * @summary Listar clientes (con datos de la persona)
  */
 
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListClientsQueryOptions(options)
+  const queryOptions = getListClientsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -425,7 +427,7 @@ export const createClient = (
 ) => {
       
       
-      return customInstance<ProfessionalClient>(
+      return customInstance<EnrichedClientDto>(
       {url: `/v1/clients`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createClientDto, signal
@@ -481,7 +483,7 @@ export const useCreateClient = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Obtener un cliente por id
+ * @summary Obtener un cliente por id (con datos de la persona)
  */
 export const getClient = (
     id: string,
@@ -489,7 +491,7 @@ export const getClient = (
 ) => {
       
       
-      return customInstance<ProfessionalClient>(
+      return customInstance<EnrichedClientDto>(
       {url: `/v1/clients/${id}`, method: 'GET', signal
     },
       options);
@@ -552,7 +554,7 @@ export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TErr
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Obtener un cliente por id
+ * @summary Obtener un cliente por id (con datos de la persona)
  */
 
 export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(
@@ -580,7 +582,7 @@ export const archiveClient = (
  options?: SecondParameter<typeof customInstance>,) => {
       
       
-      return customInstance<ProfessionalClient>(
+      return customInstance<EnrichedClientDto>(
       {url: `/v1/clients/${id}`, method: 'DELETE'
     },
       options);
@@ -642,7 +644,7 @@ export const updateFicha = (
  options?: SecondParameter<typeof customInstance>,) => {
       
       
-      return customInstance<ProfessionalClient>(
+      return customInstance<EnrichedClientDto>(
       {url: `/v1/clients/${id}/ficha`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: updateClientFichaDto

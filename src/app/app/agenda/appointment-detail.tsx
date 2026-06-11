@@ -17,8 +17,8 @@ import {
   useStart,
   useComplete,
   useNoShow,
-  useCancel,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
+import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { personDisplayName } from "@/lib/agenda";
@@ -45,7 +45,7 @@ export function AppointmentDetail({
   const start = useStart();
   const complete = useComplete();
   const noShow = useNoShow();
-  const cancel = useCancel();
+  const cancel = useCancelAppointment();
   const busy =
     confirm.isPending ||
     start.isPending ||
