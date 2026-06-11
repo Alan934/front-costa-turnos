@@ -4,6 +4,7 @@
  * la demo); el formateo visible usa los helpers es-AR de format.ts.
  */
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 
 export const DAY_START_HOUR = 8;
 export const DAY_END_HOUR = 20;
@@ -60,6 +61,57 @@ export function weekRange(d: Date): { from: string; to: string } {
   const to = addDays(from, 6);
   to.setHours(23, 59, 59, 999);
   return { from: from.toISOString(), to: to.toISOString() };
+}
+
+export function startOfMonth(d: Date): Date {
+  const x = startOfDay(d);
+  x.setDate(1);
+  return x;
+}
+
+export function addMonths(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setMonth(x.getMonth() + n);
+  return x;
+}
+
+/** Los 42 días (6 semanas, lun-dom) que cubren el mes en una grilla de calendario. */
+export function monthGridDays(d: Date): Date[] {
+  const gridStart = startOfWeek(startOfMonth(d));
+  return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+}
+
+/** Rango ISO que cubre toda la grilla del mes (incluye días de meses vecinos visibles). */
+export function monthGridRange(d: Date): { from: string; to: string } {
+  const days = monthGridDays(d);
+  const to = new Date(days[41]);
+  to.setHours(23, 59, 59, 999);
+  return { from: days[0].toISOString(), to: to.toISOString() };
+}
+
+/** Clave local yyyy-mm-dd de una fecha. */
+export function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Cuenta turnos por día (excluye cancelados: no ocupan agenda). */
+export function countByDay(appts: Appointment[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const a of appts) {
+    if (a.status === AppointmentStatus.cancelled) continue;
+    const k = dayKey(new Date(a.startAt));
+    out[k] = (out[k] ?? 0) + 1;
+  }
+  return out;
+}
+
+/** Nivel de carga 0..4 según la cantidad de turnos del día (para el "heatmap"). */
+export function loadLevel(count: number): 0 | 1 | 2 | 3 | 4 {
+  if (count <= 0) return 0;
+  if (count <= 2) return 1;
+  if (count <= 4) return 2;
+  if (count <= 7) return 3;
+  return 4;
 }
 
 export interface PositionedAppointment {

@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, CalendarOff, Coffee, Briefcase } from "lucide-react";
+import { Plus, Trash2, CalendarOff, Coffee, Briefcase, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { useListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useListStaff, useCreateStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import {
   useListSchedule,
   useCreateScheduleRule,
@@ -30,18 +37,44 @@ export function ScheduleManager() {
   const staffQuery = useListStaff();
   const staffList = (staffQuery.data ?? []).filter((s: Staff) => s.isActive);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [addingStaff, setAddingStaff] = useState(false);
   const staffId = activeId ?? staffList[0]?.id ?? "";
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-6 sm:px-8">
-      <h1 className="font-display text-2xl font-semibold tracking-tight">Horarios</h1>
-      <p className="text-sm text-muted-foreground">
-        Definí cuándo atiende cada profesional y cargá descansos, feriados o vacaciones.
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Horarios</h1>
+          <p className="text-sm text-muted-foreground">
+            Definí cuándo atiende cada profesional y cargá descansos, feriados o vacaciones.
+          </p>
+        </div>
+        {staffList.length > 0 && (
+          <Button size="sm" variant="outline" onClick={() => setAddingStaff(true)}>
+            <UserPlus className="size-4" />
+            <span className="hidden sm:inline">Agregar</span>
+          </Button>
+        )}
+      </div>
 
       {staffQuery.isLoading && <Skeleton className="mt-5 h-10 w-48 rounded-full" />}
       {staffQuery.isError && (
         <ErrorState className="mt-5" message="No pudimos cargar tu equipo." onRetry={() => staffQuery.refetch()} />
+      )}
+
+      {!staffQuery.isLoading && !staffQuery.isError && staffList.length === 0 && (
+        <EmptyState
+          className="mt-6"
+          icon={<Users className="size-5" />}
+          title="Todavía no tenés a nadie en tu equipo"
+          message="Agregá al menos un profesional (o una 'silla'/box) para poder atender y recibir reservas."
+          action={
+            <Button size="sm" onClick={() => setAddingStaff(true)}>
+              <UserPlus className="size-4" />
+              Agregar profesional
+            </Button>
+          }
+        />
       )}
 
       {staffList.length > 0 && (
@@ -69,7 +102,75 @@ export function ScheduleManager() {
           {staffId && <StaffSchedule key={staffId} staffId={staffId} />}
         </>
       )}
+
+      {addingStaff && (
+        <NewStaffDialog
+          onClose={() => setAddingStaff(false)}
+          onCreated={(s) => {
+            setActiveId(s.id);
+            staffQuery.refetch();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function NewStaffDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (staff: Staff) => void;
+}) {
+  const [displayName, setDisplayName] = useState("");
+  const create = useCreateStaff();
+
+  function submit() {
+    create.mutate(
+      { data: { displayName: displayName.trim() } },
+      {
+        onSuccess: (staff) => {
+          onCreated(staff as Staff);
+          onClose();
+        },
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Agregar al equipo</DialogTitle>
+          <DialogDescription>
+            Puede ser una persona (ej. &quot;Lucía&quot;) o un puesto/box (ej. &quot;Silla 1&quot;).
+            Tus clientes lo van a ver al elegir con quién atenderse.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="px-6 pb-2">
+          <Label htmlFor="staff-name">Nombre</Label>
+          <Input
+            id="staff-name"
+            className="mt-1.5"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Lucía / Silla 1"
+            autoFocus
+          />
+        </div>
+        <div className="p-6 pt-3">
+          <Button
+            className="w-full"
+            disabled={displayName.trim().length < 1}
+            loading={create.isPending}
+            onClick={submit}
+          >
+            {create.isPending ? "Agregando…" : "Agregar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

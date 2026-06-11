@@ -8,17 +8,19 @@ import { ErrorState } from "@/components/state-views";
 import { useListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
-import { addDays, dayRange, weekRange, weekDays } from "@/lib/agenda";
+import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
 import { formatDateLong, formatDayChip } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import { DayGrid } from "./day-grid";
 import { WeekGrid } from "./week-grid";
+import { MonthGrid } from "./month-grid";
+import { DayAppointmentsDialog } from "./day-appointments-dialog";
 import { AppointmentDetail } from "./appointment-detail";
 import { NewAppointmentDialog } from "./new-appointment-dialog";
 
-type ViewMode = "dia" | "semana";
+type ViewMode = "dia" | "semana" | "mes";
 
 export function AgendaView() {
   const [view, setView] = useState<ViewMode>("dia");
@@ -26,6 +28,7 @@ export function AgendaView() {
   const [activeStaffId, setActiveStaffId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [creating, setCreating] = useState(false);
+  const [dayList, setDayList] = useState<Date | null>(null);
 
   const staffQuery = useListStaff();
   const servicesQuery = useServices();
@@ -35,7 +38,8 @@ export function AgendaView() {
   // En semana mostramos un staff; en día, todos (columnas) o el filtrado.
   const weekStaffId = activeStaffId ?? staffList[0]?.id ?? "";
 
-  const range = view === "dia" ? dayRange(date) : weekRange(date);
+  const range =
+    view === "dia" ? dayRange(date) : view === "semana" ? weekRange(date) : monthGridRange(date);
   const apptQuery = useAppointments({
     ...range,
     staffId: view === "semana" ? weekStaffId : (activeStaffId ?? undefined),
@@ -44,6 +48,7 @@ export function AgendaView() {
 
   const title = useMemo(() => {
     if (view === "dia") return formatDateLong(date);
+    if (view === "mes") return date.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
     const days = weekDays(date);
     const a = formatDayChip(days[0]);
     const b = formatDayChip(days[6]);
@@ -51,7 +56,9 @@ export function AgendaView() {
   }, [view, date]);
 
   function move(dir: -1 | 1) {
-    setDate((d) => addDays(d, view === "dia" ? dir : dir * 7));
+    setDate((d) =>
+      view === "dia" ? addDays(d, dir) : view === "semana" ? addDays(d, dir * 7) : addMonths(d, dir),
+    );
   }
 
   return (
@@ -96,7 +103,7 @@ export function AgendaView() {
         {/* Selector de staff */}
         {staffList.length > 1 && (
           <div className="mt-3 flex gap-2 overflow-x-auto">
-            {view === "dia" && (
+            {view !== "semana" && (
               <StaffChip
                 active={activeStaffId === null}
                 onClick={() => setActiveStaffId(null)}
@@ -140,13 +147,23 @@ export function AgendaView() {
             services={services}
             onSelect={setSelected}
           />
-        ) : (
+        ) : view === "semana" ? (
           <WeekGrid
             date={date}
             appointments={appointments}
             services={services}
             staffName={staffList.find((s) => s.id === weekStaffId)?.displayName ?? ""}
             onSelect={setSelected}
+          />
+        ) : (
+          <MonthGrid
+            date={date}
+            appointments={appointments}
+            onPickDay={(d) => {
+              setDate(d);
+              setView("dia");
+            }}
+            onOpenDay={(d) => setDayList(d)}
           />
         )}
       </div>
@@ -161,6 +178,25 @@ export function AgendaView() {
           onChanged={() => {
             apptQuery.refetch();
             setSelected(null);
+          }}
+        />
+      )}
+
+      {/* Lista de turnos del día (doble click en el mes) */}
+      {dayList && (
+        <DayAppointmentsDialog
+          date={dayList}
+          appointments={appointments}
+          services={services}
+          onClose={() => setDayList(null)}
+          onSelect={(a) => {
+            setDayList(null);
+            setSelected(a);
+          }}
+          onCreate={() => {
+            setDate(dayList);
+            setDayList(null);
+            setCreating(true);
           }}
         />
       )}
@@ -189,19 +225,20 @@ function ViewToggle({
   view: ViewMode;
   onChange: (v: ViewMode) => void;
 }) {
+  const labels: Record<ViewMode, string> = { dia: "Día", semana: "Semana", mes: "Mes" };
   return (
     <div className="flex items-center rounded-lg border border-border p-0.5 text-sm font-medium">
-      {(["dia", "semana"] as const).map((v) => (
+      {(["dia", "semana", "mes"] as const).map((v) => (
         <button
           key={v}
           type="button"
           onClick={() => onChange(v)}
           className={cn(
-            "rounded-md px-3 py-1.5 capitalize transition-colors",
+            "rounded-md px-3 py-1.5 transition-colors",
             view === v ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          {v === "dia" ? "Día" : "Semana"}
+          {labels[v]}
         </button>
       ))}
     </div>

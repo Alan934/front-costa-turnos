@@ -7,6 +7,7 @@ import { CalendarClock, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
+import { SetupChecklist } from "@/components/setup-checklist";
 import { APP_NAV } from "./nav";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="min-w-0">
         <VerifyEmailBanner />
         <SubscriptionBanner />
+        <SetupChecklist />
         {children}
       </main>
     </div>
