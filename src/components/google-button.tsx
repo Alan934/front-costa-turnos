@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { env } from "@/lib/env";
 
 /** Botón "Continuar con Google". Redirige al endpoint OAuth del backend. */
 export function GoogleButton({ label = "Continuar con Google" }: { label?: string }) {
+  const [redirecting, setRedirecting] = useState(false);
+
   function go() {
+    setRedirecting(true); // feedback mientras se va a Google (la página se descarga)
     if (env.mockingEnabled) {
       // En mock no hay OAuth real: simulamos el retorno del backend al /auth/callback.
       window.location.href = "/auth/callback?access_token=mock.client.token&refresh_token=mock.refresh";
@@ -15,9 +19,9 @@ export function GoogleButton({ label = "Continuar con Google" }: { label?: strin
     window.location.href = `${env.apiUrl}/auth/google`;
   }
   return (
-    <Button variant="outline" className="w-full" onClick={go} type="button">
-      <GoogleIcon />
-      {label}
+    <Button variant="outline" className="w-full" onClick={go} type="button" loading={redirecting}>
+      {!redirecting && <GoogleIcon />}
+      {redirecting ? "Redirigiendo…" : label}
     </Button>
   );
 }

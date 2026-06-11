@@ -6,7 +6,6 @@ import { CalendarClock, Store, Link2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
 import { useOnboard } from "@/lib/api/generated/endpoints/professionals/professionals";
@@ -156,9 +155,9 @@ export function OnboardingView() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" size="lg" className="w-full" disabled={!canSubmit || onboard.isPending}>
-            {onboard.isPending ? <Spinner /> : <Check className="size-4" />}
-            Crear mi negocio
+          <Button type="submit" size="lg" className="w-full" loading={onboard.isPending} disabled={!canSubmit}>
+            {!onboard.isPending && <Check className="size-4" />}
+            {onboard.isPending ? "Creando tu negocio…" : "Crear mi negocio"}
           </Button>
         </form>
       </main>

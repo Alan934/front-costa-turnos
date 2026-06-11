@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { AuthShell } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
@@ -155,9 +154,14 @@ export function LoginRegister() {
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-          {submitting ? <Spinner /> : null}
-          {tab === "login" ? "Ingresar" : "Crear cuenta"}
+        <Button type="submit" className="w-full" size="lg" loading={submitting}>
+          {submitting
+            ? tab === "login"
+              ? "Ingresando…"
+              : "Creando cuenta…"
+            : tab === "login"
+              ? "Ingresar"
+              : "Crear cuenta"}
         </Button>
       </form>
     </AuthShell>

@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { CreditCard, Check, Sparkles, AlertTriangle, CheckCircle2, XCircle, Clock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ErrorState, EmptyState } from "@/components/state-views";
@@ -167,9 +166,13 @@ function StatusCard({ sub }: { sub: Subscription }) {
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
-      <Button className="mt-5 w-full sm:w-auto" onClick={pay} disabled={checkout.isPending}>
-        {checkout.isPending ? <Spinner /> : <CreditCard className="size-4" />}
-        {upToDate ? "Renovar por adelantado" : "Pagar con MercadoPago"}
+      <Button className="mt-5 w-full sm:w-auto" onClick={pay} loading={checkout.isPending}>
+        {!checkout.isPending && <CreditCard className="size-4" />}
+        {checkout.isPending
+          ? "Abriendo el checkout…"
+          : upToDate
+            ? "Renovar por adelantado"
+            : "Pagar con MercadoPago"}
       </Button>
       {upToDate && (
         <p className="mt-2 text-xs text-muted-foreground">Tu plan está al día, no hace falta que hagas nada.</p>
