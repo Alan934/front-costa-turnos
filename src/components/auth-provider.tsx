@@ -66,12 +66,23 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
     (raw.tenant as string) ??
     null;
 
+  // Solo definimos emailVerified si el back lo manda; si no, queda undefined (sin aviso).
+  const verifiedRaw =
+    raw.emailVerified ?? raw.isEmailVerified ?? raw.verified ?? raw.emailVerifiedAt;
+  const emailVerified =
+    verifiedRaw === undefined || verifiedRaw === null
+      ? undefined
+      : typeof verifiedRaw === "boolean"
+        ? verifiedRaw
+        : Boolean(verifiedRaw); // p.ej. emailVerifiedAt (fecha) => verificado
+
   return {
     id: String(raw.id ?? raw.sub ?? ""),
     email: String(raw.email ?? ""),
     fullName: String(raw.fullName ?? raw.name ?? ""),
     roles,
     professionalId,
+    emailVerified,
   };
 }
 

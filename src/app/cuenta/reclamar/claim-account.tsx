@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MailCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { AuthShell } from "@/components/auth-shell";
 import { useAuth } from "@/components/auth-provider";
 import { useRequestClaimCode, useClaim } from "@/lib/api/generated/endpoints/auth/auth";
@@ -19,16 +18,46 @@ type Step = "email" | "codigo";
 
 export function ClaimAccount() {
   const router = useRouter();
-  const { refresh } = useAuth();
+  const params = useSearchParams();
+  const { refresh, user } = useAuth();
 
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  // El email de activación deep-linkea con ?email= (y opcional ?code=). Si viene el email,
+  // arrancamos directo en el paso del código (el back ya lo mandó; no pedimos uno nuevo).
+  const emailParam = params.get("email") ?? "";
+  const [step, setStep] = useState<Step>(emailParam ? "codigo" : "email");
+  const [email, setEmail] = useState(emailParam);
+  const [code, setCode] = useState((params.get("code") ?? "").replace(/\D/g, "").slice(0, 6));
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
+  const [claimed, setClaimed] = useState(false);
 
   const requestCode = useRequestClaimCode();
   const claim = useClaim();
+
+  function resendCode() {
+    setError(null);
+    setResent(false);
+    requestCode.mutate(
+      { data: { email } },
+      {
+        onSuccess: () => setResent(true),
+        onError: () => setError("No pudimos reenviar el código. Revisá el email."),
+      },
+    );
+  }
+
+  // Tras activar, derivamos según el rol (un profesional creado por admin va al panel).
+  useEffect(() => {
+    if (!claimed || !user) return;
+    if (user.roles.includes("professional")) {
+      router.replace(user.professionalId ? "/app" : "/onboarding");
+    } else if (user.roles.includes("admin")) {
+      router.replace("/admin/profesionales");
+    } else {
+      router.replace("/mis-turnos");
+    }
+  }, [claimed, user, router]);
 
   function sendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +81,7 @@ export function ClaimAccount() {
           const t = tokens as unknown as AuthTokensDto;
           if (t?.accessToken) setAccessToken(t.accessToken);
           await refresh();
-          router.replace("/mis-turnos");
+          setClaimed(true);
         },
         onError: () => setError("El código no es válido o expiró."),
       },
@@ -62,8 +91,8 @@ export function ClaimAccount() {
   if (step === "email") {
     return (
       <AuthShell
-        title="Reclamá tu cuenta"
-        subtitle="Tu profesional ya te creó una cuenta. Ingresá tu email y te mandamos un código para activarla."
+        title="Activá tu cuenta"
+        subtitle="Si te crearon una cuenta (tu profesional o el equipo de Costa Turnos), ingresá tu email y te mandamos un código para activarla."
         footer={
           <Link href="/ingresar" className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
             <ArrowLeft className="size-3.5" />
@@ -86,9 +115,8 @@ export function ClaimAccount() {
             />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" size="lg" disabled={requestCode.isPending}>
-            {requestCode.isPending ? <Spinner /> : null}
-            Enviarme el código
+          <Button type="submit" className="w-full" size="lg" loading={requestCode.isPending}>
+            {requestCode.isPending ? "Enviando…" : "Enviarme el código"}
           </Button>
         </form>
       </AuthShell>
@@ -97,12 +125,15 @@ export function ClaimAccount() {
 
   return (
     <AuthShell
-      title="Revisá tu email"
-      subtitle={`Te enviamos un código a ${email}. Ingresalo y elegí tu contraseña.`}
+      title="Activá tu cuenta"
+      subtitle={`Ingresá el código que te enviamos a ${email} y elegí tu contraseña.`}
       footer={
         <button
           type="button"
-          onClick={() => setStep("email")}
+          onClick={() => {
+            setStep("email");
+            setResent(false);
+          }}
           className="inline-flex items-center gap-1 font-medium text-accent hover:underline"
         >
           <ArrowLeft className="size-3.5" />
@@ -112,7 +143,7 @@ export function ClaimAccount() {
     >
       <div className="mb-5 flex items-center gap-3 rounded-lg bg-accent/10 p-3 text-sm text-accent">
         <MailCheck className="size-4 shrink-0" />
-        Código enviado. Revisá también el spam.
+        {resent ? "Te reenviamos un código nuevo. Revisá también el spam." : "Revisá tu email (y el spam) para encontrar el código."}
       </div>
       <form onSubmit={confirmClaim} className="space-y-4">
         <div>
@@ -141,12 +172,19 @@ export function ClaimAccount() {
           />
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        <Button type="submit" className="w-full" size="lg" disabled={claim.isPending}>
-          {claim.isPending ? <Spinner /> : null}
-          Activar mi cuenta
+        <Button type="submit" className="w-full" size="lg" loading={claim.isPending}>
+          {claim.isPending ? "Activando…" : "Activar mi cuenta"}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">
-          Demo: el código es <strong>123456</strong>.
+        <p className="text-center text-sm text-muted-foreground">
+          ¿No te llegó o venció?{" "}
+          <button
+            type="button"
+            onClick={resendCode}
+            disabled={requestCode.isPending}
+            className="font-medium text-accent hover:underline disabled:opacity-50"
+          >
+            {requestCode.isPending ? "Reenviando…" : "Reenviá el código"}
+          </button>
         </p>
       </form>
     </AuthShell>

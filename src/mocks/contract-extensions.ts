@@ -144,6 +144,8 @@ export interface MeResponse {
   roles: AccountRole[];
   /** Si es profesional, su tenant. */
   professionalId?: string | null;
+  /** Si el back lo informa: true/false. `undefined` = no sabemos (no mostramos aviso). */
+  emailVerified?: boolean;
 }
 
 /**

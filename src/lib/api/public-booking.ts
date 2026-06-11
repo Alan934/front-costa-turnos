@@ -7,13 +7,56 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { BookWithDepositDto } from "@/lib/api/generated/model/bookWithDepositDto";
-import type { PublicPage, Slot, BookWithDepositResult } from "@/mocks/contract-extensions";
+import type { Service } from "@/lib/api/generated/model/service";
+import type { PublicPage, Slot, StaffPublic, BookWithDepositResult } from "@/mocks/contract-extensions";
+
+const asObject = (v: unknown): Record<string, unknown> =>
+  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+const asArray = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+const asString = (v: unknown, d = ""): string => (typeof v === "string" ? v : d);
+const asNumber = (v: unknown, d = 0): number => (typeof v === "number" ? v : d);
+
+/**
+ * Normaliza `GET /r/{slug}` a nuestro `PublicPage`. El contrato lo deja `void` y la respuesta
+ * real es plana (`{ businessName, slug, timezone, settings, services }`, sin `professional`
+ * anidado y sin `staff` garantizado). Toleramos ambas formas y completamos faltantes para no
+ * romper si el negocio es nuevo (sin servicios/staff).
+ */
+function normalizePublicPage(raw: unknown): PublicPage {
+  const root = asObject(raw);
+  const pro = asObject(root.professional ?? root);
+  const settings = asObject(root.settings ?? pro.publicPageSettings ?? pro.branding ?? root.branding);
+
+  return {
+    professional: {
+      id: asString(pro.id ?? root.id),
+      businessName: asString(pro.businessName ?? root.businessName),
+      slug: asString(pro.slug ?? root.slug),
+      timezone: asString(pro.timezone ?? root.timezone, "America/Argentina/Buenos_Aires"),
+      defaultDepositMode: (pro.defaultDepositMode ?? root.defaultDepositMode ?? "none") as PublicPage["professional"]["defaultDepositMode"],
+      cancellationWindowHours: asNumber(pro.cancellationWindowHours ?? root.cancellationWindowHours, 24),
+      branding: {
+        accentColor: asString(settings.accentColor) || undefined,
+        coverImageUrl: asString(settings.coverImageUrl) || undefined,
+        logoFileId: asString(settings.logoFileId) || undefined,
+        bio: asString(settings.bio) || undefined,
+        // address pasó a ser top-level del professional (no en settings).
+        address: asString(root.address ?? pro.address ?? settings.address) || undefined,
+        phone: asString(settings.phone) || undefined,
+      },
+    },
+    services: asArray<Service>(root.services ?? pro.services),
+    staff: asArray<StaffPublic>(root.staff ?? pro.staff),
+  };
+}
 
 export function usePublicPage(slug: string) {
   return useQuery({
     queryKey: ["public-page", slug],
-    queryFn: ({ signal }) =>
-      customInstance<PublicPage>({ url: `/r/${slug}`, method: "GET", signal }),
+    queryFn: async ({ signal }) => {
+      const raw = await customInstance<unknown>({ url: `/r/${slug}`, method: "GET", signal });
+      return normalizePublicPage(raw);
+    },
     enabled: !!slug,
   });
 }

@@ -11,6 +11,8 @@ import { AuthShell } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
 import { cn } from "@/lib/utils";
+import type { AxiosError } from "axios";
+import type { ReactNode } from "react";
 import type { MeResponse } from "@/mocks/contract-extensions";
 
 type Tab = "login" | "registro";
@@ -23,7 +25,7 @@ export function LoginRegister() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReactNode>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function routeByRole(user: MeResponse) {
@@ -50,12 +52,18 @@ export function LoginRegister() {
       }
       const user = await login({ email, password });
       routeByRole(user);
-    } catch {
-      setError(
-        tab === "login"
-          ? "Email o contraseña incorrectos."
-          : "No pudimos crear la cuenta. Revisá los datos.",
-      );
+    } catch (err) {
+      const ax = err as AxiosError<{ message?: string }>;
+      const status = ax.response?.status;
+      const message = ax.response?.data?.message ?? "";
+      if (tab === "login") {
+        setError("Email o contraseña incorrectos.");
+      } else if (status === 400 && /existe|registrad|ya.*email|email.*ya/i.test(message)) {
+        // El email ya tiene cuenta: orientamos según el caso.
+        setError(<EmailExistsHelp />);
+      } else {
+        setError("No pudimos crear la cuenta. Revisá los datos.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +160,11 @@ export function LoginRegister() {
           />
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <Button type="submit" className="w-full" size="lg" loading={submitting}>
           {submitting
@@ -165,5 +177,30 @@ export function LoginRegister() {
         </Button>
       </form>
     </AuthShell>
+  );
+}
+
+/** Mensaje cuando el email ya tiene cuenta: orienta a recuperar o activar. */
+function EmailExistsHelp() {
+  return (
+    <div className="space-y-1.5">
+      <p className="font-medium">Ya existe una cuenta con ese email.</p>
+      <ul className="list-disc space-y-1 pl-4 text-destructive/90">
+        <li>
+          ¿Olvidaste tu contraseña?{" "}
+          <Link href="/cuenta/recuperar" className="font-medium underline">
+            Recuperala
+          </Link>
+          .
+        </li>
+        <li>
+          ¿Te creó la cuenta un profesional y todavía no tenés contraseña?{" "}
+          <Link href="/cuenta/reclamar" className="font-medium underline">
+            Activá tu cuenta
+          </Link>
+          .
+        </li>
+      </ul>
+    </div>
   );
 }

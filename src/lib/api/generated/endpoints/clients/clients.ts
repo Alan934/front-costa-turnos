@@ -26,7 +26,6 @@ import type {
 
 import type {
   ClientNote,
-  CreateClientDto,
   CreateClientNoteDto,
   CreateFichaFieldDto,
   EnrichedClientDto,
@@ -419,70 +418,6 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
 
 
 /**
- * @summary Crear un cliente
- */
-export const createClient = (
-    createClientDto: BodyType<CreateClientDto>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<EnrichedClientDto>(
-      {url: `/v1/clients`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createClientDto, signal
-    },
-      options);
-    }
-  
-
-
-export const getCreateClientMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<CreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<CreateClientDto>}, TContext> => {
-
-const mutationKey = ['createClient'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createClient>>, {data: BodyType<CreateClientDto>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  createClient(data,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CreateClientMutationResult = NonNullable<Awaited<ReturnType<typeof createClient>>>
-    export type CreateClientMutationBody = BodyType<CreateClientDto>
-    export type CreateClientMutationError = ErrorType<void>
-
-    /**
- * @summary Crear un cliente
- */
-export const useCreateClient = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<CreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createClient>>,
-        TError,
-        {data: BodyType<CreateClientDto>},
-        TContext
-      > => {
-
-      const mutationOptions = getCreateClientMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Obtener un cliente por id (con datos de la persona)
  */
 export const getClient = (

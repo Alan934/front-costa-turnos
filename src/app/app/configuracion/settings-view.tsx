@@ -54,9 +54,14 @@ const DEPOSIT_LABELS: Record<DepositMode, string> = {
   [DepositMode.required]: "Obligatoria",
 };
 
-function BusinessSection({ professional }: { professional: { businessName: string; cancellationWindowHours: number; defaultDepositMode: DepositMode } }) {
+function BusinessSection({
+  professional,
+}: {
+  professional: { businessName: string; cancellationWindowHours: number; defaultDepositMode: DepositMode; address?: string | null };
+}) {
   const update = useUpdateProfessional();
   const [name, setName] = useState(professional.businessName);
+  const [address, setAddress] = useState(professional.address ?? "");
   const [window, setWindow] = useState(String(professional.cancellationWindowHours));
   const [deposit, setDeposit] = useState<DepositMode>(professional.defaultDepositMode);
   const [saved, setSaved] = useState(false);
@@ -65,6 +70,7 @@ function BusinessSection({ professional }: { professional: { businessName: strin
     update.mutate(
       {
         businessName: name.trim(),
+        address: address.trim(),
         cancellationWindowHours: Number(window),
         defaultDepositMode: deposit,
       },
@@ -84,6 +90,11 @@ function BusinessSection({ professional }: { professional: { businessName: strin
         <div>
           <Label htmlFor="biz-name">Nombre del negocio</Label>
           <Input id="biz-name" className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div>
+          <Label htmlFor="biz-address">Dirección</Label>
+          <Input id="biz-address" className="mt-1.5" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Belgrano 245, Costa de Araujo, Mendoza" />
+          <p className="mt-1 text-xs text-muted-foreground">Se muestra en tu página pública y en el turno del cliente.</p>
         </div>
         <div>
           <Label htmlFor="biz-window">Cancelación: hasta cuántas horas antes</Label>
@@ -127,19 +138,17 @@ function BrandingSection({
   const update = useUpdateProfessional();
   const initial = professional.publicPageSettings as PublicPageBranding;
   const [bio, setBio] = useState(initial.bio ?? "");
-  const [address, setAddress] = useState(initial.address ?? "");
   const [phone, setPhone] = useState(initial.phone ?? "");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     setBio(initial.bio ?? "");
-    setAddress(initial.address ?? "");
     setPhone(initial.phone ?? "");
-  }, [initial.bio, initial.address, initial.phone]);
+  }, [initial.bio, initial.phone]);
 
   function save() {
     update.mutate(
-      { publicPageSettings: { ...initial, bio, address, phone } },
+      { publicPageSettings: { ...initial, bio, phone } },
       {
         onSuccess: () => {
           setSaved(true);
@@ -194,10 +203,6 @@ function BrandingSection({
             onChange={(e) => setBio(e.target.value)}
             placeholder="Contale a tus clientes qué hacés y cómo atendés."
           />
-        </div>
-        <div>
-          <Label htmlFor="br-address">Dirección</Label>
-          <Input id="br-address" className="mt-1.5" value={address} onChange={(e) => setAddress(e.target.value)} />
         </div>
         <div>
           <Label htmlFor="br-phone">Teléfono / WhatsApp</Label>

@@ -124,6 +124,22 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
     );
   }
 
+  // Negocio nuevo / sin agenda configurada: no se puede reservar todavía.
+  if (page.services.length === 0 || page.staff.length === 0) {
+    return (
+      <div>
+        <BusinessHeader page={page} />
+        <div className="mt-6">
+          <EmptyState
+            icon={<CalendarX2 className="size-5" />}
+            title="Todavía no se puede reservar"
+            message="Este negocio aún está configurando su agenda. Volvé a intentar más tarde."
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <BusinessHeader page={page} />

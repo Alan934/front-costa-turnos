@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ClaimAccount } from "./claim-account";
+import { VerifyEmail } from "./verify-email";
 
 export const metadata: Metadata = {
-  title: "Activar cuenta",
+  title: "Verificar email",
 };
 
 export default function Page() {
   return (
     <Suspense>
-      <ClaimAccount />
+      <VerifyEmail />
     </Suspense>
   );
 }

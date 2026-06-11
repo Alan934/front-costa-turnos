@@ -38,6 +38,7 @@ export function OnboardingView() {
   const [businessName, setBusinessName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [address, setAddress] = useState("");
   const [timezone, setTimezone] = useState(TIMEZONES[0].value);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,7 +58,7 @@ export function OnboardingView() {
     e.preventDefault();
     setError(null);
     onboard.mutate(
-      { data: { businessName: businessName.trim(), slug, timezone } },
+      { data: { businessName: businessName.trim(), slug, timezone, address: address.trim() || undefined } },
       {
         onSuccess: async () => {
           await refresh(); // recarga /auth/me para tomar el professionalId nuevo
@@ -138,9 +139,26 @@ export function OnboardingView() {
           </div>
 
           <div>
+            <Label htmlFor="addr">
+              Dirección <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="addr"
+              className="mt-1.5"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Ej: Belgrano 245, Costa de Araujo, Mendoza"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Aparece en tu página pública y en el turno de tus clientes.
+            </p>
+          </div>
+
+          <div>
             <Label htmlFor="tz">Zona horaria</Label>
             <select
               id="tz"
+              aria-label="Zona horaria"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
               className="mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

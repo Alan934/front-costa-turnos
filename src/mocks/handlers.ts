@@ -577,6 +577,51 @@ export const handlers: RequestHandler[] = [
 
   // ---- Admin de plataforma ----
   http.get(url("/admin/professionals"), () => HttpResponse.json(adminProfessionals)),
+  http.post(url("/admin/professionals"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const id = `pro_${Date.now()}`;
+    const nowIso = new Date().toISOString();
+    const trialEnd = new Date(Date.now() + 15 * 86400000).toISOString();
+    const row = {
+      professional: {
+        id,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        accountId: `acc_${Date.now()}`,
+        businessName: String(body.businessName ?? "Nuevo negocio"),
+        slug: String(body.slug ?? `negocio-${Date.now()}`),
+        timezone: "America/Argentina/Buenos_Aires",
+        address: null,
+        defaultDepositMode: DepositMode.hybrid,
+        cancellationWindowHours: 24,
+        publicPageSettings: {},
+      },
+      subscription: {
+        id: `sub_${id}`,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        professionalId: id,
+        status: SubscriptionStatus.trial,
+        trialEndsAt: trialEnd,
+        currentPeriodStart: nowIso,
+        currentPeriodEnd: trialEnd,
+        graceEndsAt: null,
+        amountCents: 1500000,
+        mercadopagoPreapprovalId: null,
+      },
+    } as (typeof adminProfessionals)[number];
+    adminProfessionals.unshift(row);
+    return HttpResponse.json(row, { status: 201 });
+  }),
+  http.post(url("/admin/accounts/:accountId/block"), () => HttpResponse.json({ ok: true }, { status: 201 })),
+  http.post(url("/admin/accounts/:accountId/activate"), () => HttpResponse.json({ ok: true }, { status: 201 })),
+  http.post(url("/admin/clients"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    return HttpResponse.json(
+      { id: `cli_${Date.now()}`, fullName: String(body.fullName ?? "Cliente"), status: "active" },
+      { status: 201 },
+    );
+  }),
   http.post(url("/admin/subscriptions/:professionalId/mark-cash-paid"), ({ params }) => {
     const row = adminProfessionals.find((r) => r.professional.id === params.professionalId);
     if (!row) return new HttpResponse(null, { status: 404 });

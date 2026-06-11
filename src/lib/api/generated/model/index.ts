@@ -6,9 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './account';
+export * from './accountStatus';
 export * from './activeByMonthDto';
 export * from './addEntryDto';
 export * from './addParticipantsByEmailDto';
+export * from './adminCreateClientDto';
+export * from './adminCreateProfessionalDto';
 export * from './adminMetricsDto';
 export * from './adminMetricsTotalsDto';
 export * from './appointment';
