@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, Menu, X } from "lucide-react";
+import { CalendarClock, Menu, X, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
@@ -134,14 +134,14 @@ function NavList({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function SidebarFooter() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pro = useProfessional();
   const name = user?.fullName?.trim() || user?.email || "Mi cuenta";
   const business = pro.data?.businessName ?? "";
   const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
   return (
-    <div className="hidden items-center justify-between gap-2 border-t border-border px-5 py-4 lg:flex">
+    <div className="flex items-center justify-between gap-2 border-t border-border px-5 py-4">
       <div className="flex min-w-0 items-center gap-2.5">
         <Avatar name={business || name} fileId={logoFileId} />
         <div className="min-w-0">
@@ -149,7 +149,18 @@ function SidebarFooter() {
           {business && <p className="truncate text-xs text-muted-foreground">{business}</p>}
         </div>
       </div>
-      <ThemeToggle />
+      <div className="flex shrink-0 items-center gap-1">
+        <ThemeToggle />
+        <button
+          type="button"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          onClick={() => logout()}
+          className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <LogOut className="size-4" />
+        </button>
+      </div>
     </div>
   );
 }
