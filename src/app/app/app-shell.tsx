@@ -80,9 +80,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main className="min-w-0">
         <VerifyEmailBanner />
-        <SubscriptionBanner />
         <SetupChecklist />
         {children}
+        {/* Va al final: rinde una tarjeta FIJA al pie + un espaciador para no tapar contenido. */}
+        <SubscriptionBanner />
       </main>
     </div>
   );
