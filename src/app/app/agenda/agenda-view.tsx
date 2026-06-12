@@ -13,7 +13,7 @@ import { formatDateLong, formatDayChip } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
-import { DayGrid } from "./day-grid";
+import { DayList } from "./day-list";
 import { WeekGrid } from "./week-grid";
 import { MonthGrid } from "./month-grid";
 import { DayAppointmentsDialog } from "./day-appointments-dialog";
@@ -140,7 +140,7 @@ export function AgendaView() {
             />
           </div>
         ) : view === "dia" ? (
-          <DayGrid
+          <DayList
             date={date}
             staff={activeStaffId ? staffList.filter((s) => s.id === activeStaffId) : staffList}
             appointments={appointments}

@@ -24,6 +24,7 @@ import {
   useActivateAccount,
 } from "@/lib/api/admin";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
+import { subscriptionEndInfo } from "@/lib/subscription";
 import { formatMoney, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { AdminProfessionalRow } from "@/mocks/contract-extensions";
@@ -137,10 +138,10 @@ function ProfessionalRow({ row }: { row: AdminProfessionalRow }) {
           <p className="truncate text-xs text-muted-foreground">/r/{pro.slug}</p>
           <p className="mt-1 flex flex-wrap gap-x-4 text-xs text-muted-foreground">
             <span>{formatMoney(sub.amountCents)}/mes</span>
-            <span>Período hasta {formatDateShort(sub.currentPeriodEnd)}</span>
-            {sub.status === "trial" && sub.trialEndsAt && (
-              <span>Prueba hasta {formatDateShort(sub.trialEndsAt)}</span>
-            )}
+            {(() => {
+              const end = subscriptionEndInfo(sub);
+              return end.date ? <span>{end.label} {formatDateShort(end.date)}</span> : null;
+            })()}
           </p>
         </div>
 

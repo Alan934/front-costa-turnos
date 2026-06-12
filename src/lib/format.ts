@@ -37,53 +37,66 @@ export function formatMoney(
 
 type DateInput = Date | string | number;
 
-function toDate(input: DateInput): Date {
-  return input instanceof Date ? input : new Date(input);
+/** Convierte a Date válida o null (null/undefined/"" o fecha inválida → null). */
+function toDate(input: DateInput | null | undefined): Date | null {
+  if (input == null || input === "") return null;
+  const d = input instanceof Date ? input : new Date(input);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Marcador para fechas ausentes/ inválidas. */
+const NO_DATE = "—";
+
 /** Fecha + hora: "vie. 7 jun., 14:30" */
-export function formatDateTime(input: DateInput): string {
-  return formatInTimeZone(toDate(input), TIME_ZONE, "EEE d MMM, HH:mm", { locale: es });
+export function formatDateTime(input: DateInput | null | undefined): string {
+  const d = toDate(input);
+  return d ? formatInTimeZone(d, TIME_ZONE, "EEE d MMM, HH:mm", { locale: es }) : NO_DATE;
 }
 
 /** Solo fecha larga: "viernes 7 de junio de 2026" */
-export function formatDateLong(input: DateInput): string {
-  return formatInTimeZone(toDate(input), TIME_ZONE, "EEEE d 'de' MMMM 'de' yyyy", {
-    locale: es,
-  });
+export function formatDateLong(input: DateInput | null | undefined): string {
+  const d = toDate(input);
+  return d
+    ? formatInTimeZone(d, TIME_ZONE, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })
+    : NO_DATE;
 }
 
 /** Solo fecha corta: "07/06/2026" */
-export function formatDateShort(input: DateInput): string {
-  return formatInTimeZone(toDate(input), TIME_ZONE, "dd/MM/yyyy", { locale: es });
+export function formatDateShort(input: DateInput | null | undefined): string {
+  const d = toDate(input);
+  return d ? formatInTimeZone(d, TIME_ZONE, "dd/MM/yyyy", { locale: es }) : NO_DATE;
 }
 
 /** Solo hora: "14:30" */
-export function formatTime(input: DateInput): string {
-  return formatInTimeZone(toDate(input), TIME_ZONE, "HH:mm", { locale: es });
+export function formatTime(input: DateInput | null | undefined): string {
+  const d = toDate(input);
+  return d ? formatInTimeZone(d, TIME_ZONE, "HH:mm", { locale: es }) : NO_DATE;
 }
 
 /** Día de la semana capitalizado: "Viernes" */
-export function formatWeekday(input: DateInput): string {
-  const day = formatInTimeZone(toDate(input), TIME_ZONE, "EEEE", { locale: es });
+export function formatWeekday(input: DateInput | null | undefined): string {
+  const d = toDate(input);
+  if (!d) return NO_DATE;
+  const day = formatInTimeZone(d, TIME_ZONE, "EEEE", { locale: es });
   return day.charAt(0).toUpperCase() + day.slice(1);
 }
 
 /** Día corto para selector de fecha: "vie 7" (abreviado + número). */
 export function formatDayChip(input: DateInput): { weekday: string; day: string } {
-  const weekday = formatInTimeZone(toDate(input), TIME_ZONE, "EEE", { locale: es }).replace(
-    ".",
-    "",
-  );
-  const day = formatInTimeZone(toDate(input), TIME_ZONE, "d", { locale: es });
+  const d = toDate(input);
+  if (!d) return { weekday: "—", day: "—" };
+  const weekday = formatInTimeZone(d, TIME_ZONE, "EEE", { locale: es }).replace(".", "");
+  const day = formatInTimeZone(d, TIME_ZONE, "d", { locale: es });
   return { weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1), day };
 }
 
 /** ¿Dos fechas caen en el mismo día calendario (en la TZ de AR)? */
 export function isSameDay(a: DateInput, b: DateInput): boolean {
+  const da = toDate(a);
+  const db = toDate(b);
+  if (!da || !db) return false;
   return (
-    formatInTimeZone(toDate(a), TIME_ZONE, "yyyy-MM-dd") ===
-    formatInTimeZone(toDate(b), TIME_ZONE, "yyyy-MM-dd")
+    formatInTimeZone(da, TIME_ZONE, "yyyy-MM-dd") === formatInTimeZone(db, TIME_ZONE, "yyyy-MM-dd")
   );
 }
 

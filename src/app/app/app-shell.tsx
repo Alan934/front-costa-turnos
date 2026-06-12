@@ -8,8 +8,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { SetupChecklist } from "@/components/setup-checklist";
+import { useAuth } from "@/components/auth-provider";
+import { Avatar } from "@/components/avatar";
+import { useProfessional } from "@/lib/api/professional";
 import { APP_NAV } from "./nav";
 import { cn } from "@/lib/utils";
+import type { PublicPageBranding } from "@/mocks/contract-extensions";
 
 /** Layout del panel del profesional: sidebar en desktop, drawer en mobile. */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -129,11 +133,20 @@ function NavList({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function SidebarFooter() {
+  const { user } = useAuth();
+  const pro = useProfessional();
+  const name = user?.fullName?.trim() || user?.email || "Mi cuenta";
+  const business = pro.data?.businessName ?? "";
+  const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
+
   return (
-    <div className="hidden items-center justify-between border-t border-border px-5 py-4 lg:flex">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">Lucía Fernández</p>
-        <p className="truncate text-xs text-muted-foreground">Peluquería del Pueblo</p>
+    <div className="hidden items-center justify-between gap-2 border-t border-border px-5 py-4 lg:flex">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar name={business || name} fileId={logoFileId} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{name}</p>
+          {business && <p className="truncate text-xs text-muted-foreground">{business}</p>}
+        </div>
       </div>
       <ThemeToggle />
     </div>

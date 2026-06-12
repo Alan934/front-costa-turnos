@@ -25,6 +25,20 @@ export function daysUntil(iso?: string | null): number | null {
   return Math.ceil(ms / 86_400_000);
 }
 
+/**
+ * Fecha "fin" relevante según el estado, con su etiqueta. En trial el `currentPeriodEnd`
+ * suele venir null, así que mostramos el fin de la prueba; en gracia, el fin de la gracia.
+ */
+export function subscriptionEndInfo(sub: Subscription): { label: string; date: string | null } {
+  if (sub.status === SubscriptionStatus.trial) {
+    return { label: "Prueba hasta", date: sub.trialEndsAt ?? sub.currentPeriodEnd ?? null };
+  }
+  if (sub.status === SubscriptionStatus.grace) {
+    return { label: "Gracia hasta", date: sub.graceEndsAt ?? sub.currentPeriodEnd ?? null };
+  }
+  return { label: "Próximo cobro", date: sub.currentPeriodEnd ?? null };
+}
+
 const plural = (n: number, s: string, p = `${s}s`) => (n === 1 ? s : p);
 
 /** Resume el estado de la suscripción para la UI (banner, gate y pantalla de pago). */

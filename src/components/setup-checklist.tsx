@@ -25,9 +25,12 @@ export function SetupChecklist() {
     query: { enabled: !!firstStaffId },
   });
 
-  // No mostramos nada hasta tener los datos: evita el aviso "en falso" mientras carga.
+  // Esperamos a que las consultas "asienten" (éxito o error) para no parpadear, pero NO
+  // exigimos éxito: si alguna falla, mostramos el paso como pendiente igual (en vez de
+  // ocultar el aviso y dejar al profesional sin saber qué le falta).
+  const settled = (q: { isSuccess: boolean; isError: boolean }) => q.isSuccess || q.isError;
   const evaluated =
-    services.isSuccess && staff.isSuccess && (!firstStaffId || schedule.isSuccess);
+    settled(services) && settled(staff) && (!firstStaffId || settled(schedule));
   if (!evaluated) return null;
 
   const hasWork = (schedule.data ?? []).some((r) => r.kind === ScheduleRuleKind.work);

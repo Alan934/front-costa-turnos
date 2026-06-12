@@ -15,13 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
+import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/components/auth-provider";
 import { useAppointments } from "@/lib/api/appointments";
+import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
 import { dayRange, isSameLocalDay, personDisplayName } from "@/lib/agenda";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { formatMoney, formatTime } from "@/lib/format";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { PublicPageBranding } from "@/mocks/contract-extensions";
 
 const ACTIVE: AppointmentStatus[] = [
   AppointmentStatus.requested,
@@ -35,6 +38,8 @@ export function Dashboard() {
   const range = useMemo(() => dayRange(today), [today]);
   const appts = useAppointments(range);
   const services = useServices();
+  const pro = useProfessional();
+  const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
   const todays = (appts.data ?? []).filter((a) => isSameLocalDay(new Date(a.startAt), today));
   const priceOf = (a: Appointment) =>
@@ -55,11 +60,14 @@ export function Dashboard() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">
-            Hola{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
-          </h1>
-          <p className="text-sm capitalize text-muted-foreground">{formatTodayLabel(today)}</p>
+        <div className="flex items-center gap-3">
+          <Avatar name={user?.fullName} fileId={logoFileId} className="size-11" />
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight">
+              Hola{user?.fullName ? `, ${user.fullName.split(" ")[0]}` : ""} 👋
+            </h1>
+            <p className="text-sm capitalize text-muted-foreground">{formatTodayLabel(today)}</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>

@@ -161,7 +161,12 @@ function StatusCard({ sub }: { sub: Subscription }) {
           <Field label="Prueba hasta" value={formatDateLong(sub.trialEndsAt)} />
         )}
         {sub.graceEndsAt && <Field label="Gracia hasta" value={formatDateLong(sub.graceEndsAt)} />}
-        <Field label="Período actual hasta" value={formatDateLong(sub.currentPeriodEnd)} />
+        {sub.currentPeriodEnd && (
+          <Field
+            label={sub.status === "trial" ? "Primer cobro" : "Próximo cobro"}
+            value={formatDateLong(sub.currentPeriodEnd)}
+          />
+        )}
       </div>
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}

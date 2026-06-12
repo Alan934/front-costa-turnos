@@ -15,6 +15,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { useProfessional, useUpdateProfessional, useSubscription } from "@/lib/api/professional";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
+import { subscriptionEndInfo } from "@/lib/subscription";
 import { formatMoney, formatDateLong } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PublicPageBranding } from "@/mocks/contract-extensions";
@@ -255,9 +256,17 @@ function SubscriptionSection() {
             </Badge>
           </div>
           <Separator className="my-4" />
-          <p className="text-sm text-muted-foreground">
-            Próximo cobro: <span className="font-medium capitalize text-foreground">{formatDateLong(sub.data.currentPeriodEnd)}</span>
-          </p>
+          {(() => {
+            const end = subscriptionEndInfo(sub.data!);
+            return (
+              <p className="text-sm text-muted-foreground">
+                {end.label}:{" "}
+                <span className="font-medium capitalize text-foreground">
+                  {end.date ? formatDateLong(end.date) : "—"}
+                </span>
+              </p>
+            );
+          })()}
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
               <Link href="/app/suscripcion">Administrar suscripción</Link>

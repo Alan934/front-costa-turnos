@@ -27,6 +27,24 @@ function normalizePublicPage(raw: unknown): PublicPage {
   const pro = asObject(root.professional ?? root);
   const settings = asObject(root.settings ?? pro.publicPageSettings ?? pro.branding ?? root.branding);
 
+  // Probamos varios nombres posibles para staff/servicios (el contrato no los tipa).
+  const rawServices = root.services ?? pro.services ?? settings.services;
+  const rawStaff =
+    root.staff ?? pro.staff ?? root.staffMembers ?? root.professionals ?? root.team ?? settings.staff;
+
+  if (process.env.NODE_ENV !== "production") {
+    const nS = asArray(rawServices).length;
+    const nStaff = asArray(rawStaff).length;
+    if (nS === 0 || nStaff === 0) {
+      // Si falta algo, dejamos a la vista la respuesta cruda para diagnosticar la forma.
+      console.warn(
+        `[/r/:slug] servicios=${nS} staff=${nStaff}. Si el negocio está configurado, el back ` +
+          `probablemente no devuelve "staff" (o "services") en /r/:slug. Respuesta cruda:`,
+        raw,
+      );
+    }
+  }
+
   return {
     professional: {
       id: asString(pro.id ?? root.id),
@@ -45,8 +63,8 @@ function normalizePublicPage(raw: unknown): PublicPage {
         phone: asString(settings.phone) || undefined,
       },
     },
-    services: asArray<Service>(root.services ?? pro.services),
-    staff: asArray<StaffPublic>(root.staff ?? pro.staff),
+    services: asArray<Service>(rawServices),
+    staff: asArray<StaffPublic>(rawStaff),
   };
 }
 

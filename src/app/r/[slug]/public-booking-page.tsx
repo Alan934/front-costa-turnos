@@ -135,6 +135,23 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
             title="Todavía no se puede reservar"
             message="Este negocio aún está configurando su agenda. Volvé a intentar más tarde."
           />
+          {process.env.NODE_ENV !== "production" && (
+            <div className="mx-auto mt-4 max-w-md rounded-lg border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <p className="font-medium">Diagnóstico (solo en dev):</p>
+              <p>
+                Servicios recibidos: <strong>{page.services.length}</strong> · Staff recibido:{" "}
+                <strong>{page.staff.length}</strong>.
+              </p>
+              {page.staff.length === 0 && (
+                <p className="mt-1">
+                  Si el negocio ya tiene profesionales cargados, el backend{" "}
+                  <strong>no está devolviendo <code>staff</code> en <code>GET /r/{`{slug}`}</code></strong>.
+                  La reserva necesita el staff (para elegir profesional y calcular horarios). Revisá
+                  la consola para ver la respuesta cruda.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
