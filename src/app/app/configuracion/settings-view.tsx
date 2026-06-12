@@ -13,11 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
 import { ImageUpload } from "@/components/image-upload";
 import { useProfessional, useUpdateProfessional, useSubscription } from "@/lib/api/professional";
-import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { subscriptionEndInfo } from "@/lib/subscription";
 import { formatMoney, formatDateLong } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import type { PublicPageBranding } from "@/mocks/contract-extensions";
 
 export function SettingsView() {
@@ -49,22 +47,15 @@ export function SettingsView() {
   );
 }
 
-const DEPOSIT_LABELS: Record<DepositMode, string> = {
-  [DepositMode.none]: "Sin seña",
-  [DepositMode.hybrid]: "Híbrida",
-  [DepositMode.required]: "Obligatoria",
-};
-
 function BusinessSection({
   professional,
 }: {
-  professional: { businessName: string; cancellationWindowHours: number; defaultDepositMode: DepositMode; address?: string | null };
+  professional: { businessName: string; cancellationWindowHours: number; address?: string | null };
 }) {
   const update = useUpdateProfessional();
   const [name, setName] = useState(professional.businessName);
   const [address, setAddress] = useState(professional.address ?? "");
   const [window, setWindow] = useState(String(professional.cancellationWindowHours));
-  const [deposit, setDeposit] = useState<DepositMode>(professional.defaultDepositMode);
   const [saved, setSaved] = useState(false);
 
   function save() {
@@ -73,7 +64,6 @@ function BusinessSection({
         businessName: name.trim(),
         address: address.trim(),
         cancellationWindowHours: Number(window),
-        defaultDepositMode: deposit,
       },
       {
         onSuccess: () => {
@@ -103,24 +93,6 @@ function BusinessSection({
           <p className="mt-1 text-xs text-muted-foreground">
             Tus clientes pueden cancelar online hasta {window || 0} h antes del turno.
           </p>
-        </div>
-        <div>
-          <Label>Seña por defecto en servicios nuevos</Label>
-          <div className="mt-1.5 grid grid-cols-3 gap-2">
-            {(Object.values(DepositMode) as DepositMode[]).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setDeposit(m)}
-                className={cn(
-                  "rounded-lg border py-2 text-sm font-medium transition-colors",
-                  deposit === m ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:border-accent/50",
-                )}
-              >
-                {DEPOSIT_LABELS[m]}
-              </button>
-            ))}
-          </div>
         </div>
         <Button size="sm" onClick={save} disabled={update.isPending}>
           {update.isPending ? <Spinner /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}

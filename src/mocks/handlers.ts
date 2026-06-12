@@ -125,7 +125,7 @@ function createBooking(
   end.setMinutes(end.getMinutes() + (svc?.durationMinutes ?? 30));
   // Provisional si el servicio pide seña y no se abonó (book sin depósito).
   const provisional =
-    opts.provisional ?? (svc?.depositMode === "required" || svc?.depositMode === "hybrid");
+    opts.provisional ?? (!!svc && (svc.allowDeposit || svc.allowFullPayment));
 
   const appointment = {
     id: `apt_${Date.now()}`,
@@ -326,6 +326,7 @@ export const handlers: RequestHandler[] = [
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const appointment = createBooking(body, { provisional: false });
     const method = String(body.method ?? "mercadopago");
+    const fullPayment = body.paymentOption === "full";
     const svc = services.find((s) => s.id === appointment.serviceId);
     const payment: Payment = {
       id: `pay_${Date.now()}`,
@@ -334,8 +335,8 @@ export const handlers: RequestHandler[] = [
       professionalId: professional.id,
       appointmentId: appointment.id as unknown as Payment["appointmentId"],
       personId: appointment.personId,
-      type: "deposit",
-      amountCents: svc?.depositAmountCents ?? 0,
+      type: fullPayment ? "service" : "deposit",
+      amountCents: fullPayment ? (svc?.priceCents ?? 0) : (svc?.depositAmountCents ?? 0),
       method: method === "cash" ? "cash" : "mercadopago",
       status: PaymentStatus.pending,
       mercadopagoRef: null,
@@ -400,7 +401,9 @@ export const handlers: RequestHandler[] = [
       name: String(body.name ?? "Servicio"),
       durationMinutes: Number(body.durationMinutes ?? 30),
       priceCents: Number(body.priceCents ?? 0),
-      depositMode: (body.depositMode as DepositMode) ?? DepositMode.none,
+      allowNoPayment: body.allowNoPayment !== false,
+      allowDeposit: !!body.allowDeposit,
+      allowFullPayment: !!body.allowFullPayment,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
       isActive: true,
     };

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { useServices, useDeactivateService } from "@/lib/api/catalog";
-import { getDepositInfo } from "@/lib/deposit";
+import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration } from "@/lib/format";
 import type { Service } from "@/lib/api/generated/model/service";
 import { ServiceFormDialog } from "./service-form-dialog";
@@ -58,7 +58,7 @@ export function ServicesManager() {
         {services.length > 0 && (
           <ul className="space-y-2.5">
             {services.map((s) => {
-              const deposit = getDepositInfo(s);
+              const pay = paymentSummary(s);
               return (
                 <li
                   key={s.id}
@@ -71,12 +71,7 @@ export function ServicesManager() {
                         <Clock3 className="size-3.5" />
                         {formatDuration(s.durationMinutes)}
                       </span>
-                      {deposit.mode !== "none" && (
-                        <Badge variant={deposit.requiresPayment ? "accent" : "warning"}>
-                          {deposit.requiresPayment ? "Seña obligatoria" : "Seña opcional"}
-                          {deposit.amountCents ? ` · ${formatMoney(deposit.amountCents)}` : ""}
-                        </Badge>
-                      )}
+                      {pay && <Badge variant="muted">{pay}</Badge>}
                     </p>
                   </div>
                   <span className="font-display font-semibold tabular-nums">

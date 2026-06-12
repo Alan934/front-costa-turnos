@@ -5,15 +5,19 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { CreateServiceDtoDepositMode } from './createServiceDtoDepositMode';
 
 export interface CreateServiceDto {
   name: string;
   /** duracion en minutos */
   durationMinutes: number;
-  /** precio en centavos */
+  /** precio (pago completo) en centavos */
   priceCents: number;
-  depositMode?: CreateServiceDtoDepositMode;
-  /** sena en centavos */
+  /** Permitir reservar con seña */
+  allowDeposit?: boolean;
+  /** Permitir reservar con pago completo */
+  allowFullPayment?: boolean;
+  /** Permitir reservar sin pagar */
+  allowNoPayment?: boolean;
+  /** monto de la seña en centavos */
   depositAmountCents?: number;
 }

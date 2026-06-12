@@ -21,7 +21,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { usePublicPage, usePublicSlots, useBookPublicWithDeposit } from "@/lib/api/public-booking";
 import { useBook } from "@/lib/api/generated/endpoints/public-booking/public-booking";
-import { getDepositInfo } from "@/lib/deposit";
+import { getPaymentOptions, paymentSummary, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
 import {
   formatMoney,
@@ -293,7 +293,7 @@ function ServiceStep({
       <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
       <div className="mt-4 space-y-3">
         {services.map((s) => {
-          const deposit = getDepositInfo(s);
+          const summary = paymentSummary(s);
           return (
             <button
               key={s.id}
@@ -307,10 +307,10 @@ function ServiceStep({
                   <Clock3 className="size-3.5" />
                   {formatDuration(s.durationMinutes)}
                 </p>
-                {deposit.label && (
+                {summary && (
                   <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
                     <Info className="size-3" />
-                    {deposit.label}
+                    {summary}
                   </p>
                 )}
               </div>
@@ -529,7 +529,9 @@ function ConfirmStep({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const deposit = getDepositInfo(service);
+  const options = getPaymentOptions(service);
+  const hasNoPay = options.some((o) => o.choice === "none");
+  const hasPaid = options.some((o) => o.requiresPayment);
 
   const book = useBook();
   const bookWithDeposit = useBookPublicWithDeposit(slug);
@@ -538,7 +540,7 @@ function ConfirmStep({
 
   const canSubmit = fullName.trim().length > 1 && phone.trim().length > 5;
 
-  function submit(payDeposit: boolean) {
+  function submit(option: PayOption) {
     const base = {
       fullName: fullName.trim(),
       phone: phone.trim(),
@@ -547,9 +549,9 @@ function ConfirmStep({
       serviceId: service.id,
       startAt: slot.startAt,
     };
-    if (payDeposit && deposit.amountCents) {
+    if (option.paymentOption) {
       bookWithDeposit.mutate(
-        { ...base, method: "mercadopago" },
+        { ...base, method: "mercadopago", paymentOption: option.paymentOption },
         {
           onSuccess: (res) => {
             // El back devuelve el punto de pago de MercadoPago: redirigimos para abonar.
@@ -563,10 +565,10 @@ function ConfirmStep({
         },
       );
     } else {
+      // Sin pago: el turno puede quedar provisional (lo decide el back).
       book.mutate(
         { slug, data: base },
-        // Sin seña: provisional si el servicio es required/hybrid.
-        { onSuccess: () => onConfirmed(deposit.requiresPayment || deposit.isHybrid) },
+        { onSuccess: (appt) => onConfirmed(!!appt?.isProvisional) },
       );
     }
   }
@@ -583,24 +585,20 @@ function ConfirmStep({
         <Row label="Precio" value={formatMoney(service.priceCents)} strong />
       </div>
 
-      {/* Aviso de seña híbrida / required */}
-      {deposit.isHybrid && (
+      {/* Si hay pago opcional, aclaramos que sin pagar queda provisional. */}
+      {hasPaid && hasNoPay && (
         <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
           <p className="text-sm text-warning-foreground">
-            Sin seña, tu turno queda <strong>provisional</strong>: lo guardamos, pero si
-            otra persona abona la seña de {formatMoney(deposit.amountCents)} para el mismo
-            horario, puede quedarse con tu lugar. Pagando la seña, tu turno queda asegurado.
+            Si reservás sin pagar, tu turno puede quedar <strong>provisional</strong>: si otra
+            persona abona para el mismo horario, puede quedarse con tu lugar. Pagando, lo asegurás.
           </p>
         </div>
       )}
-      {deposit.requiresPayment && (
+      {hasPaid && !hasNoPay && (
         <div className="mt-4 flex gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" />
-          <p className="text-sm">
-            Este servicio requiere una seña de{" "}
-            <strong>{formatMoney(deposit.amountCents)}</strong> para confirmar el turno.
-          </p>
+          <p className="text-sm">Este servicio se reserva pagando para confirmar el turno.</p>
         </div>
       )}
 
@@ -651,50 +649,32 @@ function ConfirmStep({
         </p>
       )}
 
-      {/* Acciones según modo de seña */}
+      {/* Acciones: solo las opciones de pago habilitadas por el profesional. */}
       <div className="mt-6 space-y-2.5">
-        {deposit.requiresPayment ? (
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={!canSubmit || submitting}
-            onClick={() => submit(true)}
-          >
-            {submitting ? <Spinner /> : null}
-            Pagar seña y reservar · {formatMoney(deposit.amountCents)}
-          </Button>
-        ) : deposit.isHybrid ? (
-          <>
+        {options.map((opt, i) => {
+          const label =
+            opt.choice === "deposit"
+              ? `Pagar seña y reservar · ${formatMoney(opt.amountCents)}`
+              : opt.choice === "full"
+                ? `Pagar el total · ${formatMoney(opt.amountCents)}`
+                : hasPaid
+                  ? "Reservar sin pagar"
+                  : "Confirmar turno";
+          return (
             <Button
+              key={opt.choice}
               className="w-full"
               size="lg"
+              // El primer botón (o el único) es el primario; el resto, secundario.
+              variant={i === 0 ? "default" : "outline"}
               disabled={!canSubmit || submitting}
-              onClick={() => submit(true)}
+              onClick={() => submit(opt)}
             >
-              {submitting ? <Spinner /> : null}
-              Pagar seña y asegurar · {formatMoney(deposit.amountCents)}
+              {submitting && i === 0 ? <Spinner /> : null}
+              {label}
             </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              size="lg"
-              disabled={!canSubmit || submitting}
-              onClick={() => submit(false)}
-            >
-              Reservar sin seña (provisional)
-            </Button>
-          </>
-        ) : (
-          <Button
-            className="w-full"
-            size="lg"
-            disabled={!canSubmit || submitting}
-            onClick={() => submit(false)}
-          >
-            {submitting ? <Spinner /> : null}
-            Confirmar turno
-          </Button>
-        )}
+          );
+        })}
       </div>
     </div>
   );

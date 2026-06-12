@@ -187,11 +187,15 @@ function DepositSection({ appointmentId, onChanged }: { appointmentId: string; o
   );
   if (!payment) return null;
 
+  // El tipo del pago refleja lo que eligió el cliente: seña (deposit) o pago completo (service).
+  const isFull = payment.type === "service";
+  const kindLabel = isFull ? "Pago completo" : "Seña";
+
   if (payment.status === "paid") {
     return (
       <p className="flex items-center gap-2 rounded-lg border border-success/40 bg-success/10 p-3 text-xs text-success">
         <Check className="size-3.5" />
-        Seña de {formatMoney(payment.amountCents)} cobrada.
+        {kindLabel} de {formatMoney(payment.amountCents)} {isFull ? "cobrado" : "cobrada"}.
       </p>
     );
   }
@@ -214,7 +218,7 @@ function DepositSection({ appointmentId, onChanged }: { appointmentId: string; o
   return (
     <div className="rounded-lg border border-border bg-muted/40 p-3">
       <p className="text-xs font-medium">
-        Seña pendiente · {formatMoney(payment.amountCents)}
+        {kindLabel} pendiente · {formatMoney(payment.amountCents)}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Button

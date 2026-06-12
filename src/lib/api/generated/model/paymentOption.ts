@@ -6,12 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 
-export type CreateServiceDtoDepositMode = typeof CreateServiceDtoDepositMode[keyof typeof CreateServiceDtoDepositMode];
+/**
+ * deposit = seña, full = pago completo
+ */
+export type PaymentOption = typeof PaymentOption[keyof typeof PaymentOption];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const CreateServiceDtoDepositMode = {
-  none: 'none',
-  required: 'required',
-  hybrid: 'hybrid',
+export const PaymentOption = {
+  deposit: 'deposit',
+  full: 'full',
 } as const;

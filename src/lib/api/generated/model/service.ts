@@ -5,7 +5,6 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { DepositMode } from './depositMode';
 
 export interface Service {
   id: string;
@@ -15,7 +14,9 @@ export interface Service {
   name: string;
   durationMinutes: number;
   priceCents: number;
-  depositMode: DepositMode;
+  allowDeposit: boolean;
+  allowFullPayment: boolean;
+  allowNoPayment: boolean;
   /** @nullable */
   depositAmountCents?: number | null;
   isActive: boolean;

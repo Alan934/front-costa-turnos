@@ -26,8 +26,8 @@ import {
 } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { createScheduleRule } from "@/lib/api/generated/endpoints/availability/availability";
 import { useServices, useCreateService } from "@/lib/api/catalog";
-import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
+import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
@@ -232,10 +232,18 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
   const [name, setName] = useState("");
   const [duration, setDuration] = useState("30");
   const [price, setPrice] = useState("");
-  const [deposit, setDeposit] = useState<DepositMode>(DepositMode.none);
+  const [allowNoPayment, setAllowNoPayment] = useState(true);
+  const [allowDeposit, setAllowDeposit] = useState(false);
+  const [allowFullPayment, setAllowFullPayment] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
 
-  const canAdd = name.trim().length > 1 && Number(duration) > 0 && Number(price) >= 0;
+  const anyOption = allowNoPayment || allowDeposit || allowFullPayment;
+  const canAdd =
+    name.trim().length > 1 &&
+    Number(duration) > 0 &&
+    Number(price) >= 0 &&
+    anyOption &&
+    (!allowDeposit || Number(depositAmount) > 0);
 
   function add() {
     create.mutate(
@@ -243,16 +251,19 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
         name: name.trim(),
         durationMinutes: Number(duration),
         priceCents: Math.round(Number(price) * 100),
-        depositMode: deposit,
-        depositAmountCents:
-          deposit !== DepositMode.none && depositAmount ? Math.round(Number(depositAmount) * 100) : undefined,
+        allowNoPayment,
+        allowDeposit,
+        allowFullPayment,
+        depositAmountCents: allowDeposit ? Math.round(Number(depositAmount) * 100) : undefined,
       },
       {
         onSuccess: () => {
           setName("");
           setPrice("");
           setDepositAmount("");
-          setDeposit(DepositMode.none);
+          setAllowNoPayment(true);
+          setAllowDeposit(false);
+          setAllowFullPayment(false);
         },
       },
     );
@@ -274,7 +285,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
                 <p className="font-medium">{s.name}</p>
                 <p className="text-xs text-muted-foreground">{formatDuration(s.durationMinutes)} · {formatMoney(s.priceCents)}</p>
               </div>
-              {s.depositMode !== "none" && <Badge variant="muted">Seña</Badge>}
+              {paymentSummary(s) && <Badge variant="muted">{paymentSummary(s)}</Badge>}
             </li>
           ))}
         </ul>
@@ -295,18 +306,17 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
             <Input id="svc-price" type="number" min={0} className="mt-1.5" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="8000" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="svc-dep">Seña</Label>
-            <select id="svc-dep" aria-label="Modo de seña" value={deposit} onChange={(e) => setDeposit(e.target.value as DepositMode)} className="mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <option value={DepositMode.none}>Sin seña</option>
-              <option value={DepositMode.hybrid}>Opcional (híbrida)</option>
-              <option value={DepositMode.required}>Obligatoria</option>
-            </select>
+        <div>
+          <Label>Cómo se puede reservar</Label>
+          <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">Marcá una o varias.</p>
+          <div className="flex flex-wrap gap-2">
+            <PayChip label="Sin pago" checked={allowNoPayment} onToggle={() => setAllowNoPayment((v) => !v)} />
+            <PayChip label="Con seña" checked={allowDeposit} onToggle={() => setAllowDeposit((v) => !v)} />
+            <PayChip label="Pago completo" checked={allowFullPayment} onToggle={() => setAllowFullPayment((v) => !v)} />
           </div>
-          {deposit !== DepositMode.none && (
-            <div>
-              <Label htmlFor="svc-depamt">Monto seña ($)</Label>
+          {allowDeposit && (
+            <div className="mt-2.5">
+              <Label htmlFor="svc-depamt">Monto de la seña ($)</Label>
               <Input id="svc-depamt" type="number" min={0} className="mt-1.5" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="2000" />
             </div>
           )}
@@ -558,6 +568,23 @@ function DoneStep({ onFinish }: { onFinish: () => void }) {
         Ir a mi panel
       </Button>
     </div>
+  );
+}
+
+/* ---------- Chip de forma de pago (toggle) ---------- */
+function PayChip({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+        checked ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:border-accent/50",
+      )}
+    >
+      {checked && <Check className="size-3.5" />}
+      {label}
+    </button>
   );
 }
 

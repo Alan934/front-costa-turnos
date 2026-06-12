@@ -28,6 +28,7 @@ import type {
   Appointment,
   BookAppointmentDto,
   BookWithDepositDto,
+  PublicPageDto,
   SlotsParams
 } from '../../model';
 
@@ -178,7 +179,7 @@ export const page = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<PublicPageDto>(
       {url: `/r/${slug}`, method: 'GET', signal
     },
       options);

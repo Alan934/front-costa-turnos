@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AuthMeDto,
   AuthTokensDto,
   ClaimAccountDto,
   LoginDto,
@@ -306,7 +307,7 @@ export const me = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<AuthMeDto>(
       {url: `/auth/me`, method: 'GET', signal
     },
       options);

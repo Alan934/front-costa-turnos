@@ -12,15 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useCreateService, useUpdateService } from "@/lib/api/catalog";
-import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
-
-const DEPOSIT_OPTIONS: { value: DepositMode; label: string; hint: string }[] = [
-  { value: DepositMode.none, label: "Sin seña", hint: "Reserva directa" },
-  { value: DepositMode.hybrid, label: "Híbrida", hint: "Sin seña queda provisional" },
-  { value: DepositMode.required, label: "Obligatoria", hint: "Hay que abonar para reservar" },
-];
 
 export function ServiceFormDialog({
   service,
@@ -32,12 +25,12 @@ export function ServiceFormDialog({
   const editing = !!service;
   const [name, setName] = useState(service?.name ?? "");
   const [duration, setDuration] = useState(String(service?.durationMinutes ?? 30));
-  const [price, setPrice] = useState(
-    service ? String(service.priceCents / 100) : "",
-  );
-  const [depositMode, setDepositMode] = useState<DepositMode>(
-    service?.depositMode ?? DepositMode.none,
-  );
+  const [price, setPrice] = useState(service ? String(service.priceCents / 100) : "");
+
+  // Formas de pago habilitadas (el profesional puede elegir varias).
+  const [allowNoPayment, setAllowNoPayment] = useState(service ? service.allowNoPayment : true);
+  const [allowDeposit, setAllowDeposit] = useState(service?.allowDeposit ?? false);
+  const [allowFullPayment, setAllowFullPayment] = useState(service?.allowFullPayment ?? false);
   const [depositAmount, setDepositAmount] = useState(
     service?.depositAmountCents ? String(service.depositAmountCents / 100) : "",
   );
@@ -46,20 +39,20 @@ export function ServiceFormDialog({
   const update = useUpdateService(service?.id ?? "");
   const pending = create.isPending || update.isPending;
 
-  const needsAmount = depositMode !== DepositMode.none;
+  const anyOption = allowNoPayment || allowDeposit || allowFullPayment;
+  const depositOk = !allowDeposit || Number(depositAmount) > 0;
   const canSubmit =
-    name.trim().length > 1 &&
-    Number(duration) > 0 &&
-    Number(price) >= 0 &&
-    (!needsAmount || Number(depositAmount) > 0);
+    name.trim().length > 1 && Number(duration) > 0 && Number(price) >= 0 && anyOption && depositOk;
 
   function submit() {
     const payload = {
       name: name.trim(),
       durationMinutes: Number(duration),
       priceCents: Math.round(Number(price) * 100),
-      depositMode,
-      depositAmountCents: needsAmount ? Math.round(Number(depositAmount) * 100) : undefined,
+      allowNoPayment,
+      allowDeposit,
+      allowFullPayment,
+      depositAmountCents: allowDeposit ? Math.round(Number(depositAmount) * 100) : undefined,
     };
     if (editing) update.mutate(payload, { onSuccess: onClose });
     else create.mutate(payload, { onSuccess: onClose });
@@ -89,35 +82,42 @@ export function ServiceFormDialog({
             </div>
           </div>
 
-          {/* Modo de seña */}
+          {/* Formas de pago para reservar (varias a la vez) */}
           <div>
-            <Label>Seña</Label>
-            <div className="mt-1.5 grid grid-cols-3 gap-2">
-              {DEPOSIT_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  onClick={() => setDepositMode(o.value)}
-                  className={cn(
-                    "rounded-lg border p-2.5 text-center text-xs transition-colors",
-                    depositMode === o.value
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted-foreground hover:border-accent/50",
-                  )}
-                >
-                  <span className="block font-semibold">{o.label}</span>
-                  <span className="mt-0.5 block leading-tight">{o.hint}</span>
-                </button>
-              ))}
+            <Label>Cómo se puede reservar</Label>
+            <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
+              Elegí una o varias. El cliente verá solo las que marques.
+            </p>
+            <div className="space-y-2">
+              <OptionToggle
+                checked={allowNoPayment}
+                onChange={setAllowNoPayment}
+                title="Sin pago"
+                hint="Reserva directa, sin abonar."
+              />
+              <OptionToggle
+                checked={allowDeposit}
+                onChange={setAllowDeposit}
+                title="Con seña"
+                hint="Paga una parte para asegurar el turno."
+              />
+              {allowDeposit && (
+                <div className="pl-8">
+                  <Label htmlFor="sf-deposit">Monto de la seña ($)</Label>
+                  <Input id="sf-deposit" type="number" min={0} step={100} className="mt-1.5" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="4000" />
+                </div>
+              )}
+              <OptionToggle
+                checked={allowFullPayment}
+                onChange={setAllowFullPayment}
+                title="Pago completo"
+                hint="Paga el total al reservar."
+              />
             </div>
+            {!anyOption && (
+              <p className="mt-2 text-xs text-destructive">Marcá al menos una forma de reservar.</p>
+            )}
           </div>
-
-          {needsAmount && (
-            <div>
-              <Label htmlFor="sf-deposit">Monto de la seña ($)</Label>
-              <Input id="sf-deposit" type="number" min={0} step={100} className="mt-1.5" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="4000" />
-            </div>
-          )}
         </div>
 
         <div className="p-6 pt-3">
@@ -128,5 +128,37 @@ export function ServiceFormDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function OptionToggle({
+  checked,
+  onChange,
+  title,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors",
+        checked ? "border-accent bg-accent/5" : "border-border hover:border-accent/50",
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 size-4 accent-[var(--color-accent)]"
+      />
+      <span className="min-w-0">
+        <span className="block text-sm font-medium">{title}</span>
+        <span className="block text-xs text-muted-foreground">{hint}</span>
+      </span>
+    </label>
   );
 }

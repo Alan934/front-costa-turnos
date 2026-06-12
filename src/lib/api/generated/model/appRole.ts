@@ -6,12 +6,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export type UpdateServiceDtoDepositMode = typeof UpdateServiceDtoDepositMode[keyof typeof UpdateServiceDtoDepositMode];
+export type AppRole = typeof AppRole[keyof typeof AppRole];
 
 
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const UpdateServiceDtoDepositMode = {
-  none: 'none',
-  required: 'required',
-  hybrid: 'hybrid',
+export const AppRole = {
+  platform_admin: 'platform_admin',
+  professional: 'professional',
+  staff: 'staff',
+  client: 'client',
 } as const;

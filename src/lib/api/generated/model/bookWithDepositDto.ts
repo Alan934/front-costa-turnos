@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { BookWithDepositDtoMethod } from './bookWithDepositDtoMethod';
+import type { PaymentOption } from './paymentOption';
 
 export interface BookWithDepositDto {
   /** person.id existente */
@@ -17,4 +18,6 @@ export interface BookWithDepositDto {
   serviceId: string;
   startAt: string;
   method: BookWithDepositDtoMethod;
+  /** deposit = seña, full = pago completo */
+  paymentOption?: PaymentOption;
 }
