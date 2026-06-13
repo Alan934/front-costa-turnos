@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { Comercio } from "@/lib/api/generated/model/comercio";
 import type { ComercioInvitation } from "@/lib/api/generated/model/comercioInvitation";
+import type { Membership } from "@/lib/api/generated/model/membership";
+import type { UpdateMembershipDto } from "@/lib/api/generated/model/updateMembershipDto";
 import type {
   MembershipWithComercio,
   MembershipWithProfessional,
@@ -32,6 +34,24 @@ export function useAcceptInvitation() {
   return useMutation({
     mutationFn: (token: string) =>
       customInstance({ url: "/v1/comercios/invitations/accept", method: "POST", data: { token } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-memberships"] }),
+  });
+}
+
+/**
+ * Editar la membresía propia en un comercio (Fase 3). Hoy solo la **ubicación propia**
+ * (`address`): texto = dónde atiende este profesional en ese comercio; `null`/`""` = la limpia
+ * y vuelve a usar la dirección del comercio. Se refleja en la página pública.
+ */
+export function useUpdateMyMembership(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateMembershipDto) =>
+      customInstance<Membership>({
+        url: `/v1/comercios/${comercioId}/membership`,
+        method: "PATCH",
+        data,
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["my-memberships"] }),
   });
 }

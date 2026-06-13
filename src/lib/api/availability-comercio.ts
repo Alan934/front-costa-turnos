@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { CreateScheduleRuleDto } from "@/lib/api/generated/model/createScheduleRuleDto";
+import type { UpdateScheduleRuleDto } from "@/lib/api/generated/model/updateScheduleRuleDto";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
 import type { CreateTimeOffDto } from "@/lib/api/generated/model/createTimeOffDto";
 
@@ -40,6 +41,20 @@ export function useCreateComercioScheduleRule(comercioId: string) {
       customInstance<ScheduleRule>({
         url: `/v1/comercios/${comercioId}/availability/schedule`,
         method: "POST",
+        data,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-schedule", comercioId] }),
+  });
+}
+
+export function useUpdateComercioScheduleRule(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    // `serviceIds`: omitido = sin cambios; `[]` = todos; con ids = solo esos.
+    mutationFn: ({ id, data }: { id: string; data: UpdateScheduleRuleDto }) =>
+      customInstance<ScheduleRule>({
+        url: `/v1/comercios/${comercioId}/availability/schedule/${id}`,
+        method: "PATCH",
         data,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-schedule", comercioId] }),

@@ -5,10 +5,12 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { PaymentAppointmentId } from './paymentAppointmentId';
 import type { PaymentType } from './paymentType';
 import type { PaymentMethod } from './paymentMethod';
 import type { PaymentStatus } from './paymentStatus';
+import type { Professional } from './professional';
+import type { PaymentAppointment } from './paymentAppointment';
+import type { Person } from './person';
 
 export interface Payment {
   id: string;
@@ -16,7 +18,7 @@ export interface Payment {
   updatedAt: string;
   professionalId: string;
   /** @nullable */
-  appointmentId?: PaymentAppointmentId;
+  appointmentId?: string | null;
   personId: string;
   type: PaymentType;
   amountCents: number;
@@ -26,4 +28,8 @@ export interface Payment {
   mercadopagoRef?: string | null;
   /** @nullable */
   paidAt?: string | null;
+  professional?: Professional;
+  /** @nullable */
+  appointment?: PaymentAppointment;
+  person?: Person;
 }

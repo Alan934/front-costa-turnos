@@ -5,15 +5,15 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { ComercioAccountId } from './comercioAccountId';
 import type { ComercioPublicPageSettings } from './comercioPublicPageSettings';
+import type { ComercioAccount } from './comercioAccount';
 
 export interface Comercio {
   id: string;
   createdAt: string;
   updatedAt: string;
   /** @nullable */
-  accountId?: ComercioAccountId;
+  accountId?: string | null;
   name: string;
   slug: string;
   /** @nullable */
@@ -21,4 +21,6 @@ export interface Comercio {
   timezone: string;
   isPersonal: boolean;
   publicPageSettings: ComercioPublicPageSettings;
+  /** @nullable */
+  account?: ComercioAccount;
 }

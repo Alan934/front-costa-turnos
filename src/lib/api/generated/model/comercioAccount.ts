@@ -5,8 +5,9 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { Account } from './account';
 
 /**
  * @nullable
  */
-export type StaffAccountId = { [key: string]: unknown } | null;
+export type ComercioAccount = Account | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, CalendarOff, Coffee, Briefcase, Building2 } from "lucide-react";
+import { Plus, Trash2, CalendarOff, Coffee, Briefcase, Building2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import { useComercioServices } from "@/lib/api/catalog";
 import {
   useComercioSchedule,
   useCreateComercioScheduleRule,
+  useUpdateComercioScheduleRule,
   useDeleteComercioScheduleRule,
   useComercioTimeOff,
   useCreateComercioTimeOff,
@@ -120,9 +121,11 @@ function DayRow({
   services: Service[];
 }) {
   const create = useCreateComercioScheduleRule(comercioId);
+  const update = useUpdateComercioScheduleRule(comercioId);
   const del = useDeleteComercioScheduleRule(comercioId);
   const works = rules.filter((r) => r.kind === ScheduleRuleKind.work);
-  const [addingWork, setAddingWork] = useState(false);
+  // null = cerrado; { rule } = editar esa franja; { rule: undefined } = agregar una nueva.
+  const [workDialog, setWorkDialog] = useState<{ rule?: ScheduleRule } | null>(null);
 
   function addBreak() {
     create.mutate({ dayOfWeek: day, startTime: "13:00", endTime: "14:00", kind: ScheduleRuleKind.break });
@@ -139,7 +142,7 @@ function DayRow({
           <span className="text-xs text-muted-foreground">Cerrado</span>
         ) : (
           <div className="flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setAddingWork(true)} disabled={create.isPending}>
+            <Button variant="ghost" size="sm" onClick={() => setWorkDialog({})} disabled={create.isPending}>
               <Briefcase className="size-3.5" />
               Franja
             </Button>
@@ -156,7 +159,7 @@ function DayRow({
       {rules.length === 0 ? (
         <button
           type="button"
-          onClick={() => setAddingWork(true)}
+          onClick={() => setWorkDialog({})}
           className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
         >
           <Plus className="size-3.5" />
@@ -168,23 +171,40 @@ function DayRow({
             .slice()
             .sort((a, b) => a.startTime.localeCompare(b.startTime))
             .map((r) => (
-              <RuleChip key={r.id} rule={r} services={services} onRemove={() => remove(r.id)} />
+              <RuleChip
+                key={r.id}
+                rule={r}
+                services={services}
+                onEdit={() => setWorkDialog({ rule: r })}
+                onRemove={() => remove(r.id)}
+              />
             ))}
         </div>
       )}
 
-      {addingWork && (
-        <AddWorkDialog
+      {workDialog && (
+        <WorkRuleDialog
           day={day}
           services={services}
-          pending={create.isPending}
-          onClose={() => setAddingWork(false)}
-          onSubmit={(startTime, endTime, serviceIds) =>
-            create.mutate(
-              { dayOfWeek: day, startTime, endTime, kind: ScheduleRuleKind.work, serviceIds },
-              { onSuccess: () => setAddingWork(false) },
-            )
-          }
+          rule={workDialog.rule}
+          pending={create.isPending || update.isPending}
+          onClose={() => setWorkDialog(null)}
+          onSubmit={(startTime, endTime, serviceIds) => {
+            const editing = workDialog.rule;
+            if (editing) {
+              // En breaks no aplica serviceIds (lo omitimos en el PATCH).
+              const isBreak = editing.kind === ScheduleRuleKind.break;
+              update.mutate(
+                { id: editing.id, data: isBreak ? { startTime, endTime } : { startTime, endTime, serviceIds } },
+                { onSuccess: () => setWorkDialog(null) },
+              );
+            } else {
+              create.mutate(
+                { dayOfWeek: day, startTime, endTime, kind: ScheduleRuleKind.work, serviceIds },
+                { onSuccess: () => setWorkDialog(null) },
+              );
+            }
+          }}
         />
       )}
     </div>
@@ -195,10 +215,12 @@ function DayRow({
 function RuleChip({
   rule,
   services,
+  onEdit,
   onRemove,
 }: {
   rule: ScheduleRule;
   services: Service[];
+  onEdit?: () => void;
   onRemove: () => void;
 }) {
   const isWork = rule.kind === ScheduleRuleKind.work;
@@ -231,6 +253,16 @@ function RuleChip({
             : "Todos los servicios"}
         </span>
       )}
+      {onEdit && (
+        <button
+          type="button"
+          aria-label="Editar franja"
+          onClick={onEdit}
+          className="ml-0.5 opacity-60 hover:opacity-100"
+        >
+          <Pencil className="size-3" />
+        </button>
+      )}
       <button
         type="button"
         aria-label="Quitar"
@@ -243,32 +275,45 @@ function RuleChip({
   );
 }
 
-/** Diálogo para agregar una franja de trabajo: horario + a qué servicios aplica. */
-function AddWorkDialog({
+/**
+ * Diálogo para agregar/editar una franja. Al CREAR siempre es una franja de trabajo (work);
+ * al EDITAR puede ser un descanso (break, `rule.kind`), en cuyo caso solo se ajusta el horario
+ * (sin mapeo de servicios).
+ */
+function WorkRuleDialog({
   day,
   services,
+  rule,
   pending,
   onClose,
   onSubmit,
 }: {
   day: number;
   services: Service[];
+  /** Si viene, editamos esa regla (precargada); si no, creamos una franja de trabajo nueva. */
+  rule?: ScheduleRule;
   pending: boolean;
   onClose: () => void;
   onSubmit: (startTime: string, endTime: string, serviceIds: string[]) => void;
 }) {
-  const [start, setStart] = useState("09:00");
-  const [end, setEnd] = useState("18:00");
+  const editing = !!rule;
+  const isBreak = rule?.kind === ScheduleRuleKind.break;
+  const noun = isBreak ? "descanso" : "franja";
+  const [start, setStart] = useState(rule?.startTime ?? "09:00");
+  const [end, setEnd] = useState(rule?.endTime ?? "18:00");
   // "all" = todos los servicios (serviceIds vacío); "some" = solo los marcados.
-  const [scope, setScope] = useState<"all" | "some">("all");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [scope, setScope] = useState<"all" | "some">(
+    rule && rule.serviceIds.length > 0 ? "some" : "all",
+  );
+  const [selected, setSelected] = useState<string[]>(rule?.serviceIds ?? []);
 
   function toggle(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   const validRange = start < end;
-  const canSubmit = validRange && (scope === "all" || selected.length > 0) && !pending;
+  // Los breaks no eligen servicios; solo validan el horario.
+  const canSubmit = validRange && (isBreak || scope === "all" || selected.length > 0) && !pending;
 
   function submit() {
     onSubmit(start, end, scope === "all" ? [] : selected);
@@ -278,9 +323,13 @@ function AddWorkDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Agregar franja — {DAYS[day]}</DialogTitle>
+          <DialogTitle>
+            {editing ? `Editar ${noun}` : "Agregar franja"} — {DAYS[day]}
+          </DialogTitle>
           <DialogDescription>
-            Elegí el horario y a qué servicios aplica esta franja de atención.
+            {isBreak
+              ? "Ajustá el horario de este descanso."
+              : "Elegí el horario y a qué servicios aplica esta franja de atención."}
           </DialogDescription>
         </DialogHeader>
 
@@ -299,52 +348,54 @@ function AddWorkDialog({
             <p className="text-xs text-destructive">La hora de fin debe ser posterior a la de inicio.</p>
           )}
 
-          <div>
-            <Label>¿A qué servicios aplica?</Label>
-            <div className="mt-1.5 space-y-2">
-              <ScopeOption
-                checked={scope === "all"}
-                onSelect={() => setScope("all")}
-                title="Todos los servicios"
-                hint="La franja sirve para cualquier servicio que ofrezcas."
-              />
-              <ScopeOption
-                checked={scope === "some"}
-                onSelect={() => setScope("some")}
-                title="Solo algunos servicios"
-                hint="Elegí en qué servicios se puede reservar en esta franja."
-                disabled={services.length === 0}
-              />
-            </div>
-
-            {scope === "some" && (
-              <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2.5">
-                {services.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Todavía no tenés servicios en este comercio.
-                  </p>
-                ) : (
-                  services.map((s) => (
-                    <label key={s.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(s.id)}
-                        onChange={() => toggle(s.id)}
-                        className="size-4 accent-[var(--color-accent)]"
-                      />
-                      {s.name}
-                    </label>
-                  ))
-                )}
+          {!isBreak && (
+            <div>
+              <Label>¿A qué servicios aplica?</Label>
+              <div className="mt-1.5 space-y-2">
+                <ScopeOption
+                  checked={scope === "all"}
+                  onSelect={() => setScope("all")}
+                  title="Todos los servicios"
+                  hint="La franja sirve para cualquier servicio que ofrezcas."
+                />
+                <ScopeOption
+                  checked={scope === "some"}
+                  onSelect={() => setScope("some")}
+                  title="Solo algunos servicios"
+                  hint="Elegí en qué servicios se puede reservar en esta franja."
+                  disabled={services.length === 0}
+                />
               </div>
-            )}
-          </div>
+
+              {scope === "some" && (
+                <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2.5">
+                  {services.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Todavía no tenés servicios en este comercio.
+                    </p>
+                  ) : (
+                    services.map((s) => (
+                      <label key={s.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected.includes(s.id)}
+                          onChange={() => toggle(s.id)}
+                          className="size-4 accent-[var(--color-accent)]"
+                        />
+                        {s.name}
+                      </label>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="p-6 pt-3">
           <Button className="w-full" disabled={!canSubmit} onClick={submit}>
             {pending ? <Spinner /> : null}
-            Agregar franja
+            {editing ? "Guardar cambios" : "Agregar franja"}
           </Button>
         </div>
       </DialogContent>

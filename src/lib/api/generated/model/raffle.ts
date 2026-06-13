@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { RaffleStatus } from './raffleStatus';
-import type { RaffleWinnerEntryId } from './raffleWinnerEntryId';
+import type { Professional } from './professional';
 
 export interface Raffle {
   id: string;
@@ -16,7 +16,8 @@ export interface Raffle {
   name: string;
   status: RaffleStatus;
   /** @nullable */
-  winnerEntryId?: RaffleWinnerEntryId;
+  winnerEntryId?: string | null;
   /** @nullable */
   finishedAt?: string | null;
+  professional?: Professional;
 }

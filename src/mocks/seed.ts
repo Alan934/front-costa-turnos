@@ -25,13 +25,13 @@ import { PaymentMethod } from "@/lib/api/generated/model/paymentMethod";
 import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
 import { SubscriptionPaymentStatus } from "@/lib/api/generated/model/subscriptionPaymentStatus";
 import type {
-  PublicPage,
-  StaffPublic,
   WaitingRoom,
   WaitingItem,
   MeResponse,
   EnrichedClient,
 } from "./contract-extensions";
+import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
+import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 
 const now = new Date();
 const iso = (d: Date) => d.toISOString();
@@ -65,6 +65,8 @@ export const professional: Professional = {
     address: "Belgrano 245, Costa de Araujo, Mendoza",
     phone: "+54 9 261 555-0245",
   },
+  mpAccessToken: null,
+  mpRefreshToken: null,
 };
 
 export const staff: Staff[] = [
@@ -137,28 +139,43 @@ export const services: Service[] = [
   },
 ];
 
-const staffPublic: StaffPublic[] = staff
-  .filter((s) => s.isActive)
-  .map((s) => ({ id: s.id, displayName: s.displayName }));
+// Fase 3: la página pública es por COMERCIO. El seed demo es un comercio-de-uno (un solo
+// profesional), así que `isPersonal: true` y un único item en `professionals`.
+const DEMO_ADDRESS = "Belgrano 245, Costa de Araujo, Mendoza";
 
-export function buildPublicPage(): PublicPage {
+export function buildComercioPublicPage(): ComercioPublicPageDto {
   return {
-    professional: {
-      id: professional.id,
-      businessName: professional.businessName,
-      slug: professional.slug,
-      timezone: professional.timezone,
-      defaultDepositMode: professional.defaultDepositMode,
-      cancellationWindowHours: professional.cancellationWindowHours,
-      branding: {
-        accentColor: "#16707A",
-        bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
-        address: "Belgrano 245, Costa de Araujo, Mendoza",
-        phone: "+54 9 261 555-0245",
-      },
+    comercioId: COMERCIO_ID,
+    name: professional.businessName,
+    slug: professional.slug,
+    timezone: professional.timezone,
+    address: DEMO_ADDRESS,
+    isPersonal: true,
+    settings: {
+      accentColor: "#16707A",
+      bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
+      phone: "+54 9 261 555-0245",
     },
+    professionals: [
+      {
+        membershipId: MEMBERSHIP_ID,
+        professionalId: professional.id,
+        displayName: professional.businessName,
+        address: DEMO_ADDRESS,
+      },
+    ],
+  };
+}
+
+/** Detalle de un profesional del comercio (servicios activos + ubicación). */
+export function buildProfessionalDetail(): PublicProfessionalDetailDto {
+  return {
+    membershipId: MEMBERSHIP_ID,
+    professionalId: professional.id,
+    displayName: professional.businessName,
+    address: DEMO_ADDRESS,
+    timezone: professional.timezone,
     services: services.filter((s) => s.isActive),
-    staff: staffPublic,
   };
 }
 
@@ -398,6 +415,8 @@ function adminRow(args: {
     defaultDepositMode: DepositMode.hybrid,
     cancellationWindowHours: 24,
     publicPageSettings: {},
+    mpAccessToken: null,
+    mpRefreshToken: null,
   };
   const sub: Subscription = {
     id: `sub_${args.id}`,

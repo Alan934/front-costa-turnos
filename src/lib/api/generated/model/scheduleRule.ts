@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { ScheduleRuleKind } from './scheduleRuleKind';
+import type { Staff } from './staff';
+import type { Membership } from './membership';
 
 export interface ScheduleRule {
   id: string;
@@ -18,4 +20,6 @@ export interface ScheduleRule {
   endTime: string;
   kind: ScheduleRuleKind;
   serviceIds: string[];
+  staff?: Staff;
+  membership?: Membership;
 }

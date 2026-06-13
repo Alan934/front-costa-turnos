@@ -8,6 +8,10 @@
 
 export interface ClaimAccountDto {
   email: string;
+  /**
+   * @minLength 6
+   * @maxLength 6
+   */
   code: string;
   /** @minLength 8 */
   password: string;

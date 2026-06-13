@@ -6,7 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type AuditLogAccountId = { [key: string]: unknown } | null;
+export type ComercioPublicPageDtoSettings = { [key: string]: unknown };

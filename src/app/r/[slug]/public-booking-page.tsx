@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   MapPin,
-  Phone,
   Clock3,
   Check,
   ChevronLeft,
@@ -19,8 +18,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { usePublicPage, usePublicSlots, useBookPublicWithDeposit } from "@/lib/api/public-booking";
-import { usePublicBookingBook } from "@/lib/api/generated/endpoints/public-booking/public-booking";
+import {
+  useComercioPublicPage,
+  usePublicProfessional,
+  usePublicProfessionalSlots,
+  useBookProfessional,
+  useBookProfessionalWithDeposit,
+} from "@/lib/api/public-booking";
 import { getPaymentOptions, paymentSummary, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
 import {
@@ -33,18 +37,20 @@ import {
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
-import type { PublicPage, StaffPublic, Slot } from "@/mocks/contract-extensions";
+import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
+import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
+import type { Slot } from "@/mocks/contract-extensions";
 
 type Step = 1 | 2 | 3 | 4;
 
 interface Selection {
+  professional: PublicProfessionalDto | null;
   service: Service | null;
-  staff: StaffPublic | null;
   slot: Slot | null;
 }
 
 export function PublicBookingPage({ slug }: { slug: string }) {
-  const { data, isLoading, isError, refetch } = usePublicPage(slug);
+  const { data, isLoading, isError, refetch } = useComercioPublicPage(slug);
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl px-4 pb-24 sm:px-6">
@@ -75,29 +81,28 @@ function TopBar() {
   );
 }
 
-function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
-  const [step, setStep] = useState<Step>(1);
-  const [sel, setSel] = useState<Selection>({ service: null, staff: null, slot: null });
+function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDto }) {
+  const professionals = page.professionals ?? [];
+  // Comercio-de-uno o con un solo profesional: autoseleccionamos y arrancamos en "Servicio".
+  const single = page.isPersonal || professionals.length === 1;
+  const soleProfessional = single ? (professionals[0] ?? null) : null;
+
+  const [step, setStep] = useState<Step>(single ? 2 : 1);
+  const [sel, setSel] = useState<Selection>({
+    professional: soleProfessional,
+    service: null,
+    slot: null,
+  });
   const [confirmed, setConfirmed] = useState<{ provisional: boolean } | null>(null);
 
-  const multiStaff = page.staff.length > 1;
-
-  // Avanza saltando el paso de staff si hay uno solo.
-  function pickService(service: Service) {
-    if (multiStaff) {
-      setSel({ service, staff: null, slot: null });
-      setStep(2);
-    } else {
-      setSel({ service, staff: page.staff[0], slot: null });
-      setStep(3);
-    }
+  function pickProfessional(professional: PublicProfessionalDto) {
+    setSel({ professional, service: null, slot: null });
+    setStep(2);
   }
-
-  function pickStaff(staff: StaffPublic) {
-    setSel((s) => ({ ...s, staff, slot: null }));
+  function pickService(service: Service) {
+    setSel((s) => ({ ...s, service, slot: null }));
     setStep(3);
   }
-
   function pickSlot(slot: Slot) {
     setSel((s) => ({ ...s, slot }));
     setStep(4);
@@ -105,53 +110,31 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
 
   function back() {
     if (step === 4) setStep(3);
-    else if (step === 3) setStep(multiStaff ? 2 : 1);
-    else if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+    else if (step === 2) setStep(single ? 2 : 1);
+  }
+
+  function reset() {
+    setConfirmed(null);
+    setSel({ professional: soleProfessional, service: null, slot: null });
+    setStep(single ? 2 : 1);
   }
 
   if (confirmed) {
-    return (
-      <Confirmation
-        page={page}
-        sel={sel}
-        provisional={confirmed.provisional}
-        onReset={() => {
-          setConfirmed(null);
-          setSel({ service: null, staff: null, slot: null });
-          setStep(1);
-        }}
-      />
-    );
+    return <Confirmation page={page} sel={sel} provisional={confirmed.provisional} onReset={reset} />;
   }
 
-  // Negocio nuevo / sin agenda configurada: no se puede reservar todavía.
-  if (page.services.length === 0 || page.staff.length === 0) {
+  // Comercio sin profesionales: no se puede reservar todavía.
+  if (professionals.length === 0) {
     return (
       <div>
-        <BusinessHeader page={page} />
+        <ComercioHeader page={page} />
         <div className="mt-6">
           <EmptyState
             icon={<CalendarX2 className="size-5" />}
             title="Todavía no se puede reservar"
             message="Este negocio aún está configurando su agenda. Volvé a intentar más tarde."
           />
-          {process.env.NODE_ENV !== "production" && (
-            <div className="mx-auto mt-4 max-w-md rounded-lg border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-              <p className="font-medium">Diagnóstico (solo en dev):</p>
-              <p>
-                Servicios recibidos: <strong>{page.services.length}</strong> · Staff recibido:{" "}
-                <strong>{page.staff.length}</strong>.
-              </p>
-              {page.staff.length === 0 && (
-                <p className="mt-1">
-                  Si el negocio ya tiene profesionales cargados, el backend{" "}
-                  <strong>no está devolviendo <code>staff</code> en <code>GET /r/{`{slug}`}</code></strong>.
-                  La reserva necesita el staff (para elegir profesional y calcular horarios). Revisá
-                  la consola para ver la respuesta cruda.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -159,11 +142,11 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
 
   return (
     <div>
-      <BusinessHeader page={page} />
-      <Stepper step={step} multiStaff={multiStaff} />
+      <ComercioHeader page={page} />
+      <Stepper step={step} single={single} />
 
       <div className="mt-6">
-        {step > 1 && (
+        {(step > 1 && !single) || (step > 2 && single) ? (
           <button
             type="button"
             onClick={back}
@@ -172,27 +155,26 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
             <ChevronLeft className="size-4" />
             Volver
           </button>
-        )}
+        ) : null}
 
-        {step === 1 && (
-          <ServiceStep services={page.services} onPick={pickService} />
+        {step === 1 && <ProfessionalStep professionals={professionals} onPick={pickProfessional} />}
+        {step === 2 && sel.professional && (
+          <ServiceStep slug={slug} membershipId={sel.professional.membershipId} onPick={pickService} />
         )}
-        {step === 2 && (
-          <StaffStep staff={page.staff} onPick={pickStaff} />
-        )}
-        {step === 3 && sel.service && sel.staff && (
+        {step === 3 && sel.professional && sel.service && (
           <SlotStep
             slug={slug}
+            membershipId={sel.professional.membershipId}
             service={sel.service}
-            staff={sel.staff}
+            professional={sel.professional}
             onPick={pickSlot}
           />
         )}
-        {step === 4 && sel.service && sel.staff && sel.slot && (
+        {step === 4 && sel.professional && sel.service && sel.slot && (
           <ConfirmStep
             slug={slug}
+            professional={sel.professional}
             service={sel.service}
-            staff={sel.staff}
             slot={sel.slot}
             onConfirmed={(provisional) => setConfirmed({ provisional })}
           />
@@ -202,41 +184,32 @@ function BookingShell({ slug, page }: { slug: string; page: PublicPage }) {
   );
 }
 
-/* ---------- Header del negocio ---------- */
-function BusinessHeader({ page }: { page: PublicPage }) {
-  const { professional } = page;
-  const b = professional.branding;
+/* ---------- Header del comercio ---------- */
+function ComercioHeader({ page }: { page: ComercioPublicPageDto }) {
+  const settings = (page.settings ?? {}) as { bio?: string; phone?: string };
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
-      <h1 className="font-display text-2xl font-semibold tracking-tight">
-        {professional.businessName}
-      </h1>
-      {b.bio && <p className="mt-1.5 text-sm text-muted-foreground">{b.bio}</p>}
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
-        {b.address && (
+      <h1 className="font-display text-2xl font-semibold tracking-tight">{page.name}</h1>
+      {settings.bio && <p className="mt-1.5 text-sm text-muted-foreground">{settings.bio}</p>}
+      {page.address && (
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="size-3.5 text-accent" />
-            {b.address}
+            {page.address}
           </span>
-        )}
-        {b.phone && (
-          <span className="inline-flex items-center gap-1.5">
-            <Phone className="size-3.5 text-accent" />
-            {b.phone}
-          </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------- Stepper ---------- */
-function Stepper({ step, multiStaff }: { step: Step; multiStaff: boolean }) {
-  const labels = multiStaff
-    ? ["Servicio", "Profesional", "Horario", "Confirmar"]
-    : ["Servicio", "Horario", "Confirmar"];
-  // Índice del paso actual dentro del set visible.
-  const current = multiStaff ? step - 1 : step === 1 ? 0 : step - 2;
+function Stepper({ step, single }: { step: Step; single: boolean }) {
+  const labels = single
+    ? ["Servicio", "Horario", "Confirmar"]
+    : ["Profesional", "Servicio", "Horario", "Confirmar"];
+  // Índice del paso actual dentro del set visible (en single, el paso 1 no existe).
+  const current = single ? step - 2 : step - 1;
 
   return (
     <ol className="mt-6 flex items-center gap-2" aria-label="Pasos de la reserva">
@@ -262,9 +235,7 @@ function Stepper({ step, multiStaff }: { step: Step; multiStaff: boolean }) {
             >
               {label}
             </span>
-            {i < labels.length - 1 && (
-              <span className="h-px flex-1 bg-border" aria-hidden />
-            )}
+            {i < labels.length - 1 && <span className="h-px flex-1 bg-border" aria-hidden />}
           </li>
         );
       })}
@@ -272,85 +243,38 @@ function Stepper({ step, multiStaff }: { step: Step; multiStaff: boolean }) {
   );
 }
 
-/* ---------- Paso 1: Servicio ---------- */
-function ServiceStep({
-  services,
+/* ---------- Paso 1: Profesional ---------- */
+function ProfessionalStep({
+  professionals,
   onPick,
 }: {
-  services: Service[];
-  onPick: (s: Service) => void;
-}) {
-  if (services.length === 0) {
-    return (
-      <EmptyState
-        title="Sin servicios disponibles"
-        message="Este negocio todavía no publicó servicios para reservar."
-      />
-    );
-  }
-  return (
-    <div>
-      <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
-      <div className="mt-4 space-y-3">
-        {services.map((s) => {
-          const summary = paymentSummary(s);
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onPick(s)}
-              className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{s.name}</p>
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock3 className="size-3.5" />
-                  {formatDuration(s.durationMinutes)}
-                </p>
-                {summary && (
-                  <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
-                    <Info className="size-3" />
-                    {summary}
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="font-display font-semibold tabular-nums">
-                  {formatMoney(s.priceCents)}
-                </p>
-                <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Paso 2: Profesional ---------- */
-function StaffStep({
-  staff,
-  onPick,
-}: {
-  staff: StaffPublic[];
-  onPick: (s: StaffPublic) => void;
+  professionals: PublicProfessionalDto[];
+  onPick: (p: PublicProfessionalDto) => void;
 }) {
   return (
     <div>
       <h2 className="font-display text-lg font-semibold">¿Con quién te atendés?</h2>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {staff.map((s) => (
+      <div className="mt-4 space-y-3">
+        {professionals.map((p) => (
           <button
-            key={s.id}
+            key={p.membershipId}
             type="button"
-            onClick={() => onPick(s)}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-5 text-center transition-colors hover:border-accent focus-visible:border-accent"
+            onClick={() => onPick(p)}
+            className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
           >
-            <span className="grid size-12 place-items-center rounded-full bg-muted font-display text-lg font-semibold text-foreground">
-              {s.displayName.charAt(0)}
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted font-display text-lg font-semibold text-foreground">
+              {p.displayName.charAt(0).toUpperCase()}
             </span>
-            <span className="text-sm font-medium">{s.displayName}</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{p.displayName}</p>
+              {p.address && (
+                <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="size-3.5" />
+                  {p.address}
+                </p>
+              )}
+            </div>
+            <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
           </button>
         ))}
       </div>
@@ -358,16 +282,96 @@ function StaffStep({
   );
 }
 
-/* ---------- Paso 3: Fecha y hora ---------- */
-function SlotStep({
+/* ---------- Paso 2: Servicio (del profesional elegido) ---------- */
+function ServiceStep({
   slug,
-  service,
-  staff,
+  membershipId,
   onPick,
 }: {
   slug: string;
+  membershipId: string;
+  onPick: (s: Service) => void;
+}) {
+  const { data, isLoading, isError, refetch } = usePublicProfessional(slug, membershipId);
+  const services = (data?.services ?? []).filter((s) => s.isActive);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+  if (isError) {
+    return <ErrorState message="No pudimos cargar los servicios." onRetry={() => refetch()} />;
+  }
+
+  return (
+    <div>
+      <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
+      {data?.address && (
+        <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
+          <MapPin className="size-3.5 text-accent" />
+          {data.displayName} · {data.address}
+        </p>
+      )}
+      {services.length === 0 ? (
+        <EmptyState
+          className="mt-4"
+          title="Sin servicios disponibles"
+          message="Este profesional todavía no publicó servicios para reservar."
+        />
+      ) : (
+        <div className="mt-4 space-y-3">
+          {services.map((s) => {
+            const summary = paymentSummary(s);
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => onPick(s)}
+                className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium">{s.name}</p>
+                  <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock3 className="size-3.5" />
+                    {formatDuration(s.durationMinutes)}
+                  </p>
+                  {summary && (
+                    <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
+                      <Info className="size-3" />
+                      {summary}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-display font-semibold tabular-nums">{formatMoney(s.priceCents)}</p>
+                  <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Paso 3: Fecha y hora ---------- */
+function SlotStep({
+  slug,
+  membershipId,
+  service,
+  professional,
+  onPick,
+}: {
+  slug: string;
+  membershipId: string;
   service: Service;
-  staff: StaffPublic;
+  professional: PublicProfessionalDto;
   onPick: (s: Slot) => void;
 }) {
   // Próximos 14 días como opciones de fecha.
@@ -385,8 +389,6 @@ function SlotStep({
 
   const [activeDay, setActiveDay] = useState<Date>(days[0]);
 
-  // Una sola consulta para todo el rango: sirve para los horarios del día activo y
-  // para saber qué días tienen atención (y marcar el resto como cerrado).
   const range = useMemo(() => {
     const from = new Date(days[0]);
     const to = new Date(days[days.length - 1]);
@@ -394,19 +396,15 @@ function SlotStep({
     return { from: from.toISOString(), to: to.toISOString() };
   }, [days]);
 
-  const { data: slots, isLoading, isError, refetch } = usePublicSlots(slug, {
-    staffId: staff.id,
+  const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(slug, membershipId, {
     serviceId: service.id,
     from: range.from,
     to: range.to,
   });
 
-  // Días (yyyy-MM-dd) que tienen al menos un slot.
   const daysWithSlots = useMemo(() => {
     const set = new Set<string>();
-    for (const s of slots ?? []) {
-      set.add(new Date(s.startAt).toDateString());
-    }
+    for (const s of slots ?? []) set.add(new Date(s.startAt).toDateString());
     return set;
   }, [slots]);
 
@@ -425,17 +423,13 @@ function SlotStep({
     <div>
       <h2 className="font-display text-lg font-semibold">Elegí día y hora</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {service.name} · {formatDuration(service.durationMinutes)}
-        {staff && <> · con {staff.displayName}</>}
+        {service.name} · {formatDuration(service.durationMinutes)} · con {professional.displayName}
       </p>
 
-      {/* Selector de día (scroll horizontal, mobile-first).
-          Días sin atención: atenuados, en rojo suave y no seleccionables. */}
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
         {days.map((d) => {
           const chip = formatDayChip(d);
           const active = isSameDay(d, activeDay);
-          // Solo marcamos "cerrado" una vez que tenemos datos del rango.
           const closed = !isLoading && !isError && !dayHasSlots(d);
           return (
             <button
@@ -444,34 +438,26 @@ function SlotStep({
               onClick={() => !closed && setActiveDay(d)}
               disabled={closed}
               aria-label={
-                closed
-                  ? `${chip.weekday} ${chip.day} — sin atención`
-                  : `${chip.weekday} ${chip.day}`
+                closed ? `${chip.weekday} ${chip.day} — sin atención` : `${chip.weekday} ${chip.day}`
               }
               className={cn(
                 "relative flex shrink-0 flex-col items-center rounded-xl border px-3.5 py-2.5 transition-colors",
                 active && "border-accent bg-accent/10 text-accent",
                 !active && closed &&
                   "cursor-not-allowed border-destructive/25 bg-destructive/5 text-destructive/60",
-                !active && !closed &&
-                  "border-border text-muted-foreground hover:border-accent/50",
+                !active && !closed && "border-border text-muted-foreground hover:border-accent/50",
               )}
             >
               <span className="text-[11px] uppercase">{chip.weekday}</span>
-              <span className="font-display text-base font-semibold tabular-nums">
-                {chip.day}
-              </span>
+              <span className="font-display text-base font-semibold tabular-nums">{chip.day}</span>
               {closed && (
-                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-wide">
-                  Cerrado
-                </span>
+                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-wide">Cerrado</span>
               )}
             </button>
           );
         })}
       </div>
 
-      {/* Horarios */}
       <div className="mt-4">
         {isLoading && (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -480,12 +466,7 @@ function SlotStep({
             ))}
           </div>
         )}
-        {isError && (
-          <ErrorState
-            message="No pudimos cargar los horarios."
-            onRetry={() => refetch()}
-          />
-        )}
+        {isError && <ErrorState message="No pudimos cargar los horarios." onRetry={() => refetch()} />}
         {!isLoading && !isError && daySlots.length === 0 && (
           <EmptyState
             icon={<CalendarX2 className="size-5" />}
@@ -515,14 +496,14 @@ function SlotStep({
 /* ---------- Paso 4: Confirmar ---------- */
 function ConfirmStep({
   slug,
+  professional,
   service,
-  staff,
   slot,
   onConfirmed,
 }: {
   slug: string;
+  professional: PublicProfessionalDto;
   service: Service;
-  staff: StaffPublic;
   slot: Slot;
   onConfirmed: (provisional: boolean) => void;
 }) {
@@ -533,8 +514,8 @@ function ConfirmStep({
   const hasNoPay = options.some((o) => o.choice === "none");
   const hasPaid = options.some((o) => o.requiresPayment);
 
-  const book = usePublicBookingBook();
-  const bookWithDeposit = useBookPublicWithDeposit(slug);
+  const book = useBookProfessional(slug, professional.membershipId);
+  const bookWithDeposit = useBookProfessionalWithDeposit(slug, professional.membershipId);
   const submitting = book.isPending || bookWithDeposit.isPending;
   const failed = book.isError || bookWithDeposit.isError;
 
@@ -545,7 +526,6 @@ function ConfirmStep({
       fullName: fullName.trim(),
       phone: phone.trim(),
       email: email.trim() || undefined,
-      staffId: staff.id,
       serviceId: service.id,
       startAt: slot.startAt,
     };
@@ -554,8 +534,7 @@ function ConfirmStep({
         { ...base, method: "mercadopago", paymentOption: option.paymentOption },
         {
           onSuccess: (res) => {
-            // El back devuelve el punto de pago de MercadoPago: redirigimos para abonar.
-            // En modo mock no salimos a MP: confirmamos el turno asegurado directamente.
+            // Redirigimos a MercadoPago para abonar (salvo en mock, que confirma directo).
             if (!env.mockingEnabled && res?.mpInitPoint) {
               window.location.href = res.mpInitPoint;
               return;
@@ -566,10 +545,7 @@ function ConfirmStep({
       );
     } else {
       // Sin pago: el turno puede quedar provisional (lo decide el back).
-      book.mutate(
-        { slug, data: base },
-        { onSuccess: (appt) => onConfirmed(!!appt?.isProvisional) },
-      );
+      book.mutate(base, { onSuccess: (appt) => onConfirmed(!!appt?.isProvisional) });
     }
   }
 
@@ -577,15 +553,14 @@ function ConfirmStep({
     <div>
       <h2 className="font-display text-lg font-semibold">Confirmá tu turno</h2>
 
-      {/* Resumen */}
       <div className="mt-4 rounded-xl border border-border bg-card p-4">
         <Row label="Servicio" value={service.name} />
-        <Row label="Profesional" value={staff.displayName} />
+        <Row label="Profesional" value={professional.displayName} />
+        {professional.address && <Row label="Dónde" value={professional.address} />}
         <Row label="Cuándo" value={`${formatDateLong(slot.startAt)} · ${formatTime(slot.startAt)}`} />
         <Row label="Precio" value={formatMoney(service.priceCents)} strong />
       </div>
 
-      {/* Si hay pago opcional, aclaramos que sin pagar queda provisional. */}
       {hasPaid && hasNoPay && (
         <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
@@ -602,7 +577,6 @@ function ConfirmStep({
         </div>
       )}
 
-      {/* Datos del cliente */}
       <div className="mt-5 space-y-3">
         <div>
           <Label htmlFor="fullName">Nombre y apellido</Label>
@@ -649,7 +623,6 @@ function ConfirmStep({
         </p>
       )}
 
-      {/* Acciones: solo las opciones de pago habilitadas por el profesional. */}
       <div className="mt-6 space-y-2.5">
         {options.map((opt, i) => {
           const label =
@@ -665,7 +638,6 @@ function ConfirmStep({
               key={opt.choice}
               className="w-full"
               size="lg"
-              // El primer botón (o el único) es el primario; el resto, secundario.
               variant={i === 0 ? "default" : "outline"}
               disabled={!canSubmit || submitting}
               onClick={() => submit(opt)}
@@ -696,7 +668,7 @@ function Confirmation({
   provisional,
   onReset,
 }: {
-  page: PublicPage;
+  page: ComercioPublicPageDto;
   sel: Selection;
   provisional: boolean;
   onReset: () => void;
@@ -714,21 +686,21 @@ function Confirmation({
       <h2 className="mt-4 font-display text-2xl font-semibold">
         {provisional ? "Turno provisional reservado" : "¡Turno confirmado!"}
       </h2>
-      {sel.service && sel.staff && sel.slot && (
+      {sel.service && sel.professional && sel.slot && (
         <p className="mt-2 text-muted-foreground">
-          {sel.service.name} con {sel.staff.displayName}
+          {sel.service.name} con {sel.professional.displayName}
           <br />
           {formatDateLong(sel.slot.startAt)} · {formatTime(sel.slot.startAt)}
         </p>
       )}
       {provisional && (
         <p className="mx-auto mt-4 max-w-sm rounded-xl border border-warning/40 bg-warning/10 p-3.5 text-sm text-warning-foreground">
-          Recordá: sin seña tu turno es provisional y puede ser tomado por quien abone.
-          Te enviamos los datos para asegurarlo.
+          Recordá: sin seña tu turno es provisional y puede ser tomado por quien abone. Te enviamos
+          los datos para asegurarlo.
         </p>
       )}
       <p className="mt-4 text-sm text-muted-foreground">
-        Te avisaremos por WhatsApp. {page.professional.businessName} te espera.
+        Te avisaremos por WhatsApp. {page.name} te espera.
       </p>
       <Button variant="outline" className="mt-6" onClick={onReset}>
         Reservar otro turno

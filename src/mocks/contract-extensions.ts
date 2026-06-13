@@ -156,6 +156,8 @@ export interface MembershipWithComercio {
   professionalId: string;
   comercioId: string;
   status: "invited" | "active" | "inactive";
+  /** Ubicación propia del profesional en este comercio (Fase 3). null = usa la del comercio. */
+  address?: string | null;
   comercio?: {
     id: string;
     name: string;

@@ -30,7 +30,8 @@ import type {
   CreateScheduleRuleDto,
   CreateTimeOffDto,
   ScheduleRule,
-  TimeOff
+  TimeOff,
+  UpdateScheduleRuleDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -826,6 +827,71 @@ export const useComercioAvailabilityCreateScheduleRule = <TError = ErrorType<unk
       > => {
 
       const mutationOptions = getComercioAvailabilityCreateScheduleRuleMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Editar regla de horario in-place (incluye remapear serviceIds)
+ */
+export const comercioAvailabilityUpdateScheduleRule = (
+    comercioId: unknown,
+    id: string,
+    updateScheduleRuleDto: BodyType<UpdateScheduleRuleDto>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<ScheduleRule>(
+      {url: `/v1/comercios/${comercioId}/availability/schedule/${id}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateScheduleRuleDto
+    },
+      options);
+    }
+  
+
+
+export const getComercioAvailabilityUpdateScheduleRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateScheduleRuleDto>}, TContext> => {
+
+const mutationKey = ['comercioAvailabilityUpdateScheduleRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>, {comercioId: unknown;id: string;data: BodyType<UpdateScheduleRuleDto>}> = (props) => {
+          const {comercioId,id,data} = props ?? {};
+
+          return  comercioAvailabilityUpdateScheduleRule(comercioId,id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioAvailabilityUpdateScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>>
+    export type ComercioAvailabilityUpdateScheduleRuleMutationBody = BodyType<UpdateScheduleRuleDto>
+    export type ComercioAvailabilityUpdateScheduleRuleMutationError = ErrorType<void>
+
+    /**
+ * @summary Editar regla de horario in-place (incluye remapear serviceIds)
+ */
+export const useComercioAvailabilityUpdateScheduleRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioAvailabilityUpdateScheduleRule>>,
+        TError,
+        {comercioId: unknown;id: string;data: BodyType<UpdateScheduleRuleDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioAvailabilityUpdateScheduleRuleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -5,6 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { Professional } from './professional';
+import type { Membership } from './membership';
 
 export interface Service {
   id: string;
@@ -21,4 +23,6 @@ export interface Service {
   /** @nullable */
   depositAmountCents?: number | null;
   isActive: boolean;
+  professional?: Professional;
+  membership?: Membership;
 }

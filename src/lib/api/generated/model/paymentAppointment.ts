@@ -5,8 +5,9 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { Appointment } from './appointment';
 
-export interface PublicStaffDto {
-  id: string;
-  displayName: string;
-}
+/**
+ * @nullable
+ */
+export type PaymentAppointment = Appointment | null;

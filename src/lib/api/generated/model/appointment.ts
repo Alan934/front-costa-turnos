@@ -8,6 +8,12 @@
 import type { AppointmentStatus } from './appointmentStatus';
 import type { AppointmentCancellationReason } from './appointmentCancellationReason';
 import type { CreatedVia } from './createdVia';
+import type { Professional } from './professional';
+import type { Comercio } from './comercio';
+import type { Membership } from './membership';
+import type { Staff } from './staff';
+import type { Person } from './person';
+import type { Service } from './service';
 
 export interface Appointment {
   id: string;
@@ -28,4 +34,10 @@ export interface Appointment {
   /** @nullable */
   actualStartAt?: string | null;
   createdVia: CreatedVia;
+  professional?: Professional;
+  comercio?: Comercio;
+  membership?: Membership;
+  staff?: Staff;
+  person?: Person;
+  service?: Service;
 }

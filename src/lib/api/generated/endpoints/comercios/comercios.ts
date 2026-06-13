@@ -30,7 +30,8 @@ import type {
   ComercioInvitation,
   InviteProfessionalDto,
   Membership,
-  UpdateComercioDto
+  UpdateComercioDto,
+  UpdateMembershipDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -194,6 +195,71 @@ export const useComerciosAccept = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getComerciosAcceptMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * El profesional edita su propia membresía en el comercio donde es miembro activo.
+ * @summary Editar mi membresía en un comercio (p.ej. mi dirección propia)
+ */
+export const comerciosUpdateMyMembership = (
+    comercioId: string,
+    updateMembershipDto: BodyType<UpdateMembershipDto>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<Membership>(
+      {url: `/v1/comercios/${comercioId}/membership`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateMembershipDto
+    },
+      options);
+    }
+  
+
+
+export const getComerciosUpdateMyMembershipMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext> => {
+
+const mutationKey = ['comerciosUpdateMyMembership'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, {comercioId: string;data: BodyType<UpdateMembershipDto>}> = (props) => {
+          const {comercioId,data} = props ?? {};
+
+          return  comerciosUpdateMyMembership(comercioId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComerciosUpdateMyMembershipMutationResult = NonNullable<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>>
+    export type ComerciosUpdateMyMembershipMutationBody = BodyType<UpdateMembershipDto>
+    export type ComerciosUpdateMyMembershipMutationError = ErrorType<void>
+
+    /**
+ * @summary Editar mi membresía en un comercio (p.ej. mi dirección propia)
+ */
+export const useComerciosUpdateMyMembership = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comerciosUpdateMyMembership>>,
+        TError,
+        {comercioId: string;data: BodyType<UpdateMembershipDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComerciosUpdateMyMembershipMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

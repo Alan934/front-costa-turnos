@@ -12,5 +12,6 @@ export interface UpdateProfessionalDto {
   timezone?: string;
   address?: string;
   defaultDepositMode?: UpdateProfessionalDtoDefaultDepositMode;
+  /** @minimum 0 */
   cancellationWindowHours?: number;
 }

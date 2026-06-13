@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type RaffleEntryPersonId = { [key: string]: unknown } | null;
+export type PublicBookingSlotsFlatParams = {
+serviceId: string;
+from: string;
+to: string;
+};

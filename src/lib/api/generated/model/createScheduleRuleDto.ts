@@ -8,7 +8,11 @@
 import type { CreateScheduleRuleDtoKind } from './createScheduleRuleDtoKind';
 
 export interface CreateScheduleRuleDto {
-  /** 0=domingo ... 6=sabado */
+  /**
+   * 0=domingo ... 6=sabado
+   * @minimum 0
+   * @maximum 6
+   */
   dayOfWeek: number;
   startTime: string;
   endTime: string;

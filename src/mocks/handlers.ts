@@ -7,7 +7,8 @@ import {
   staff,
   professional,
   fichaFields,
-  buildPublicPage,
+  buildComercioPublicPage,
+  buildProfessionalDetail,
   buildWaitingRoom,
   me,
   clientUser,
@@ -147,6 +148,48 @@ function createBooking(
   };
   appointments.push(appointment);
   return appointment;
+}
+
+/** Slots a partir de los query params de una request (sirve a las rutas con/sin membershipId). */
+function slotsFromRequest(request: Request) {
+  const u = new URL(request.url);
+  return generateSlots({
+    serviceId: u.searchParams.get("serviceId") ?? undefined,
+    from: u.searchParams.get("from") ?? undefined,
+    to: u.searchParams.get("to") ?? undefined,
+  });
+}
+
+/** Resultado de book-with-deposit: turno asegurado + pago + initPoint de MercadoPago. */
+function bookWithDepositResult(body: Record<string, unknown>) {
+  const appointment = createBooking(body, { provisional: false });
+  const method = String(body.method ?? "mercadopago");
+  const fullPayment = body.paymentOption === "full";
+  const svc = services.find((s) => s.id === appointment.serviceId);
+  const payment: Payment = {
+    id: `pay_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    professionalId: professional.id,
+    appointmentId: appointment.id as unknown as Payment["appointmentId"],
+    personId: appointment.personId,
+    type: fullPayment ? "service" : "deposit",
+    amountCents: fullPayment ? (svc?.priceCents ?? 0) : (svc?.depositAmountCents ?? 0),
+    method: method === "cash" ? "cash" : "mercadopago",
+    status: PaymentStatus.pending,
+    mercadopagoRef: null,
+    paidAt: null,
+  };
+  payments.push(payment);
+  return {
+    appointment,
+    payment,
+    // Extensión del front: punto de pago directo para el cliente anónimo (ver API-GAPS).
+    mpInitPoint:
+      method === "mercadopago"
+        ? `https://www.mercadopago.com.ar/checkout/dep-mock/${payment.id}`
+        : null,
+  };
 }
 
 /** Cambia el estado de un turno en memoria y lo devuelve (o 404). */
@@ -304,58 +347,40 @@ export const handlers: RequestHandler[] = [
     return tokensFor("client");
   }),
 
-  // ---- Página pública de reserva (héroe 1) ----
-  http.get(url(`/r/${SLUG}`), () => HttpResponse.json(buildPublicPage())),
+  // ---- Página pública de reserva por comercio (Fase 3) ----
   http.get(url("/r/:slug"), ({ params }) =>
     params.slug === SLUG
-      ? HttpResponse.json(buildPublicPage())
+      ? HttpResponse.json(buildComercioPublicPage())
       : new HttpResponse(null, { status: 404 }),
   ),
-  http.get(url("/r/:slug/slots"), ({ request }) => {
-    const u = new URL(request.url);
-    return HttpResponse.json(
-      generateSlots({
-        staffId: u.searchParams.get("staffId") ?? undefined,
-        serviceId: u.searchParams.get("serviceId") ?? undefined,
-        from: u.searchParams.get("from") ?? undefined,
-        to: u.searchParams.get("to") ?? undefined,
-      }),
-    );
+  // Detalle de un profesional del comercio (servicios + ubicación).
+  http.get(url("/r/:slug/professionals/:membershipId"), ({ params }) =>
+    params.slug === SLUG
+      ? HttpResponse.json(buildProfessionalDetail())
+      : new HttpResponse(null, { status: 404 }),
+  ),
+  // Slots del profesional (rutas con :membershipId + las planas deprecated).
+  http.get(url("/r/:slug/professionals/:membershipId/slots"), ({ request }) =>
+    HttpResponse.json(slotsFromRequest(request)),
+  ),
+  http.get(url("/r/:slug/slots"), ({ request }) => HttpResponse.json(slotsFromRequest(request))),
+  // Reserva sin pago.
+  http.post(url("/r/:slug/professionals/:membershipId/book"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    return HttpResponse.json(createBooking(body), { status: 201 });
   }),
   http.post(url("/r/:slug/book"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     return HttpResponse.json(createBooking(body), { status: 201 });
   }),
+  // Reserva con seña/pago total.
+  http.post(url("/r/:slug/professionals/:membershipId/book-with-deposit"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    return HttpResponse.json(bookWithDepositResult(body));
+  }),
   http.post(url("/r/:slug/book-with-deposit"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-    const appointment = createBooking(body, { provisional: false });
-    const method = String(body.method ?? "mercadopago");
-    const fullPayment = body.paymentOption === "full";
-    const svc = services.find((s) => s.id === appointment.serviceId);
-    const payment: Payment = {
-      id: `pay_${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      professionalId: professional.id,
-      appointmentId: appointment.id as unknown as Payment["appointmentId"],
-      personId: appointment.personId,
-      type: fullPayment ? "service" : "deposit",
-      amountCents: fullPayment ? (svc?.priceCents ?? 0) : (svc?.depositAmountCents ?? 0),
-      method: method === "cash" ? "cash" : "mercadopago",
-      status: PaymentStatus.pending,
-      mercadopagoRef: null,
-      paidAt: null,
-    };
-    payments.push(payment);
-    return HttpResponse.json({
-      appointment,
-      payment,
-      // Extensión del front: punto de pago directo para el cliente anónimo (ver API-GAPS).
-      mpInitPoint:
-        method === "mercadopago"
-          ? `https://www.mercadopago.com.ar/checkout/dep-mock/${payment.id}`
-          : null,
-    });
+    return HttpResponse.json(bookWithDepositResult(body));
   }),
 
   // ---- Disponibilidad (agenda — héroe 3) ----

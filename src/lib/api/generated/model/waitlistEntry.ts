@@ -5,9 +5,11 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { WaitlistEntryStaffId } from './waitlistEntryStaffId';
-import type { WaitlistEntryServiceId } from './waitlistEntryServiceId';
 import type { WaitlistStatus } from './waitlistStatus';
+import type { Professional } from './professional';
+import type { WaitlistEntryStaff } from './waitlistEntryStaff';
+import type { Person } from './person';
+import type { WaitlistEntryService } from './waitlistEntryService';
 
 export interface WaitlistEntry {
   id: string;
@@ -15,11 +17,17 @@ export interface WaitlistEntry {
   updatedAt: string;
   professionalId: string;
   /** @nullable */
-  staffId?: WaitlistEntryStaffId;
+  staffId?: string | null;
   personId: string;
   /** @nullable */
-  serviceId?: WaitlistEntryServiceId;
+  serviceId?: string | null;
   desiredFrom: string;
   desiredTo: string;
   status: WaitlistStatus;
+  professional?: Professional;
+  /** @nullable */
+  staff?: WaitlistEntryStaff;
+  person?: Person;
+  /** @nullable */
+  service?: WaitlistEntryService;
 }

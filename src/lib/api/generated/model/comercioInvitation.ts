@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { InvitationStatus } from './invitationStatus';
+import type { Comercio } from './comercio';
 
 export interface ComercioInvitation {
   id: string;
@@ -17,4 +18,6 @@ export interface ComercioInvitation {
   expiresAt: string;
   /** @nullable */
   acceptedAt?: string | null;
+  comercio?: Comercio;
+  token: string;
 }

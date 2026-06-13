@@ -1,114 +1,92 @@
 /**
- * Wrappers tipados sobre el cliente generado para la reserva pública.
- * El contrato deja `GET /r/{slug}` y `/slots` como `void` (ver API-GAPS §1); acá
- * adaptamos los hooks generados a los tipos provisionales (PublicPage, Slot) para que
- * las pantallas trabajen tipadas. Cuando el back tipe el spec, esto se simplifica.
+ * Wrappers tipados para la reserva pública por COMERCIO (Fase 3).
+ *
+ * `/r/:slug` resuelve un comercio. El flujo es: comercio → elegir profesional (membership) →
+ * sus servicios → slots → reservar, todo con `membershipId`. El contrato ahora SÍ tipa estas
+ * respuestas (`ComercioPublicPageDto`, `PublicProfessionalDetailDto`, …), así que ya no hace
+ * falta normalizar a mano. Las rutas planas `/r/:slug/{slots,book}` quedaron `deprecated`.
+ *
+ * Hechos a mano (en vez de usar los hooks generados) para controlar queryKeys y tipos de slot.
  */
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
-import type { BookWithDepositDto } from "@/lib/api/generated/model/bookWithDepositDto";
-import type { Service } from "@/lib/api/generated/model/service";
-import type { PublicPage, Slot, StaffPublic, BookWithDepositResult } from "@/mocks/contract-extensions";
+import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
+import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
+import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
+import type { PublicBookWithDepositDto } from "@/lib/api/generated/model/publicBookWithDepositDto";
+import type { Slot, BookWithDepositResult } from "@/mocks/contract-extensions";
+import type { Appointment } from "@/lib/api/generated/model/appointment";
 
-const asObject = (v: unknown): Record<string, unknown> =>
-  v && typeof v === "object" ? (v as Record<string, unknown>) : {};
-const asArray = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
-const asString = (v: unknown, d = ""): string => (typeof v === "string" ? v : d);
-const asNumber = (v: unknown, d = 0): number => (typeof v === "number" ? v : d);
-
-/**
- * Normaliza `GET /r/{slug}` a nuestro `PublicPage`. El contrato lo deja `void` y la respuesta
- * real es plana (`{ businessName, slug, timezone, settings, services }`, sin `professional`
- * anidado y sin `staff` garantizado). Toleramos ambas formas y completamos faltantes para no
- * romper si el negocio es nuevo (sin servicios/staff).
- */
-function normalizePublicPage(raw: unknown): PublicPage {
-  const root = asObject(raw);
-  const pro = asObject(root.professional ?? root);
-  const settings = asObject(root.settings ?? pro.publicPageSettings ?? pro.branding ?? root.branding);
-
-  // Probamos varios nombres posibles para staff/servicios (el contrato no los tipa).
-  const rawServices = root.services ?? pro.services ?? settings.services;
-  const rawStaff =
-    root.staff ?? pro.staff ?? root.staffMembers ?? root.professionals ?? root.team ?? settings.staff;
-
-  if (process.env.NODE_ENV !== "production") {
-    const nS = asArray(rawServices).length;
-    const nStaff = asArray(rawStaff).length;
-    if (nS === 0 || nStaff === 0) {
-      // Si falta algo, dejamos a la vista la respuesta cruda para diagnosticar la forma.
-      console.warn(
-        `[/r/:slug] servicios=${nS} staff=${nStaff}. Si el negocio está configurado, el back ` +
-          `probablemente no devuelve "staff" (o "services") en /r/:slug. Respuesta cruda:`,
-        raw,
-      );
-    }
-  }
-
-  return {
-    professional: {
-      id: asString(pro.id ?? root.id),
-      businessName: asString(pro.businessName ?? root.businessName),
-      slug: asString(pro.slug ?? root.slug),
-      timezone: asString(pro.timezone ?? root.timezone, "America/Argentina/Buenos_Aires"),
-      defaultDepositMode: (pro.defaultDepositMode ?? root.defaultDepositMode ?? "none") as PublicPage["professional"]["defaultDepositMode"],
-      cancellationWindowHours: asNumber(pro.cancellationWindowHours ?? root.cancellationWindowHours, 24),
-      branding: {
-        accentColor: asString(settings.accentColor) || undefined,
-        coverImageUrl: asString(settings.coverImageUrl) || undefined,
-        logoFileId: asString(settings.logoFileId) || undefined,
-        bio: asString(settings.bio) || undefined,
-        // address pasó a ser top-level del professional (no en settings).
-        address: asString(root.address ?? pro.address ?? settings.address) || undefined,
-        phone: asString(settings.phone) || undefined,
-      },
-    },
-    services: asArray<Service>(rawServices),
-    staff: asArray<StaffPublic>(rawStaff),
-  };
-}
-
-export function usePublicPage(slug: string) {
+/** Página del comercio: datos + lista de profesionales (`/r/:slug`). */
+export function useComercioPublicPage(slug: string) {
   return useQuery({
-    queryKey: ["public-page", slug],
-    queryFn: async ({ signal }) => {
-      const raw = await customInstance<unknown>({ url: `/r/${slug}`, method: "GET", signal });
-      return normalizePublicPage(raw);
-    },
+    queryKey: ["comercio-public-page", slug],
+    queryFn: ({ signal }) =>
+      customInstance<ComercioPublicPageDto>({ url: `/r/${slug}`, method: "GET", signal }),
     enabled: !!slug,
   });
 }
 
-export interface SlotsQuery {
-  staffId: string;
+/** Detalle de un profesional del comercio: servicios + ubicación resuelta. */
+export function usePublicProfessional(slug: string, membershipId: string | null) {
+  return useQuery({
+    queryKey: ["public-professional", slug, membershipId],
+    queryFn: ({ signal }) =>
+      customInstance<PublicProfessionalDetailDto>({
+        url: `/r/${slug}/professionals/${membershipId}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!slug && !!membershipId,
+  });
+}
+
+export interface ProfessionalSlotsQuery {
   serviceId: string;
   from: string;
   to: string;
 }
 
-export function usePublicSlots(slug: string, params: SlotsQuery | null) {
+/** Slots de un profesional para un servicio (`/r/:slug/professionals/:membershipId/slots`). */
+export function usePublicProfessionalSlots(
+  slug: string,
+  membershipId: string | null,
+  params: ProfessionalSlotsQuery | null,
+) {
   return useQuery({
-    queryKey: ["public-slots", slug, params],
+    queryKey: ["public-professional-slots", slug, membershipId, params],
     queryFn: ({ signal }) =>
       customInstance<Slot[]>({
-        url: `/r/${slug}/slots`,
+        url: `/r/${slug}/professionals/${membershipId}/slots`,
         method: "GET",
         params: params ?? undefined,
         signal,
       }),
-    enabled: !!slug && !!params,
+    enabled: !!slug && !!membershipId && !!params,
+  });
+}
+
+/** Reserva sin pago (eligiendo profesional). Puede quedar provisional (lo decide el back). */
+export function useBookProfessional(slug: string, membershipId: string) {
+  return useMutation({
+    mutationFn: (data: PublicBookDto) =>
+      customInstance<Appointment>({
+        url: `/r/${slug}/professionals/${membershipId}/book`,
+        method: "POST",
+        data,
+      }),
   });
 }
 
 /**
- * Reserva con seña desde la página pública. Devuelve `{ appointment, payment, mpInitPoint? }`.
- * orval tipa la respuesta como `void` (el contrato no la describe), así que la tipamos acá.
+ * Reserva con seña/pago total (eligiendo profesional). Devuelve `{ appointment, payment,
+ * mpInitPoint? }`. `mpInitPoint` es una extensión del front para redirigir a MercadoPago.
  */
-export function useBookPublicWithDeposit(slug: string) {
+export function useBookProfessionalWithDeposit(slug: string, membershipId: string) {
   return useMutation({
-    mutationFn: (data: BookWithDepositDto) =>
+    mutationFn: (data: PublicBookWithDepositDto) =>
       customInstance<BookWithDepositResult>({
-        url: `/r/${slug}/book-with-deposit`,
+        url: `/r/${slug}/professionals/${membershipId}/book-with-deposit`,
         method: "POST",
         data,
       }),

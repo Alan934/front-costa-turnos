@@ -5,20 +5,20 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { NotificationProfessionalId } from './notificationProfessionalId';
-import type { NotificationPersonId } from './notificationPersonId';
 import type { NotificationChannel } from './notificationChannel';
 import type { NotificationType } from './notificationType';
 import type { NotificationPayload } from './notificationPayload';
 import type { NotificationStatus } from './notificationStatus';
+import type { NotificationProfessional } from './notificationProfessional';
+import type { NotificationPerson } from './notificationPerson';
 
 export interface Notification {
   id: string;
   createdAt: string;
   /** @nullable */
-  professionalId?: NotificationProfessionalId;
+  professionalId?: string | null;
   /** @nullable */
-  personId?: NotificationPersonId;
+  personId?: string | null;
   channel: NotificationChannel;
   type: NotificationType;
   payload: NotificationPayload;
@@ -27,4 +27,8 @@ export interface Notification {
   attempts: number;
   /** @nullable */
   sentAt?: string | null;
+  /** @nullable */
+  professional?: NotificationProfessional;
+  /** @nullable */
+  person?: NotificationPerson;
 }

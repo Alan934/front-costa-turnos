@@ -13,7 +13,10 @@ export interface RegisterProfessionalDto {
   fullName: string;
   /** nombre visible del profesional */
   businessName: string;
-  /** slug único para su página propia */
+  /**
+   * slug único para su página propia
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
   slug: string;
   timezone?: string;
   address?: string;

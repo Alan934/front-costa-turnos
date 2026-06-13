@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export type PublicPageDtoSettings = { [key: string]: unknown };
+export type ProfessionalClientFichaValues = { [key: string]: unknown };

@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 import type { MembershipStatus } from './membershipStatus';
+import type { Professional } from './professional';
+import type { Comercio } from './comercio';
 
 export interface Membership {
   id: string;
@@ -14,4 +16,8 @@ export interface Membership {
   professionalId: string;
   comercioId: string;
   status: MembershipStatus;
+  /** @nullable */
+  address?: string | null;
+  professional?: Professional;
+  comercio?: Comercio;
 }

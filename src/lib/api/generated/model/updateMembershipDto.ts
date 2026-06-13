@@ -6,13 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface ResetPasswordDto {
-  email: string;
+export interface UpdateMembershipDto {
   /**
-   * @minLength 6
-   * @maxLength 6
+   * Dirección propia en este comercio. null/"" = usa la del comercio (fallback).
+   * @nullable
    */
-  code: string;
-  /** @minLength 8 */
-  newPassword: string;
+  address?: string | null;
 }

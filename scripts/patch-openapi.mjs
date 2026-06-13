@@ -11,9 +11,11 @@
  * path lo declara, le agrega un `parameters` a NIVEL de path con la definición de `comercioId`.
  * Es idempotente: si ya está declarado (Fase 2), no toca nada.
  *
- * Pedirle al back que declare `comercioId` también en los 4 controllers de Fase 1 para poder
- * borrar este script. (El dedupe de operationIds que hacía antes ya NO hace falta: el back
- * arregló la operationIdFactory a controller+método.)
+ * Además colapsa el doble prefijo `/v1/v1/...` → `/v1/...` que el back a veces emite (la ruta
+ * real es `/v1/`, pero el spec sale duplicado por global-prefix + versioning).
+ *
+ * Pedirle al back que (a) declare `comercioId` en los 4 controllers de Fase 1 y (b) no duplique
+ * el prefijo `/v1` en el spec, para poder borrar este script.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -24,6 +26,18 @@ const file = resolve(here, "..", "openapi.json");
 
 const spec = JSON.parse(readFileSync(file, "utf8"));
 const METHODS = ["get", "post", "patch", "delete", "put", "options", "head"];
+
+// Colapsa el doble prefijo de versión `/v1/v1/...` → `/v1/...`. El back a veces emite el spec
+// con `/v1/v1/` (global prefix + versioning duplicados) aunque la ruta REAL sea `/v1/`. Sin esto
+// orval generaría URLs `/v1/v1/...` que dan 404. Idempotente: si no hay `/v1/v1/`, no toca nada.
+let collapsed = 0;
+const fixedPaths = {};
+for (const [path, item] of Object.entries(spec.paths ?? {})) {
+  const fixed = path.replace(/^\/v1\/v1\//, "/v1/");
+  if (fixed !== path) collapsed++;
+  fixedPaths[fixed] = item;
+}
+spec.paths = fixedPaths;
 
 let patched = 0;
 for (const [path, item] of Object.entries(spec.paths ?? {})) {
@@ -49,9 +63,11 @@ for (const [path, item] of Object.entries(spec.paths ?? {})) {
   patched++;
 }
 
-if (patched > 0) {
+if (patched > 0 || collapsed > 0) {
   writeFileSync(file, JSON.stringify(spec, null, 2) + "\n", "utf8");
-  console.log(`[patch-openapi] comercioId agregado a ${patched} path(s).`);
+  console.log(
+    `[patch-openapi] comercioId agregado a ${patched} path(s); ${collapsed} path(s) /v1/v1→/v1.`,
+  );
 } else {
-  console.log("[patch-openapi] nada que parchear (comercioId ya declarado).");
+  console.log("[patch-openapi] nada que parchear.");
 }

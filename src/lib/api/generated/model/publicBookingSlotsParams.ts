@@ -7,7 +7,6 @@
  */
 
 export type PublicBookingSlotsParams = {
-staffId: string;
 serviceId: string;
 from: string;
 to: string;
