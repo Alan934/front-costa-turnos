@@ -25,7 +25,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  ComputeSlotsParams,
+  AvailabilityComputeSlotsParams,
+  ComercioAvailabilityComputeSlotsParams,
   CreateScheduleRuleDto,
   CreateTimeOffDto,
   ScheduleRule,
@@ -43,8 +44,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Calcular slots disponibles
  */
-export const computeSlots = (
-    params: ComputeSlotsParams,
+export const availabilityComputeSlots = (
+    params: AvailabilityComputeSlotsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -59,69 +60,69 @@ export const computeSlots = (
 
 
 
-export const getComputeSlotsQueryKey = (params?: ComputeSlotsParams,) => {
+export const getAvailabilityComputeSlotsQueryKey = (params?: AvailabilityComputeSlotsParams,) => {
     return [
     `/v1/availability/slots`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getComputeSlotsQueryOptions = <TData = Awaited<ReturnType<typeof computeSlots>>, TError = ErrorType<void>>(params: ComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAvailabilityComputeSlotsQueryOptions = <TData = Awaited<ReturnType<typeof availabilityComputeSlots>>, TError = ErrorType<void>>(params: AvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getComputeSlotsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getAvailabilityComputeSlotsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof computeSlots>>> = ({ signal }) => computeSlots(params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof availabilityComputeSlots>>> = ({ signal }) => availabilityComputeSlots(params, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ComputeSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof computeSlots>>>
-export type ComputeSlotsQueryError = ErrorType<void>
+export type AvailabilityComputeSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof availabilityComputeSlots>>>
+export type AvailabilityComputeSlotsQueryError = ErrorType<void>
 
 
-export function useComputeSlots<TData = Awaited<ReturnType<typeof computeSlots>>, TError = ErrorType<void>>(
- params: ComputeSlotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData>> & Pick<
+export function useAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof availabilityComputeSlots>>, TError = ErrorType<void>>(
+ params: AvailabilityComputeSlotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof computeSlots>>,
+          Awaited<ReturnType<typeof availabilityComputeSlots>>,
           TError,
-          Awaited<ReturnType<typeof computeSlots>>
+          Awaited<ReturnType<typeof availabilityComputeSlots>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useComputeSlots<TData = Awaited<ReturnType<typeof computeSlots>>, TError = ErrorType<void>>(
- params: ComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData>> & Pick<
+export function useAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof availabilityComputeSlots>>, TError = ErrorType<void>>(
+ params: AvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof computeSlots>>,
+          Awaited<ReturnType<typeof availabilityComputeSlots>>,
           TError,
-          Awaited<ReturnType<typeof computeSlots>>
+          Awaited<ReturnType<typeof availabilityComputeSlots>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useComputeSlots<TData = Awaited<ReturnType<typeof computeSlots>>, TError = ErrorType<void>>(
- params: ComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof availabilityComputeSlots>>, TError = ErrorType<void>>(
+ params: AvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Calcular slots disponibles
  */
 
-export function useComputeSlots<TData = Awaited<ReturnType<typeof computeSlots>>, TError = ErrorType<void>>(
- params: ComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof computeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof availabilityComputeSlots>>, TError = ErrorType<void>>(
+ params: AvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getComputeSlotsQueryOptions(params,options)
+  const queryOptions = getAvailabilityComputeSlotsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -136,7 +137,7 @@ export function useComputeSlots<TData = Awaited<ReturnType<typeof computeSlots>>
 /**
  * @summary Listar reglas de horario del staff
  */
-export const listSchedule = (
+export const availabilityListSchedule = (
     staffId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -151,69 +152,69 @@ export const listSchedule = (
 
 
 
-export const getListScheduleQueryKey = (staffId?: string,) => {
+export const getAvailabilityListScheduleQueryKey = (staffId?: string,) => {
     return [
     `/v1/availability/staff/${staffId}/schedule`
     ] as const;
     }
 
     
-export const getListScheduleQueryOptions = <TData = Awaited<ReturnType<typeof listSchedule>>, TError = ErrorType<void>>(staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAvailabilityListScheduleQueryOptions = <TData = Awaited<ReturnType<typeof availabilityListSchedule>>, TError = ErrorType<void>>(staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListScheduleQueryKey(staffId);
+  const queryKey =  queryOptions?.queryKey ?? getAvailabilityListScheduleQueryKey(staffId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSchedule>>> = ({ signal }) => listSchedule(staffId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof availabilityListSchedule>>> = ({ signal }) => availabilityListSchedule(staffId, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(staffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(staffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof listSchedule>>>
-export type ListScheduleQueryError = ErrorType<void>
+export type AvailabilityListScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof availabilityListSchedule>>>
+export type AvailabilityListScheduleQueryError = ErrorType<void>
 
 
-export function useListSchedule<TData = Awaited<ReturnType<typeof listSchedule>>, TError = ErrorType<void>>(
- staffId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData>> & Pick<
+export function useAvailabilityListSchedule<TData = Awaited<ReturnType<typeof availabilityListSchedule>>, TError = ErrorType<void>>(
+ staffId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listSchedule>>,
+          Awaited<ReturnType<typeof availabilityListSchedule>>,
           TError,
-          Awaited<ReturnType<typeof listSchedule>>
+          Awaited<ReturnType<typeof availabilityListSchedule>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListSchedule<TData = Awaited<ReturnType<typeof listSchedule>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData>> & Pick<
+export function useAvailabilityListSchedule<TData = Awaited<ReturnType<typeof availabilityListSchedule>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listSchedule>>,
+          Awaited<ReturnType<typeof availabilityListSchedule>>,
           TError,
-          Awaited<ReturnType<typeof listSchedule>>
+          Awaited<ReturnType<typeof availabilityListSchedule>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListSchedule<TData = Awaited<ReturnType<typeof listSchedule>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityListSchedule<TData = Awaited<ReturnType<typeof availabilityListSchedule>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar reglas de horario del staff
  */
 
-export function useListSchedule<TData = Awaited<ReturnType<typeof listSchedule>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityListSchedule<TData = Awaited<ReturnType<typeof availabilityListSchedule>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListScheduleQueryOptions(staffId,options)
+  const queryOptions = getAvailabilityListScheduleQueryOptions(staffId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -228,7 +229,7 @@ export function useListSchedule<TData = Awaited<ReturnType<typeof listSchedule>>
 /**
  * @summary Crear regla de horario para el staff
  */
-export const createScheduleRule = (
+export const availabilityCreateScheduleRule = (
     staffId: string,
     createScheduleRuleDto: BodyType<CreateScheduleRuleDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -245,11 +246,11 @@ export const createScheduleRule = (
   
 
 
-export const getCreateScheduleRuleMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext> => {
+export const getAvailabilityCreateScheduleRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext> => {
 
-const mutationKey = ['createScheduleRule'];
+const mutationKey = ['availabilityCreateScheduleRule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -259,10 +260,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createScheduleRule>>, {staffId: string;data: BodyType<CreateScheduleRuleDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof availabilityCreateScheduleRule>>, {staffId: string;data: BodyType<CreateScheduleRuleDto>}> = (props) => {
           const {staffId,data} = props ?? {};
 
-          return  createScheduleRule(staffId,data,requestOptions)
+          return  availabilityCreateScheduleRule(staffId,data,requestOptions)
         }
 
         
@@ -270,30 +271,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof createScheduleRule>>>
-    export type CreateScheduleRuleMutationBody = BodyType<CreateScheduleRuleDto>
-    export type CreateScheduleRuleMutationError = ErrorType<void>
+    export type AvailabilityCreateScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof availabilityCreateScheduleRule>>>
+    export type AvailabilityCreateScheduleRuleMutationBody = BodyType<CreateScheduleRuleDto>
+    export type AvailabilityCreateScheduleRuleMutationError = ErrorType<void>
 
     /**
  * @summary Crear regla de horario para el staff
  */
-export const useCreateScheduleRule = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAvailabilityCreateScheduleRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateScheduleRule>>, TError,{staffId: string;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createScheduleRule>>,
+        Awaited<ReturnType<typeof availabilityCreateScheduleRule>>,
         TError,
         {staffId: string;data: BodyType<CreateScheduleRuleDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateScheduleRuleMutationOptions(options);
+      const mutationOptions = getAvailabilityCreateScheduleRuleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Eliminar regla de horario del staff
  */
-export const deleteScheduleRule = (
+export const availabilityDeleteScheduleRule = (
     staffId: string,
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -307,11 +308,11 @@ export const deleteScheduleRule = (
   
 
 
-export const getDeleteScheduleRuleMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScheduleRule>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteScheduleRule>>, TError,{staffId: string;id: string}, TContext> => {
+export const getAvailabilityDeleteScheduleRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>, TError,{staffId: string;id: string}, TContext> => {
 
-const mutationKey = ['deleteScheduleRule'];
+const mutationKey = ['availabilityDeleteScheduleRule'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -321,10 +322,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteScheduleRule>>, {staffId: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>, {staffId: string;id: string}> = (props) => {
           const {staffId,id} = props ?? {};
 
-          return  deleteScheduleRule(staffId,id,requestOptions)
+          return  availabilityDeleteScheduleRule(staffId,id,requestOptions)
         }
 
         
@@ -332,30 +333,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof deleteScheduleRule>>>
+    export type AvailabilityDeleteScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>>
     
-    export type DeleteScheduleRuleMutationError = ErrorType<void>
+    export type AvailabilityDeleteScheduleRuleMutationError = ErrorType<void>
 
     /**
  * @summary Eliminar regla de horario del staff
  */
-export const useDeleteScheduleRule = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScheduleRule>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAvailabilityDeleteScheduleRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteScheduleRule>>,
+        Awaited<ReturnType<typeof availabilityDeleteScheduleRule>>,
         TError,
         {staffId: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getDeleteScheduleRuleMutationOptions(options);
+      const mutationOptions = getAvailabilityDeleteScheduleRuleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar bloqueos de tiempo del staff
  */
-export const listTimeOff = (
+export const availabilityListTimeOff = (
     staffId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -370,69 +371,69 @@ export const listTimeOff = (
 
 
 
-export const getListTimeOffQueryKey = (staffId?: string,) => {
+export const getAvailabilityListTimeOffQueryKey = (staffId?: string,) => {
     return [
     `/v1/availability/staff/${staffId}/time-off`
     ] as const;
     }
 
     
-export const getListTimeOffQueryOptions = <TData = Awaited<ReturnType<typeof listTimeOff>>, TError = ErrorType<void>>(staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAvailabilityListTimeOffQueryOptions = <TData = Awaited<ReturnType<typeof availabilityListTimeOff>>, TError = ErrorType<void>>(staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListTimeOffQueryKey(staffId);
+  const queryKey =  queryOptions?.queryKey ?? getAvailabilityListTimeOffQueryKey(staffId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTimeOff>>> = ({ signal }) => listTimeOff(staffId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof availabilityListTimeOff>>> = ({ signal }) => availabilityListTimeOff(staffId, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(staffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(staffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListTimeOffQueryResult = NonNullable<Awaited<ReturnType<typeof listTimeOff>>>
-export type ListTimeOffQueryError = ErrorType<void>
+export type AvailabilityListTimeOffQueryResult = NonNullable<Awaited<ReturnType<typeof availabilityListTimeOff>>>
+export type AvailabilityListTimeOffQueryError = ErrorType<void>
 
 
-export function useListTimeOff<TData = Awaited<ReturnType<typeof listTimeOff>>, TError = ErrorType<void>>(
- staffId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData>> & Pick<
+export function useAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof availabilityListTimeOff>>, TError = ErrorType<void>>(
+ staffId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTimeOff>>,
+          Awaited<ReturnType<typeof availabilityListTimeOff>>,
           TError,
-          Awaited<ReturnType<typeof listTimeOff>>
+          Awaited<ReturnType<typeof availabilityListTimeOff>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTimeOff<TData = Awaited<ReturnType<typeof listTimeOff>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData>> & Pick<
+export function useAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof availabilityListTimeOff>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listTimeOff>>,
+          Awaited<ReturnType<typeof availabilityListTimeOff>>,
           TError,
-          Awaited<ReturnType<typeof listTimeOff>>
+          Awaited<ReturnType<typeof availabilityListTimeOff>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListTimeOff<TData = Awaited<ReturnType<typeof listTimeOff>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof availabilityListTimeOff>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar bloqueos de tiempo del staff
  */
 
-export function useListTimeOff<TData = Awaited<ReturnType<typeof listTimeOff>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof availabilityListTimeOff>>, TError = ErrorType<void>>(
+ staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof availabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTimeOffQueryOptions(staffId,options)
+  const queryOptions = getAvailabilityListTimeOffQueryOptions(staffId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -447,7 +448,7 @@ export function useListTimeOff<TData = Awaited<ReturnType<typeof listTimeOff>>, 
 /**
  * @summary Crear bloqueo de tiempo para el staff
  */
-export const createTimeOff = (
+export const availabilityCreateTimeOff = (
     staffId: string,
     createTimeOffDto: BodyType<CreateTimeOffDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -464,11 +465,11 @@ export const createTimeOff = (
   
 
 
-export const getCreateTimeOffMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext> => {
+export const getAvailabilityCreateTimeOffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext> => {
 
-const mutationKey = ['createTimeOff'];
+const mutationKey = ['availabilityCreateTimeOff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -478,10 +479,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTimeOff>>, {staffId: string;data: BodyType<CreateTimeOffDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof availabilityCreateTimeOff>>, {staffId: string;data: BodyType<CreateTimeOffDto>}> = (props) => {
           const {staffId,data} = props ?? {};
 
-          return  createTimeOff(staffId,data,requestOptions)
+          return  availabilityCreateTimeOff(staffId,data,requestOptions)
         }
 
         
@@ -489,30 +490,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof createTimeOff>>>
-    export type CreateTimeOffMutationBody = BodyType<CreateTimeOffDto>
-    export type CreateTimeOffMutationError = ErrorType<void>
+    export type AvailabilityCreateTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof availabilityCreateTimeOff>>>
+    export type AvailabilityCreateTimeOffMutationBody = BodyType<CreateTimeOffDto>
+    export type AvailabilityCreateTimeOffMutationError = ErrorType<void>
 
     /**
  * @summary Crear bloqueo de tiempo para el staff
  */
-export const useCreateTimeOff = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAvailabilityCreateTimeOff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityCreateTimeOff>>, TError,{staffId: string;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createTimeOff>>,
+        Awaited<ReturnType<typeof availabilityCreateTimeOff>>,
         TError,
         {staffId: string;data: BodyType<CreateTimeOffDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateTimeOffMutationOptions(options);
+      const mutationOptions = getAvailabilityCreateTimeOffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Eliminar bloqueo de tiempo del staff
  */
-export const deleteTimeOff = (
+export const availabilityDeleteTimeOff = (
     staffId: string,
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -526,11 +527,11 @@ export const deleteTimeOff = (
   
 
 
-export const getDeleteTimeOffMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeOff>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteTimeOff>>, TError,{staffId: string;id: string}, TContext> => {
+export const getAvailabilityDeleteTimeOffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteTimeOff>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteTimeOff>>, TError,{staffId: string;id: string}, TContext> => {
 
-const mutationKey = ['deleteTimeOff'];
+const mutationKey = ['availabilityDeleteTimeOff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -540,10 +541,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTimeOff>>, {staffId: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof availabilityDeleteTimeOff>>, {staffId: string;id: string}> = (props) => {
           const {staffId,id} = props ?? {};
 
-          return  deleteTimeOff(staffId,id,requestOptions)
+          return  availabilityDeleteTimeOff(staffId,id,requestOptions)
         }
 
         
@@ -551,23 +552,561 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTimeOff>>>
+    export type AvailabilityDeleteTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof availabilityDeleteTimeOff>>>
     
-    export type DeleteTimeOffMutationError = ErrorType<void>
+    export type AvailabilityDeleteTimeOffMutationError = ErrorType<void>
 
     /**
  * @summary Eliminar bloqueo de tiempo del staff
  */
-export const useDeleteTimeOff = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTimeOff>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAvailabilityDeleteTimeOff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof availabilityDeleteTimeOff>>, TError,{staffId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteTimeOff>>,
+        Awaited<ReturnType<typeof availabilityDeleteTimeOff>>,
         TError,
         {staffId: string;id: string},
         TContext
       > => {
 
-      const mutationOptions = getDeleteTimeOffMutationOptions(options);
+      const mutationOptions = getAvailabilityDeleteTimeOffMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Calcular slots disponibles del profesional en este comercio
+ */
+export const comercioAvailabilityComputeSlots = (
+    comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/comercios/${comercioId}/availability/slots`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioAvailabilityComputeSlotsQueryKey = (comercioId?: unknown,
+    params?: ComercioAvailabilityComputeSlotsParams,) => {
+    return [
+    `/v1/comercios/${comercioId}/availability/slots`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getComercioAvailabilityComputeSlotsQueryOptions = <TData = Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError = ErrorType<unknown>>(comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioAvailabilityComputeSlotsQueryKey(comercioId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>> = ({ signal }) => comercioAvailabilityComputeSlots(comercioId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioAvailabilityComputeSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>>
+export type ComercioAvailabilityComputeSlotsQueryError = ErrorType<unknown>
+
+
+export function useComercioAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError = ErrorType<unknown>>(
+ comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError = ErrorType<unknown>>(
+ comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError = ErrorType<unknown>>(
+ comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Calcular slots disponibles del profesional en este comercio
+ */
+
+export function useComercioAvailabilityComputeSlots<TData = Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError = ErrorType<unknown>>(
+ comercioId: unknown,
+    params: ComercioAvailabilityComputeSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityComputeSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioAvailabilityComputeSlotsQueryOptions(comercioId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Listar reglas de horario (con serviceIds; vacío = todos)
+ */
+export const comercioAvailabilityListSchedule = (
+    comercioId: unknown,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ScheduleRule[]>(
+      {url: `/v1/comercios/${comercioId}/availability/schedule`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioAvailabilityListScheduleQueryKey = (comercioId?: unknown,) => {
+    return [
+    `/v1/comercios/${comercioId}/availability/schedule`
+    ] as const;
+    }
+
+    
+export const getComercioAvailabilityListScheduleQueryOptions = <TData = Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError = ErrorType<unknown>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioAvailabilityListScheduleQueryKey(comercioId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>> = ({ signal }) => comercioAvailabilityListSchedule(comercioId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioAvailabilityListScheduleQueryResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>>
+export type ComercioAvailabilityListScheduleQueryError = ErrorType<unknown>
+
+
+export function useComercioAvailabilityListSchedule<TData = Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityListSchedule<TData = Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityListSchedule<TData = Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar reglas de horario (con serviceIds; vacío = todos)
+ */
+
+export function useComercioAvailabilityListSchedule<TData = Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListSchedule>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioAvailabilityListScheduleQueryOptions(comercioId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear regla de horario (serviceIds opcional: aplica a esos servicios o a todos)
+ */
+export const comercioAvailabilityCreateScheduleRule = (
+    comercioId: unknown,
+    createScheduleRuleDto: BodyType<CreateScheduleRuleDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ScheduleRule>(
+      {url: `/v1/comercios/${comercioId}/availability/schedule`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createScheduleRuleDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getComercioAvailabilityCreateScheduleRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>, TError,{comercioId: unknown;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>, TError,{comercioId: unknown;data: BodyType<CreateScheduleRuleDto>}, TContext> => {
+
+const mutationKey = ['comercioAvailabilityCreateScheduleRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>, {comercioId: unknown;data: BodyType<CreateScheduleRuleDto>}> = (props) => {
+          const {comercioId,data} = props ?? {};
+
+          return  comercioAvailabilityCreateScheduleRule(comercioId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioAvailabilityCreateScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>>
+    export type ComercioAvailabilityCreateScheduleRuleMutationBody = BodyType<CreateScheduleRuleDto>
+    export type ComercioAvailabilityCreateScheduleRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Crear regla de horario (serviceIds opcional: aplica a esos servicios o a todos)
+ */
+export const useComercioAvailabilityCreateScheduleRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>, TError,{comercioId: unknown;data: BodyType<CreateScheduleRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioAvailabilityCreateScheduleRule>>,
+        TError,
+        {comercioId: unknown;data: BodyType<CreateScheduleRuleDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioAvailabilityCreateScheduleRuleMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Eliminar regla de horario
+ */
+export const comercioAvailabilityDeleteScheduleRule = (
+    comercioId: unknown,
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/comercios/${comercioId}/availability/schedule/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getComercioAvailabilityDeleteScheduleRuleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>, TError,{comercioId: unknown;id: string}, TContext> => {
+
+const mutationKey = ['comercioAvailabilityDeleteScheduleRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>, {comercioId: unknown;id: string}> = (props) => {
+          const {comercioId,id} = props ?? {};
+
+          return  comercioAvailabilityDeleteScheduleRule(comercioId,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioAvailabilityDeleteScheduleRuleMutationResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>>
+    
+    export type ComercioAvailabilityDeleteScheduleRuleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Eliminar regla de horario
+ */
+export const useComercioAvailabilityDeleteScheduleRule = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioAvailabilityDeleteScheduleRule>>,
+        TError,
+        {comercioId: unknown;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioAvailabilityDeleteScheduleRuleMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Listar bloqueos de tiempo
+ */
+export const comercioAvailabilityListTimeOff = (
+    comercioId: unknown,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<TimeOff[]>(
+      {url: `/v1/comercios/${comercioId}/availability/time-off`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioAvailabilityListTimeOffQueryKey = (comercioId?: unknown,) => {
+    return [
+    `/v1/comercios/${comercioId}/availability/time-off`
+    ] as const;
+    }
+
+    
+export const getComercioAvailabilityListTimeOffQueryOptions = <TData = Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError = ErrorType<unknown>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioAvailabilityListTimeOffQueryKey(comercioId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>> = ({ signal }) => comercioAvailabilityListTimeOff(comercioId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioAvailabilityListTimeOffQueryResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>>
+export type ComercioAvailabilityListTimeOffQueryError = ErrorType<unknown>
+
+
+export function useComercioAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>,
+          TError,
+          Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar bloqueos de tiempo
+ */
+
+export function useComercioAvailabilityListTimeOff<TData = Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioAvailabilityListTimeOff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioAvailabilityListTimeOffQueryOptions(comercioId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear bloqueo de tiempo
+ */
+export const comercioAvailabilityCreateTimeOff = (
+    comercioId: unknown,
+    createTimeOffDto: BodyType<CreateTimeOffDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<TimeOff>(
+      {url: `/v1/comercios/${comercioId}/availability/time-off`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createTimeOffDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getComercioAvailabilityCreateTimeOffMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>, TError,{comercioId: unknown;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>, TError,{comercioId: unknown;data: BodyType<CreateTimeOffDto>}, TContext> => {
+
+const mutationKey = ['comercioAvailabilityCreateTimeOff'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>, {comercioId: unknown;data: BodyType<CreateTimeOffDto>}> = (props) => {
+          const {comercioId,data} = props ?? {};
+
+          return  comercioAvailabilityCreateTimeOff(comercioId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioAvailabilityCreateTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>>
+    export type ComercioAvailabilityCreateTimeOffMutationBody = BodyType<CreateTimeOffDto>
+    export type ComercioAvailabilityCreateTimeOffMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Crear bloqueo de tiempo
+ */
+export const useComercioAvailabilityCreateTimeOff = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>, TError,{comercioId: unknown;data: BodyType<CreateTimeOffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioAvailabilityCreateTimeOff>>,
+        TError,
+        {comercioId: unknown;data: BodyType<CreateTimeOffDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioAvailabilityCreateTimeOffMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Eliminar bloqueo de tiempo
+ */
+export const comercioAvailabilityDeleteTimeOff = (
+    comercioId: unknown,
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/comercios/${comercioId}/availability/time-off/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getComercioAvailabilityDeleteTimeOffMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>, TError,{comercioId: unknown;id: string}, TContext> => {
+
+const mutationKey = ['comercioAvailabilityDeleteTimeOff'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>, {comercioId: unknown;id: string}> = (props) => {
+          const {comercioId,id} = props ?? {};
+
+          return  comercioAvailabilityDeleteTimeOff(comercioId,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioAvailabilityDeleteTimeOffMutationResult = NonNullable<Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>>
+    
+    export type ComercioAvailabilityDeleteTimeOffMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Eliminar bloqueo de tiempo
+ */
+export const useComercioAvailabilityDeleteTimeOff = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioAvailabilityDeleteTimeOff>>,
+        TError,
+        {comercioId: unknown;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioAvailabilityDeleteTimeOffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

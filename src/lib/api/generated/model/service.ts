@@ -11,6 +11,7 @@ export interface Service {
   createdAt: string;
   updatedAt: string;
   professionalId: string;
+  membershipId: string;
   name: string;
   durationMinutes: number;
   priceCents: number;

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
-import { useRequestPasswordReset, useResetPassword } from "@/lib/api/generated/endpoints/auth/auth";
+import { useAuthRequestPasswordReset, useAuthResetPassword } from "@/lib/api/generated/endpoints/auth/auth";
 
 type Step = "email" | "codigo" | "listo";
 
@@ -21,8 +21,8 @@ export function RecoverPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const requestReset = useRequestPasswordReset();
-  const reset = useResetPassword();
+  const requestReset = useAuthRequestPasswordReset();
+  const reset = useAuthResetPassword();
 
   function sendCode(e: React.FormEvent) {
     e.preventDefault();

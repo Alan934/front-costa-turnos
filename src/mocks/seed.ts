@@ -44,6 +44,10 @@ const at = (hours: number, minutes = 0, dayOffset = 0) => {
 
 export const PROFESSIONAL_ID = "pro_pueblo";
 export const SLUG = "peluqueria-del-pueblo";
+// Fase 2: el comercio-de-uno del profesional demo y su membresía en él. Los servicios/horarios/
+// turnos del seed cuelgan de esta membresía (modelo por-comercio).
+export const COMERCIO_ID = "com_pueblo";
+export const MEMBERSHIP_ID = "mem_pueblo_self";
 
 export const professional: Professional = {
   id: PROFESSIONAL_ID,
@@ -91,6 +95,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    membershipId: MEMBERSHIP_ID,
     name: "Corte de pelo",
     durationMinutes: 30,
     priceCents: 800000,
@@ -105,6 +110,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    membershipId: MEMBERSHIP_ID,
     name: "Corte + barba",
     durationMinutes: 45,
     priceCents: 1200000,
@@ -119,6 +125,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    membershipId: MEMBERSHIP_ID,
     name: "Color + lavado",
     durationMinutes: 90,
     priceCents: 2500000,
@@ -209,6 +216,8 @@ export const appointments: Appointment[] = [
     createdAt: iso(at(8, 0)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
     staffId: "staff_lucia",
     personId: "per_sofia",
     serviceId: "svc_color",
@@ -224,6 +233,8 @@ export const appointments: Appointment[] = [
     createdAt: iso(at(8, 30)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
     staffId: "staff_lucia",
     personId: "per_martin",
     serviceId: "svc_corte_barba",
@@ -238,6 +249,8 @@ export const appointments: Appointment[] = [
     createdAt: iso(at(9, 0)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
     staffId: "staff_lucia",
     personId: "per_juan",
     serviceId: "svc_corte",
@@ -282,6 +295,8 @@ export const appointments: Appointment[] = [
           createdAt: iso(at(8, 0, offset - 1)),
           updatedAt: iso(now),
           professionalId: PROFESSIONAL_ID,
+          comercioId: COMERCIO_ID,
+          membershipId: MEMBERSHIP_ID,
           staffId,
           personId: names[n % names.length],
           serviceId: svc.id,
@@ -516,10 +531,13 @@ export const scheduleRules: ScheduleRule[] = (() => {
         createdAt: iso(now),
         updatedAt: iso(now),
         staffId,
+        membershipId: MEMBERSHIP_ID,
         dayOfWeek: day,
         startTime: "09:00",
         endTime: day === 6 ? "13:00" : "18:00",
         kind: ScheduleRuleKind.work,
+        // serviceIds vacío = la regla aplica a todos los servicios de la membresía.
+        serviceIds: [],
       });
       // pausa de almuerzo (salvo sábado)
       if (day !== 6) {
@@ -528,10 +546,12 @@ export const scheduleRules: ScheduleRule[] = (() => {
           createdAt: iso(now),
           updatedAt: iso(now),
           staffId,
+          membershipId: MEMBERSHIP_ID,
           dayOfWeek: day,
           startTime: "13:00",
           endTime: "14:00",
           kind: ScheduleRuleKind.break,
+          serviceIds: [],
         });
       }
     }
@@ -546,6 +566,7 @@ export const timeOffs: TimeOff[] = [
     createdAt: iso(now),
     updatedAt: iso(now),
     staffId: "staff_lucia",
+    membershipId: MEMBERSHIP_ID,
     startAt: iso(at(0, 0, 9)),
     endAt: iso(at(23, 59, 16)),
     // El contrato tipa reason como objeto|null (ver API-GAPS §1b); guardamos el texto.
@@ -556,6 +577,7 @@ export const timeOffs: TimeOff[] = [
     createdAt: iso(now),
     updatedAt: iso(now),
     staffId: "staff_tomas",
+    membershipId: MEMBERSHIP_ID,
     startAt: iso(at(15, 0, 2)),
     endAt: iso(at(18, 0, 2)),
     reason: "Turno médico" as unknown as TimeOff["reason"],

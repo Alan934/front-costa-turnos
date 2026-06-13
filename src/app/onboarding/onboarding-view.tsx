@@ -20,11 +20,11 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
 import {
-  useOnboard,
-  useListStaff,
-  useCreateStaff,
+  useProfessionalsOnboard,
+  useProfessionalsListStaff,
+  useProfessionalsCreateStaff,
 } from "@/lib/api/generated/endpoints/professionals/professionals";
-import { createScheduleRule } from "@/lib/api/generated/endpoints/availability/availability";
+import { availabilityCreateScheduleRule } from "@/lib/api/generated/endpoints/availability/availability";
 import { useServices, useCreateService } from "@/lib/api/catalog";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { paymentSummary } from "@/lib/deposit";
@@ -60,14 +60,10 @@ export function OnboardingView() {
   const router = useRouter();
   const { user } = useAuth();
   // Un profesional ya onboardeado no debería ver el asistente.
+  // Si ya tiene negocio (register-professional creó el comercio-de-uno), arrancamos en
+  // Servicios y saltamos el paso 1; si no, empezamos creando el negocio.
   const [hadTenant] = useState(() => !!user?.professionalId);
-  const [step, setStep] = useState<Step>(1);
-
-  useEffect(() => {
-    if (hadTenant) router.replace("/app");
-  }, [hadTenant, router]);
-
-  if (hadTenant) return null;
+  const [step, setStep] = useState<Step>(hadTenant ? 2 : 1);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -136,7 +132,7 @@ function StepHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: s
 /* ---------- Paso 1: Negocio ---------- */
 function BusinessStep({ onDone }: { onDone: () => void }) {
   const { refresh } = useAuth();
-  const onboard = useOnboard();
+  const onboard = useProfessionalsOnboard();
   const [businessName, setBusinessName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
@@ -339,8 +335,8 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
 /* ---------- Paso 3: Quién atiende ---------- */
 function StaffStep({ onNext }: { onNext: () => void }) {
   const { user } = useAuth();
-  const list = useListStaff();
-  const create = useCreateStaff();
+  const list = useProfessionalsListStaff();
+  const create = useProfessionalsCreateStaff();
   const staff = (list.data ?? []).filter((s: Staff) => s.isActive);
   const ownerFirst = (user?.fullName ?? "").trim().split(" ")[0];
   const [name, setName] = useState("");
@@ -447,7 +443,7 @@ const DAYS = [
 ];
 
 function ScheduleStep({ onNext }: { onNext: () => void }) {
-  const list = useListStaff();
+  const list = useProfessionalsListStaff();
   const staff = (list.data ?? []).filter((s: Staff) => s.isActive);
   const [days, setDays] = useState<Set<number>>(new Set([1, 2, 3, 4, 5]));
   const [start, setStart] = useState("09:00");
@@ -476,7 +472,7 @@ function ScheduleStep({ onNext }: { onNext: () => void }) {
       await Promise.all(
         staff.flatMap((s) =>
           [...days].map((d) =>
-            createScheduleRule(s.id, {
+            availabilityCreateScheduleRule(s.id, {
               dayOfWeek: d,
               startTime: start,
               endTime: end,

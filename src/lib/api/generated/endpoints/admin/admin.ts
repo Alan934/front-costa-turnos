@@ -29,6 +29,8 @@ import type {
   AdminCreateClientDto,
   AdminCreateProfessionalDto,
   AdminMetricsDto,
+  Comercio,
+  CreateComercialDto,
   EnrichedClientDto,
   Professional,
   Subscription
@@ -43,29 +45,30 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Crear un cliente y asignarlo a un profesional
+ * Crea el account (email+password) con rol comercial y su comercio asociado.
+ * @summary Crear una cuenta comercial + su comercio
  */
-export const createClient = (
-    adminCreateClientDto: BodyType<AdminCreateClientDto>,
+export const adminCreateComercial = (
+    createComercialDto: BodyType<CreateComercialDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<EnrichedClientDto>(
-      {url: `/v1/admin/clients`, method: 'POST',
+      return customInstance<Comercio>(
+      {url: `/v1/admin/comercios`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: adminCreateClientDto, signal
+      data: createComercialDto, signal
     },
       options);
     }
   
 
 
-export const getCreateClientMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext> => {
+export const getAdminCreateComercialMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateComercial>>, TError,{data: BodyType<CreateComercialDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreateComercial>>, TError,{data: BodyType<CreateComercialDto>}, TContext> => {
 
-const mutationKey = ['createClient'];
+const mutationKey = ['adminCreateComercial'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -75,10 +78,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createClient>>, {data: BodyType<AdminCreateClientDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreateComercial>>, {data: BodyType<CreateComercialDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  createClient(data,requestOptions)
+          return  adminCreateComercial(data,requestOptions)
         }
 
         
@@ -86,30 +89,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateClientMutationResult = NonNullable<Awaited<ReturnType<typeof createClient>>>
-    export type CreateClientMutationBody = BodyType<AdminCreateClientDto>
-    export type CreateClientMutationError = ErrorType<void>
+    export type AdminCreateComercialMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreateComercial>>>
+    export type AdminCreateComercialMutationBody = BodyType<CreateComercialDto>
+    export type AdminCreateComercialMutationError = ErrorType<void>
 
     /**
- * @summary Crear un cliente y asignarlo a un profesional
+ * @summary Crear una cuenta comercial + su comercio
  */
-export const useCreateClient = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAdminCreateComercial = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateComercial>>, TError,{data: BodyType<CreateComercialDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createClient>>,
+        Awaited<ReturnType<typeof adminCreateComercial>>,
         TError,
-        {data: BodyType<AdminCreateClientDto>},
+        {data: BodyType<CreateComercialDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateClientMutationOptions(options);
+      const mutationOptions = getAdminCreateComercialMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Metricas de la plataforma (agregado de todos los tenants)
  */
-export const metrics = (
+export const adminMetrics = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -124,69 +127,69 @@ export const metrics = (
 
 
 
-export const getMetricsQueryKey = () => {
+export const getAdminMetricsQueryKey = () => {
     return [
     `/v1/admin/metrics`
     ] as const;
     }
 
     
-export const getMetricsQueryOptions = <TData = Awaited<ReturnType<typeof metrics>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAdminMetricsQueryOptions = <TData = Awaited<ReturnType<typeof adminMetrics>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getMetricsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getAdminMetricsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof metrics>>> = ({ signal }) => metrics(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminMetrics>>> = ({ signal }) => adminMetrics(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type MetricsQueryResult = NonNullable<Awaited<ReturnType<typeof metrics>>>
-export type MetricsQueryError = ErrorType<void>
+export type AdminMetricsQueryResult = NonNullable<Awaited<ReturnType<typeof adminMetrics>>>
+export type AdminMetricsQueryError = ErrorType<void>
 
 
-export function useMetrics<TData = Awaited<ReturnType<typeof metrics>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>> & Pick<
+export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof metrics>>,
+          Awaited<ReturnType<typeof adminMetrics>>,
           TError,
-          Awaited<ReturnType<typeof metrics>>
+          Awaited<ReturnType<typeof adminMetrics>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMetrics<TData = Awaited<ReturnType<typeof metrics>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>> & Pick<
+export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof metrics>>,
+          Awaited<ReturnType<typeof adminMetrics>>,
           TError,
-          Awaited<ReturnType<typeof metrics>>
+          Awaited<ReturnType<typeof adminMetrics>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMetrics<TData = Awaited<ReturnType<typeof metrics>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Metricas de la plataforma (agregado de todos los tenants)
  */
 
-export function useMetrics<TData = Awaited<ReturnType<typeof metrics>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminMetrics>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getMetricsQueryOptions(options)
+  const queryOptions = getAdminMetricsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -201,7 +204,7 @@ export function useMetrics<TData = Awaited<ReturnType<typeof metrics>>, TError =
 /**
  * @summary Listar profesionales con su suscripcion
  */
-export const listProfessionals = (
+export const adminListProfessionals = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -216,69 +219,69 @@ export const listProfessionals = (
 
 
 
-export const getListProfessionalsQueryKey = () => {
+export const getAdminListProfessionalsQueryKey = () => {
     return [
     `/v1/admin/professionals`
     ] as const;
     }
 
     
-export const getListProfessionalsQueryOptions = <TData = Awaited<ReturnType<typeof listProfessionals>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAdminListProfessionalsQueryOptions = <TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListProfessionalsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getAdminListProfessionalsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProfessionals>>> = ({ signal }) => listProfessionals(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListProfessionals>>> = ({ signal }) => adminListProfessionals(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListProfessionalsQueryResult = NonNullable<Awaited<ReturnType<typeof listProfessionals>>>
-export type ListProfessionalsQueryError = ErrorType<void>
+export type AdminListProfessionalsQueryResult = NonNullable<Awaited<ReturnType<typeof adminListProfessionals>>>
+export type AdminListProfessionalsQueryError = ErrorType<void>
 
 
-export function useListProfessionals<TData = Awaited<ReturnType<typeof listProfessionals>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData>> & Pick<
+export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listProfessionals>>,
+          Awaited<ReturnType<typeof adminListProfessionals>>,
           TError,
-          Awaited<ReturnType<typeof listProfessionals>>
+          Awaited<ReturnType<typeof adminListProfessionals>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListProfessionals<TData = Awaited<ReturnType<typeof listProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData>> & Pick<
+export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listProfessionals>>,
+          Awaited<ReturnType<typeof adminListProfessionals>>,
           TError,
-          Awaited<ReturnType<typeof listProfessionals>>
+          Awaited<ReturnType<typeof adminListProfessionals>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListProfessionals<TData = Awaited<ReturnType<typeof listProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar profesionales con su suscripcion
  */
 
-export function useListProfessionals<TData = Awaited<ReturnType<typeof listProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListProfessionalsQueryOptions(options)
+  const queryOptions = getAdminListProfessionalsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -294,7 +297,7 @@ export function useListProfessionals<TData = Awaited<ReturnType<typeof listProfe
  * Crea la cuenta sin password; el profesional luego la reclama con codigo (/auth/request-claim-code + /auth/claim) para setear su contrasena.
  * @summary Crear un profesional (cuenta sin reclamar + negocio + suscripcion trial)
  */
-export const createProfessional = (
+export const adminCreateProfessional = (
     adminCreateProfessionalDto: BodyType<AdminCreateProfessionalDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -310,11 +313,11 @@ export const createProfessional = (
   
 
 
-export const getCreateProfessionalMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext> => {
+export const getAdminCreateProfessionalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreateProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext> => {
 
-const mutationKey = ['createProfessional'];
+const mutationKey = ['adminCreateProfessional'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -324,10 +327,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProfessional>>, {data: BodyType<AdminCreateProfessionalDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreateProfessional>>, {data: BodyType<AdminCreateProfessionalDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  createProfessional(data,requestOptions)
+          return  adminCreateProfessional(data,requestOptions)
         }
 
         
@@ -335,30 +338,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateProfessionalMutationResult = NonNullable<Awaited<ReturnType<typeof createProfessional>>>
-    export type CreateProfessionalMutationBody = BodyType<AdminCreateProfessionalDto>
-    export type CreateProfessionalMutationError = ErrorType<void>
+    export type AdminCreateProfessionalMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreateProfessional>>>
+    export type AdminCreateProfessionalMutationBody = BodyType<AdminCreateProfessionalDto>
+    export type AdminCreateProfessionalMutationError = ErrorType<void>
 
     /**
  * @summary Crear un profesional (cuenta sin reclamar + negocio + suscripcion trial)
  */
-export const useCreateProfessional = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAdminCreateProfessional = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateProfessional>>, TError,{data: BodyType<AdminCreateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createProfessional>>,
+        Awaited<ReturnType<typeof adminCreateProfessional>>,
         TError,
         {data: BodyType<AdminCreateProfessionalDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateProfessionalMutationOptions(options);
+      const mutationOptions = getAdminCreateProfessionalMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
  */
-export const markCashPaid = (
+export const adminMarkCashPaid = (
     professionalId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -372,11 +375,11 @@ export const markCashPaid = (
   
 
 
-export const getMarkCashPaidMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof markCashPaid>>, TError,{professionalId: string}, TContext> => {
+export const getAdminMarkCashPaidMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext> => {
 
-const mutationKey = ['markCashPaid'];
+const mutationKey = ['adminMarkCashPaid'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -386,10 +389,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markCashPaid>>, {professionalId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminMarkCashPaid>>, {professionalId: string}> = (props) => {
           const {professionalId} = props ?? {};
 
-          return  markCashPaid(professionalId,requestOptions)
+          return  adminMarkCashPaid(professionalId,requestOptions)
         }
 
         
@@ -397,30 +400,94 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type MarkCashPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markCashPaid>>>
+    export type AdminMarkCashPaidMutationResult = NonNullable<Awaited<ReturnType<typeof adminMarkCashPaid>>>
     
-    export type MarkCashPaidMutationError = ErrorType<void>
+    export type AdminMarkCashPaidMutationError = ErrorType<void>
 
     /**
  * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
  */
-export const useMarkCashPaid = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAdminMarkCashPaid = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof markCashPaid>>,
+        Awaited<ReturnType<typeof adminMarkCashPaid>>,
         TError,
         {professionalId: string},
         TContext
       > => {
 
-      const mutationOptions = getMarkCashPaidMutationOptions(options);
+      const mutationOptions = getAdminMarkCashPaidMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Crear un cliente y asignarlo a un profesional
+ */
+export const adminCreateClient = (
+    adminCreateClientDto: BodyType<AdminCreateClientDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<EnrichedClientDto>(
+      {url: `/v1/admin/clients`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: adminCreateClientDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAdminCreateClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminCreateClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext> => {
+
+const mutationKey = ['adminCreateClient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminCreateClient>>, {data: BodyType<AdminCreateClientDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  adminCreateClient(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminCreateClientMutationResult = NonNullable<Awaited<ReturnType<typeof adminCreateClient>>>
+    export type AdminCreateClientMutationBody = BodyType<AdminCreateClientDto>
+    export type AdminCreateClientMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear un cliente y asignarlo a un profesional
+ */
+export const useAdminCreateClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminCreateClient>>, TError,{data: BodyType<AdminCreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminCreateClient>>,
+        TError,
+        {data: BodyType<AdminCreateClientDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminCreateClientMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Bloquear una cuenta (revoca su sesion)
  */
-export const blockAccount = (
+export const adminBlockAccount = (
     accountId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -434,11 +501,11 @@ export const blockAccount = (
   
 
 
-export const getBlockAccountMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof blockAccount>>, TError,{accountId: string}, TContext> => {
+export const getAdminBlockAccountMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminBlockAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminBlockAccount>>, TError,{accountId: string}, TContext> => {
 
-const mutationKey = ['blockAccount'];
+const mutationKey = ['adminBlockAccount'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -448,10 +515,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof blockAccount>>, {accountId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminBlockAccount>>, {accountId: string}> = (props) => {
           const {accountId} = props ?? {};
 
-          return  blockAccount(accountId,requestOptions)
+          return  adminBlockAccount(accountId,requestOptions)
         }
 
         
@@ -459,30 +526,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type BlockAccountMutationResult = NonNullable<Awaited<ReturnType<typeof blockAccount>>>
+    export type AdminBlockAccountMutationResult = NonNullable<Awaited<ReturnType<typeof adminBlockAccount>>>
     
-    export type BlockAccountMutationError = ErrorType<void>
+    export type AdminBlockAccountMutationError = ErrorType<void>
 
     /**
  * @summary Bloquear una cuenta (revoca su sesion)
  */
-export const useBlockAccount = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAdminBlockAccount = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminBlockAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof blockAccount>>,
+        Awaited<ReturnType<typeof adminBlockAccount>>,
         TError,
         {accountId: string},
         TContext
       > => {
 
-      const mutationOptions = getBlockAccountMutationOptions(options);
+      const mutationOptions = getAdminBlockAccountMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Reactivar una cuenta bloqueada
  */
-export const activateAccount = (
+export const adminActivateAccount = (
     accountId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -496,11 +563,11 @@ export const activateAccount = (
   
 
 
-export const getActivateAccountMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof activateAccount>>, TError,{accountId: string}, TContext> => {
+export const getAdminActivateAccountMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminActivateAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminActivateAccount>>, TError,{accountId: string}, TContext> => {
 
-const mutationKey = ['activateAccount'];
+const mutationKey = ['adminActivateAccount'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -510,10 +577,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateAccount>>, {accountId: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminActivateAccount>>, {accountId: string}> = (props) => {
           const {accountId} = props ?? {};
 
-          return  activateAccount(accountId,requestOptions)
+          return  adminActivateAccount(accountId,requestOptions)
         }
 
         
@@ -521,23 +588,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ActivateAccountMutationResult = NonNullable<Awaited<ReturnType<typeof activateAccount>>>
+    export type AdminActivateAccountMutationResult = NonNullable<Awaited<ReturnType<typeof adminActivateAccount>>>
     
-    export type ActivateAccountMutationError = ErrorType<void>
+    export type AdminActivateAccountMutationError = ErrorType<void>
 
     /**
  * @summary Reactivar una cuenta bloqueada
  */
-export const useActivateAccount = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useAdminActivateAccount = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminActivateAccount>>, TError,{accountId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof activateAccount>>,
+        Awaited<ReturnType<typeof adminActivateAccount>>,
         TError,
         {accountId: string},
         TContext
       > => {
 
-      const mutationOptions = getActivateAccountMutationOptions(options);
+      const mutationOptions = getAdminActivateAccountMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

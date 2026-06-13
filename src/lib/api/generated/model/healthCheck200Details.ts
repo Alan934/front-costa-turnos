@@ -6,9 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ListClientsParams = {
-/**
- * Busca por nombre, email o telefono
- */
-q?: string;
-};
+export type HealthCheck200Details = {[key: string]: {
+  status: string;
+  [key: string]: unknown;
+ }};

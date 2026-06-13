@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type WebhookBody = { [key: string]: unknown };
+export interface AcceptInvitationDto {
+  /** token recibido en el email de invitación */
+  token: string;
+}

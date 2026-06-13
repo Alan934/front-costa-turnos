@@ -6,7 +6,10 @@
  * OpenAPI spec version: 1.0
  */
 
-export type Check200Details = {[key: string]: {
+/**
+ * @nullable
+ */
+export type HealthCheck503Error = {[key: string]: {
   status: string;
   [key: string]: unknown;
- }};
+ }} | null;

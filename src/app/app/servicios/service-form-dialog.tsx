@@ -11,14 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { useCreateService, useUpdateService } from "@/lib/api/catalog";
+import { useCreateComercioService, useUpdateComercioService } from "@/lib/api/catalog";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
 
 export function ServiceFormDialog({
+  comercioId,
   service,
   onClose,
 }: {
+  comercioId: string;
   service?: Service;
   onClose: () => void;
 }) {
@@ -35,8 +37,8 @@ export function ServiceFormDialog({
     service?.depositAmountCents ? String(service.depositAmountCents / 100) : "",
   );
 
-  const create = useCreateService();
-  const update = useUpdateService(service?.id ?? "");
+  const create = useCreateComercioService(comercioId);
+  const update = useUpdateComercioService(comercioId, service?.id ?? "");
   const pending = create.isPending || update.isPending;
 
   const anyOption = allowNoPayment || allowDeposit || allowFullPayment;

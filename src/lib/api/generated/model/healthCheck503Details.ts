@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type UploadParams = {
-ownerType: string;
-ownerId: string;
-};
+export type HealthCheck503Details = {[key: string]: {
+  status: string;
+  [key: string]: unknown;
+ }};

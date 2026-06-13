@@ -37,71 +37,9 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Cancelar un turno propio (dentro de la ventana)
- */
-export const cancel = (
-    id: string,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<MyAppointmentDto>(
-      {url: `/v1/me/appointments/${id}/cancel`, method: 'POST', signal
-    },
-      options);
-    }
-  
-
-
-export const getCancelMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string}, TContext> => {
-
-const mutationKey = ['cancel'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancel>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
-
-          return  cancel(id,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type CancelMutationResult = NonNullable<Awaited<ReturnType<typeof cancel>>>
-    
-    export type CancelMutationError = ErrorType<void>
-
-    /**
- * @summary Cancelar un turno propio (dentro de la ventana)
- */
-export const useCancel = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof cancel>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
-
-      const mutationOptions = getCancelMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * @summary Listar mis turnos (todos los negocios)
  */
-export const myAppointments = (
+export const meMyAppointments = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -116,69 +54,69 @@ export const myAppointments = (
 
 
 
-export const getMyAppointmentsQueryKey = () => {
+export const getMeMyAppointmentsQueryKey = () => {
     return [
     `/v1/me/appointments`
     ] as const;
     }
 
     
-export const getMyAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof myAppointments>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMeMyAppointmentsQueryOptions = <TData = Awaited<ReturnType<typeof meMyAppointments>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getMyAppointmentsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getMeMyAppointmentsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof myAppointments>>> = ({ signal }) => myAppointments(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof meMyAppointments>>> = ({ signal }) => meMyAppointments(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type MyAppointmentsQueryResult = NonNullable<Awaited<ReturnType<typeof myAppointments>>>
-export type MyAppointmentsQueryError = ErrorType<void>
+export type MeMyAppointmentsQueryResult = NonNullable<Awaited<ReturnType<typeof meMyAppointments>>>
+export type MeMyAppointmentsQueryError = ErrorType<void>
 
 
-export function useMyAppointments<TData = Awaited<ReturnType<typeof myAppointments>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData>> & Pick<
+export function useMeMyAppointments<TData = Awaited<ReturnType<typeof meMyAppointments>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof myAppointments>>,
+          Awaited<ReturnType<typeof meMyAppointments>>,
           TError,
-          Awaited<ReturnType<typeof myAppointments>>
+          Awaited<ReturnType<typeof meMyAppointments>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMyAppointments<TData = Awaited<ReturnType<typeof myAppointments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData>> & Pick<
+export function useMeMyAppointments<TData = Awaited<ReturnType<typeof meMyAppointments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof myAppointments>>,
+          Awaited<ReturnType<typeof meMyAppointments>>,
           TError,
-          Awaited<ReturnType<typeof myAppointments>>
+          Awaited<ReturnType<typeof meMyAppointments>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMyAppointments<TData = Awaited<ReturnType<typeof myAppointments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMeMyAppointments<TData = Awaited<ReturnType<typeof meMyAppointments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar mis turnos (todos los negocios)
  */
 
-export function useMyAppointments<TData = Awaited<ReturnType<typeof myAppointments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMeMyAppointments<TData = Awaited<ReturnType<typeof meMyAppointments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof meMyAppointments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getMyAppointmentsQueryOptions(options)
+  const queryOptions = getMeMyAppointmentsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -190,3 +128,66 @@ export function useMyAppointments<TData = Awaited<ReturnType<typeof myAppointmen
 
 
 
+/**
+ * @summary Cancelar un turno propio (dentro de la ventana)
+ */
+export const meCancel = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/me/appointments/${id}/cancel`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getMeCancelMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof meCancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof meCancel>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['meCancel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof meCancel>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  meCancel(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MeCancelMutationResult = NonNullable<Awaited<ReturnType<typeof meCancel>>>
+    
+    export type MeCancelMutationError = ErrorType<void>
+
+    /**
+ * @summary Cancelar un turno propio (dentro de la ventana)
+ */
+export const useMeCancel = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof meCancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof meCancel>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getMeCancelMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

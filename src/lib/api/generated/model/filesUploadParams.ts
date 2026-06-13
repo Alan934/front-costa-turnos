@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type Check503Details = {[key: string]: {
-  status: string;
-  [key: string]: unknown;
- }};
+export type FilesUploadParams = {
+ownerType: string;
+ownerId: string;
+};

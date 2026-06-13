@@ -14,6 +14,8 @@ export interface Appointment {
   createdAt: string;
   updatedAt: string;
   professionalId: string;
+  comercioId: string;
+  membershipId: string;
   staffId: string;
   personId: string;
   serviceId: string;

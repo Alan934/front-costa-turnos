@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { usePublicPage, usePublicSlots, useBookPublicWithDeposit } from "@/lib/api/public-booking";
-import { useBook } from "@/lib/api/generated/endpoints/public-booking/public-booking";
+import { usePublicBookingBook } from "@/lib/api/generated/endpoints/public-booking/public-booking";
 import { getPaymentOptions, paymentSummary, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
 import {
@@ -533,7 +533,7 @@ function ConfirmStep({
   const hasNoPay = options.some((o) => o.choice === "none");
   const hasPaid = options.some((o) => o.requiresPayment);
 
-  const book = useBook();
+  const book = usePublicBookingBook();
   const bookWithDeposit = useBookPublicWithDeposit(slug);
   const submitting = book.isPending || bookWithDeposit.isPending;
   const failed = book.isError || bookWithDeposit.isError;

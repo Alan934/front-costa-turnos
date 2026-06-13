@@ -17,6 +17,7 @@ import {
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 import type { LoginDto } from "@/lib/api/generated/model/loginDto";
 import type { RegisterDto } from "@/lib/api/generated/model/registerDto";
+import type { RegisterProfessionalDto } from "@/lib/api/generated/model/registerProfessionalDto";
 import type { MeResponse, AccountRole } from "@/mocks/contract-extensions";
 
 interface AuthContextValue {
@@ -28,6 +29,8 @@ interface AuthContextValue {
   hasRole: (r: AccountRole) => boolean;
   login: (dto: LoginDto) => Promise<MeResponse>;
   register: (dto: RegisterDto) => Promise<MeResponse>;
+  /** Registro de profesional self-service (crea cuenta + profesional + comercio-de-uno + trial). */
+  registerProfessional: (dto: RegisterProfessionalDto) => Promise<MeResponse>;
   logout: () => Promise<void>;
   /** Re-lee /auth/me (tras reclamar cuenta, etc.). */
   refresh: () => Promise<void>;
@@ -48,6 +51,7 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
     professional: "professional",
     owner: "professional",
     staff: "professional",
+    comercial: "comercial",
     client: "client",
     customer: "client",
   };
@@ -59,12 +63,18 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
   const roles = rawRoles
     .map((r) => roleAlias[String(r).toLowerCase()] ?? (String(r) as AccountRole))
     .filter((r, i, a) => a.indexOf(r) === i);
+  // AuthMeDto trae isPlatformAdmin como flag aparte.
+  if (raw.isPlatformAdmin === true && !roles.includes("admin")) roles.push("admin");
 
   const professionalId =
     (raw.professionalId as string) ??
     (raw.tenantId as string) ??
     (raw.tenant as string) ??
     null;
+
+  const comercioIds = Array.isArray(raw.comercioIds)
+    ? (raw.comercioIds as unknown[]).map(String)
+    : undefined;
 
   // Solo definimos emailVerified si el back lo manda; si no, queda undefined (sin aviso).
   const verifiedRaw =
@@ -82,6 +92,7 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
     fullName: String(raw.fullName ?? raw.name ?? ""),
     roles,
     professionalId,
+    comercioIds,
     emailVerified,
   };
 }
@@ -150,6 +161,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [afterAuth],
   );
 
+  const registerProfessional = useCallback(
+    async (dto: RegisterProfessionalDto) => {
+      const tokens = await customInstance<AuthTokensDto>({
+        url: "/auth/register-professional",
+        method: "POST",
+        data: dto,
+      });
+      setAccessToken(tokens.accessToken);
+      const u = await afterAuth();
+      if (!u) throw new Error("No se pudo cargar la sesión");
+      return u;
+    },
+    [afterAuth],
+  );
+
   const logout = useCallback(async () => {
     try {
       await customInstance({ url: "/auth/logout", method: "POST" });
@@ -177,6 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasRole: (r) => roles.includes(r),
         login,
         register,
+        registerProfessional,
         logout,
         refresh,
       }}

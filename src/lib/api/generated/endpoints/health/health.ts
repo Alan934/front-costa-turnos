@@ -21,8 +21,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  Check200,
-  Check503
+  HealthCheck200,
+  HealthCheck503
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -36,13 +36,13 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Verificar estado del servicio
  */
-export const check = (
+export const healthCheck = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<Check200>(
+      return customInstance<HealthCheck200>(
       {url: `/health`, method: 'GET', signal
     },
       options);
@@ -51,69 +51,69 @@ export const check = (
 
 
 
-export const getCheckQueryKey = () => {
+export const getHealthCheckQueryKey = () => {
     return [
     `/health`
     ] as const;
     }
 
     
-export const getCheckQueryOptions = <TData = Awaited<ReturnType<typeof check>>, TError = ErrorType<Check503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<HealthCheck503>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getCheckQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getHealthCheckQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof check>>> = ({ signal }) => check(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) => healthCheck(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type CheckQueryResult = NonNullable<Awaited<ReturnType<typeof check>>>
-export type CheckQueryError = ErrorType<Check503>
+export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
+export type HealthCheckQueryError = ErrorType<HealthCheck503>
 
 
-export function useCheck<TData = Awaited<ReturnType<typeof check>>, TError = ErrorType<Check503>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData>> & Pick<
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<HealthCheck503>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof check>>,
+          Awaited<ReturnType<typeof healthCheck>>,
           TError,
-          Awaited<ReturnType<typeof check>>
+          Awaited<ReturnType<typeof healthCheck>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheck<TData = Awaited<ReturnType<typeof check>>, TError = ErrorType<Check503>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData>> & Pick<
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<HealthCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof check>>,
+          Awaited<ReturnType<typeof healthCheck>>,
           TError,
-          Awaited<ReturnType<typeof check>>
+          Awaited<ReturnType<typeof healthCheck>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useCheck<TData = Awaited<ReturnType<typeof check>>, TError = ErrorType<Check503>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<HealthCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Verificar estado del servicio
  */
 
-export function useCheck<TData = Awaited<ReturnType<typeof check>>, TError = ErrorType<Check503>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof check>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<HealthCheck503>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getCheckQueryOptions(options)
+  const queryOptions = getHealthCheckQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -26,7 +26,7 @@ import type {
 
 import type {
   FileObject,
-  UploadParams
+  FilesUploadParams
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -38,72 +38,11 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Eliminar un archivo
- */
-export const remove = (
-    id: string,
- options?: SecondParameter<typeof customInstance>,) => {
-      
-      
-      return customInstance<void>(
-      {url: `/v1/files/${id}`, method: 'DELETE'
-    },
-      options);
-    }
-  
-
-
-export const getRemoveMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof remove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof remove>>, TError,{id: string}, TContext> => {
-
-const mutationKey = ['remove'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-      
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof remove>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
-
-          return  remove(id,requestOptions)
-        }
-
-        
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RemoveMutationResult = NonNullable<Awaited<ReturnType<typeof remove>>>
-    
-    export type RemoveMutationError = ErrorType<void>
-
-    /**
- * @summary Eliminar un archivo
- */
-export const useRemove = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof remove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof remove>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
-
-      const mutationOptions = getRemoveMutationOptions(options);
-
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
  * Imagenes hasta 10MB (se comprimen a webp); PDFs hasta 3MB. Tipos no permitidos o archivos que superen el tope se rechazan con 400/413.
  * @summary Subir un archivo (imagen jpeg/png/webp o PDF)
  */
-export const upload = (
-    params: UploadParams,
+export const filesUpload = (
+    params: FilesUploadParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -117,11 +56,11 @@ export const upload = (
   
 
 
-export const getUploadMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upload>>, TError,{params: UploadParams}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof upload>>, TError,{params: UploadParams}, TContext> => {
+export const getFilesUploadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof filesUpload>>, TError,{params: FilesUploadParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof filesUpload>>, TError,{params: FilesUploadParams}, TContext> => {
 
-const mutationKey = ['upload'];
+const mutationKey = ['filesUpload'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -131,10 +70,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof upload>>, {params: UploadParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof filesUpload>>, {params: FilesUploadParams}> = (props) => {
           const {params} = props ?? {};
 
-          return  upload(params,requestOptions)
+          return  filesUpload(params,requestOptions)
         }
 
         
@@ -142,30 +81,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UploadMutationResult = NonNullable<Awaited<ReturnType<typeof upload>>>
+    export type FilesUploadMutationResult = NonNullable<Awaited<ReturnType<typeof filesUpload>>>
     
-    export type UploadMutationError = ErrorType<void>
+    export type FilesUploadMutationError = ErrorType<void>
 
     /**
  * @summary Subir un archivo (imagen jpeg/png/webp o PDF)
  */
-export const useUpload = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof upload>>, TError,{params: UploadParams}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useFilesUpload = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof filesUpload>>, TError,{params: FilesUploadParams}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof upload>>,
+        Awaited<ReturnType<typeof filesUpload>>,
         TError,
-        {params: UploadParams},
+        {params: FilesUploadParams},
         TContext
       > => {
 
-      const mutationOptions = getUploadMutationOptions(options);
+      const mutationOptions = getFilesUploadMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Obtener URL firmada del archivo
  */
-export const signedUrl = (
+export const filesSignedUrl = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -180,69 +119,69 @@ export const signedUrl = (
 
 
 
-export const getSignedUrlQueryKey = (id?: string,) => {
+export const getFilesSignedUrlQueryKey = (id?: string,) => {
     return [
     `/v1/files/${id}/url`
     ] as const;
     }
 
     
-export const getSignedUrlQueryOptions = <TData = Awaited<ReturnType<typeof signedUrl>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getFilesSignedUrlQueryOptions = <TData = Awaited<ReturnType<typeof filesSignedUrl>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getSignedUrlQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getFilesSignedUrlQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof signedUrl>>> = ({ signal }) => signedUrl(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof filesSignedUrl>>> = ({ signal }) => filesSignedUrl(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type SignedUrlQueryResult = NonNullable<Awaited<ReturnType<typeof signedUrl>>>
-export type SignedUrlQueryError = ErrorType<void>
+export type FilesSignedUrlQueryResult = NonNullable<Awaited<ReturnType<typeof filesSignedUrl>>>
+export type FilesSignedUrlQueryError = ErrorType<void>
 
 
-export function useSignedUrl<TData = Awaited<ReturnType<typeof signedUrl>>, TError = ErrorType<void>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData>> & Pick<
+export function useFilesSignedUrl<TData = Awaited<ReturnType<typeof filesSignedUrl>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof signedUrl>>,
+          Awaited<ReturnType<typeof filesSignedUrl>>,
           TError,
-          Awaited<ReturnType<typeof signedUrl>>
+          Awaited<ReturnType<typeof filesSignedUrl>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSignedUrl<TData = Awaited<ReturnType<typeof signedUrl>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData>> & Pick<
+export function useFilesSignedUrl<TData = Awaited<ReturnType<typeof filesSignedUrl>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof signedUrl>>,
+          Awaited<ReturnType<typeof filesSignedUrl>>,
           TError,
-          Awaited<ReturnType<typeof signedUrl>>
+          Awaited<ReturnType<typeof filesSignedUrl>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSignedUrl<TData = Awaited<ReturnType<typeof signedUrl>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useFilesSignedUrl<TData = Awaited<ReturnType<typeof filesSignedUrl>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Obtener URL firmada del archivo
  */
 
-export function useSignedUrl<TData = Awaited<ReturnType<typeof signedUrl>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof signedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useFilesSignedUrl<TData = Awaited<ReturnType<typeof filesSignedUrl>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof filesSignedUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getSignedUrlQueryOptions(id,options)
+  const queryOptions = getFilesSignedUrlQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -254,3 +193,65 @@ export function useSignedUrl<TData = Awaited<ReturnType<typeof signedUrl>>, TErr
 
 
 
+/**
+ * @summary Eliminar un archivo
+ */
+export const filesRemove = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/files/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getFilesRemoveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof filesRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof filesRemove>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['filesRemove'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof filesRemove>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  filesRemove(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FilesRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof filesRemove>>>
+    
+    export type FilesRemoveMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar un archivo
+ */
+export const useFilesRemove = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof filesRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof filesRemove>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getFilesRemoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

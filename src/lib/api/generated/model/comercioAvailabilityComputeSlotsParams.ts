@@ -6,9 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 
-export type SlotsParams = {
-staffId: string;
+export type ComercioAvailabilityComputeSlotsParams = {
 serviceId: string;
+/**
+ * fecha desde (YYYY-MM-DD)
+ */
 from: string;
+/**
+ * fecha hasta (YYYY-MM-DD)
+ */
 to: string;
 };

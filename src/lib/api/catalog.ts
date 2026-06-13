@@ -44,3 +44,64 @@ export function useDeactivateService() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["services"] }),
   });
 }
+
+/* ---------- Servicios por comercio (Fase 2) ---------- */
+
+/**
+ * Variantes scopeadas a un comercio (membresía del profesional en ese comercio).
+ * Misma forma que las de arriba pero contra `/v1/comercios/{comercioId}/services`. La
+ * queryKey incluye el `comercioId` para no mezclar la caché entre comercios.
+ *
+ * Hechas a mano (como `comercios.ts`) porque orval nombra estos endpoints de forma genérica
+ * (`listInComercio`, `createInComercio`, …) y preferimos no acoplarnos a esos nombres.
+ */
+export function useComercioServices(comercioId: string | undefined) {
+  return useQuery({
+    queryKey: ["comercio-services", comercioId],
+    queryFn: ({ signal }) =>
+      customInstance<Service[]>({
+        url: `/v1/comercios/${comercioId}/services`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!comercioId,
+  });
+}
+
+export function useCreateComercioService(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateServiceDto) =>
+      customInstance<Service>({
+        url: `/v1/comercios/${comercioId}/services`,
+        method: "POST",
+        data,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+  });
+}
+
+export function useUpdateComercioService(comercioId: string, id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: UpdateServiceDto) =>
+      customInstance<Service>({
+        url: `/v1/comercios/${comercioId}/services/${id}`,
+        method: "PATCH",
+        data,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+  });
+}
+
+export function useDeactivateComercioService(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      customInstance({
+        url: `/v1/comercios/${comercioId}/services/${id}`,
+        method: "DELETE",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+  });
+}

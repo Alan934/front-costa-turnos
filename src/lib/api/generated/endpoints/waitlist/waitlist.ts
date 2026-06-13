@@ -6,21 +6,31 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  CreateWaitlistDto,
   WaitlistEntry
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
-import type { ErrorType } from '../../../axios-instance';
+import type { ErrorType , BodyType } from '../../../axios-instance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -28,9 +38,165 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Listar entradas de lista de espera
+ */
+export const waitlistList = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<WaitlistEntry[]>(
+      {url: `/v1/waitlist`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getWaitlistListQueryKey = () => {
+    return [
+    `/v1/waitlist`
+    ] as const;
+    }
+
+    
+export const getWaitlistListQueryOptions = <TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getWaitlistListQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof waitlistList>>> = ({ signal }) => waitlistList(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type WaitlistListQueryResult = NonNullable<Awaited<ReturnType<typeof waitlistList>>>
+export type WaitlistListQueryError = ErrorType<void>
+
+
+export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof waitlistList>>,
+          TError,
+          Awaited<ReturnType<typeof waitlistList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof waitlistList>>,
+          TError,
+          Awaited<ReturnType<typeof waitlistList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar entradas de lista de espera
+ */
+
+export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitlistList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getWaitlistListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear entrada en lista de espera
+ */
+export const waitlistCreate = (
+    createWaitlistDto: BodyType<CreateWaitlistDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<WaitlistEntry>(
+      {url: `/v1/waitlist`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createWaitlistDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitlistCreateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistCreate>>, TError,{data: BodyType<CreateWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitlistCreate>>, TError,{data: BodyType<CreateWaitlistDto>}, TContext> => {
+
+const mutationKey = ['waitlistCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitlistCreate>>, {data: BodyType<CreateWaitlistDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  waitlistCreate(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitlistCreateMutationResult = NonNullable<Awaited<ReturnType<typeof waitlistCreate>>>
+    export type WaitlistCreateMutationBody = BodyType<CreateWaitlistDto>
+    export type WaitlistCreateMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear entrada en lista de espera
+ */
+export const useWaitlistCreate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistCreate>>, TError,{data: BodyType<CreateWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitlistCreate>>,
+        TError,
+        {data: BodyType<CreateWaitlistDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitlistCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Notificar hueco disponible a la entrada
  */
-export const notify = (
+export const waitlistNotify = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -44,11 +210,11 @@ export const notify = (
   
 
 
-export const getNotifyMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notify>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof notify>>, TError,{id: string}, TContext> => {
+export const getWaitlistNotifyMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistNotify>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitlistNotify>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['notify'];
+const mutationKey = ['waitlistNotify'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -58,10 +224,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof notify>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitlistNotify>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  notify(id,requestOptions)
+          return  waitlistNotify(id,requestOptions)
         }
 
         
@@ -69,30 +235,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type NotifyMutationResult = NonNullable<Awaited<ReturnType<typeof notify>>>
+    export type WaitlistNotifyMutationResult = NonNullable<Awaited<ReturnType<typeof waitlistNotify>>>
     
-    export type NotifyMutationError = ErrorType<void>
+    export type WaitlistNotifyMutationError = ErrorType<void>
 
     /**
  * @summary Notificar hueco disponible a la entrada
  */
-export const useNotify = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof notify>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useWaitlistNotify = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistNotify>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof notify>>,
+        Awaited<ReturnType<typeof waitlistNotify>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getNotifyMutationOptions(options);
+      const mutationOptions = getWaitlistNotifyMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Convertir entrada de lista de espera
  */
-export const convert = (
+export const waitlistConvert = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -106,11 +272,11 @@ export const convert = (
   
 
 
-export const getConvertMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof convert>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof convert>>, TError,{id: string}, TContext> => {
+export const getWaitlistConvertMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistConvert>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitlistConvert>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['convert'];
+const mutationKey = ['waitlistConvert'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -120,10 +286,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof convert>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitlistConvert>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  convert(id,requestOptions)
+          return  waitlistConvert(id,requestOptions)
         }
 
         
@@ -131,23 +297,84 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ConvertMutationResult = NonNullable<Awaited<ReturnType<typeof convert>>>
+    export type WaitlistConvertMutationResult = NonNullable<Awaited<ReturnType<typeof waitlistConvert>>>
     
-    export type ConvertMutationError = ErrorType<void>
+    export type WaitlistConvertMutationError = ErrorType<void>
 
     /**
  * @summary Convertir entrada de lista de espera
  */
-export const useConvert = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof convert>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useWaitlistConvert = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistConvert>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof convert>>,
+        Awaited<ReturnType<typeof waitlistConvert>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getConvertMutationOptions(options);
+      const mutationOptions = getWaitlistConvertMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Eliminar entrada de lista de espera
+ */
+export const waitlistRemove = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/waitlist/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getWaitlistRemoveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitlistRemove>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['waitlistRemove'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitlistRemove>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  waitlistRemove(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitlistRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof waitlistRemove>>>
+    
+    export type WaitlistRemoveMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar entrada de lista de espera
+ */
+export const useWaitlistRemove = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitlistRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitlistRemove>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitlistRemoveMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

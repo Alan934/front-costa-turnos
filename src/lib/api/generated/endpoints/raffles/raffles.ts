@@ -45,7 +45,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Listar sorteos del tenant
  */
-export const list = (
+export const rafflesList = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -60,69 +60,69 @@ export const list = (
 
 
 
-export const getListQueryKey = () => {
+export const getRafflesListQueryKey = () => {
     return [
     `/v1/raffles`
     ] as const;
     }
 
     
-export const getListQueryOptions = <TData = Awaited<ReturnType<typeof list>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getRafflesListQueryOptions = <TData = Awaited<ReturnType<typeof rafflesList>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getRafflesListQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof list>>> = ({ signal }) => list(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rafflesList>>> = ({ signal }) => rafflesList(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListQueryResult = NonNullable<Awaited<ReturnType<typeof list>>>
-export type ListQueryError = ErrorType<void>
+export type RafflesListQueryResult = NonNullable<Awaited<ReturnType<typeof rafflesList>>>
+export type RafflesListQueryError = ErrorType<void>
 
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useRafflesList<TData = Awaited<ReturnType<typeof rafflesList>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof rafflesList>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof rafflesList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>> & Pick<
+export function useRafflesList<TData = Awaited<ReturnType<typeof rafflesList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof list>>,
+          Awaited<ReturnType<typeof rafflesList>>,
           TError,
-          Awaited<ReturnType<typeof list>>
+          Awaited<ReturnType<typeof rafflesList>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesList<TData = Awaited<ReturnType<typeof rafflesList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar sorteos del tenant
  */
 
-export function useList<TData = Awaited<ReturnType<typeof list>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof list>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesList<TData = Awaited<ReturnType<typeof rafflesList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListQueryOptions(options)
+  const queryOptions = getRafflesListQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -137,7 +137,7 @@ export function useList<TData = Awaited<ReturnType<typeof list>>, TError = Error
 /**
  * @summary Crear un sorteo
  */
-export const create = (
+export const rafflesCreate = (
     createRaffleDto: BodyType<CreateRaffleDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -153,11 +153,11 @@ export const create = (
   
 
 
-export const getCreateMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create>>, TError,{data: BodyType<CreateRaffleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof create>>, TError,{data: BodyType<CreateRaffleDto>}, TContext> => {
+export const getRafflesCreateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesCreate>>, TError,{data: BodyType<CreateRaffleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof rafflesCreate>>, TError,{data: BodyType<CreateRaffleDto>}, TContext> => {
 
-const mutationKey = ['create'];
+const mutationKey = ['rafflesCreate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -167,10 +167,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof create>>, {data: BodyType<CreateRaffleDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rafflesCreate>>, {data: BodyType<CreateRaffleDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  create(data,requestOptions)
+          return  rafflesCreate(data,requestOptions)
         }
 
         
@@ -178,30 +178,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateMutationResult = NonNullable<Awaited<ReturnType<typeof create>>>
-    export type CreateMutationBody = BodyType<CreateRaffleDto>
-    export type CreateMutationError = ErrorType<void>
+    export type RafflesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof rafflesCreate>>>
+    export type RafflesCreateMutationBody = BodyType<CreateRaffleDto>
+    export type RafflesCreateMutationError = ErrorType<void>
 
     /**
  * @summary Crear un sorteo
  */
-export const useCreate = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof create>>, TError,{data: BodyType<CreateRaffleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRafflesCreate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesCreate>>, TError,{data: BodyType<CreateRaffleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof create>>,
+        Awaited<ReturnType<typeof rafflesCreate>>,
         TError,
         {data: BodyType<CreateRaffleDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateMutationOptions(options);
+      const mutationOptions = getRafflesCreateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Obtener un sorteo por id
  */
-export const get = (
+export const rafflesGet = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -216,69 +216,69 @@ export const get = (
 
 
 
-export const getGetQueryKey = (id?: string,) => {
+export const getRafflesGetQueryKey = (id?: string,) => {
     return [
     `/v1/raffles/${id}`
     ] as const;
     }
 
     
-export const getGetQueryOptions = <TData = Awaited<ReturnType<typeof get>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getRafflesGetQueryOptions = <TData = Awaited<ReturnType<typeof rafflesGet>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getRafflesGetQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof get>>> = ({ signal }) => get(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rafflesGet>>> = ({ signal }) => rafflesGet(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetQueryResult = NonNullable<Awaited<ReturnType<typeof get>>>
-export type GetQueryError = ErrorType<void>
+export type RafflesGetQueryResult = NonNullable<Awaited<ReturnType<typeof rafflesGet>>>
+export type RafflesGetQueryError = ErrorType<void>
 
 
-export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = ErrorType<void>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>> & Pick<
+export function useRafflesGet<TData = Awaited<ReturnType<typeof rafflesGet>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof rafflesGet>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof rafflesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>> & Pick<
+export function useRafflesGet<TData = Awaited<ReturnType<typeof rafflesGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof get>>,
+          Awaited<ReturnType<typeof rafflesGet>>,
           TError,
-          Awaited<ReturnType<typeof get>>
+          Awaited<ReturnType<typeof rafflesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesGet<TData = Awaited<ReturnType<typeof rafflesGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Obtener un sorteo por id
  */
 
-export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof get>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesGet<TData = Awaited<ReturnType<typeof rafflesGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetQueryOptions(id,options)
+  const queryOptions = getRafflesGetQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -293,7 +293,7 @@ export function useGet<TData = Awaited<ReturnType<typeof get>>, TError = ErrorTy
 /**
  * @summary Agregar un premio al sorteo
  */
-export const addPrize = (
+export const rafflesAddPrize = (
     id: string,
     createPrizeDto: BodyType<CreatePrizeDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -310,11 +310,11 @@ export const addPrize = (
   
 
 
-export const getAddPrizeMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof addPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext> => {
+export const getRafflesAddPrizeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof rafflesAddPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext> => {
 
-const mutationKey = ['addPrize'];
+const mutationKey = ['rafflesAddPrize'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -324,10 +324,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addPrize>>, {id: string;data: BodyType<CreatePrizeDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rafflesAddPrize>>, {id: string;data: BodyType<CreatePrizeDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  addPrize(id,data,requestOptions)
+          return  rafflesAddPrize(id,data,requestOptions)
         }
 
         
@@ -335,30 +335,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AddPrizeMutationResult = NonNullable<Awaited<ReturnType<typeof addPrize>>>
-    export type AddPrizeMutationBody = BodyType<CreatePrizeDto>
-    export type AddPrizeMutationError = ErrorType<void>
+    export type RafflesAddPrizeMutationResult = NonNullable<Awaited<ReturnType<typeof rafflesAddPrize>>>
+    export type RafflesAddPrizeMutationBody = BodyType<CreatePrizeDto>
+    export type RafflesAddPrizeMutationError = ErrorType<void>
 
     /**
  * @summary Agregar un premio al sorteo
  */
-export const useAddPrize = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRafflesAddPrize = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddPrize>>, TError,{id: string;data: BodyType<CreatePrizeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof addPrize>>,
+        Awaited<ReturnType<typeof rafflesAddPrize>>,
         TError,
         {id: string;data: BodyType<CreatePrizeDto>},
         TContext
       > => {
 
-      const mutationOptions = getAddPrizeMutationOptions(options);
+      const mutationOptions = getRafflesAddPrizeMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar las entradas del sorteo
  */
-export const listEntries = (
+export const rafflesListEntries = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -373,69 +373,69 @@ export const listEntries = (
 
 
 
-export const getListEntriesQueryKey = (id?: string,) => {
+export const getRafflesListEntriesQueryKey = (id?: string,) => {
     return [
     `/v1/raffles/${id}/entries`
     ] as const;
     }
 
     
-export const getListEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getRafflesListEntriesQueryOptions = <TData = Awaited<ReturnType<typeof rafflesListEntries>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListEntriesQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getRafflesListEntriesQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEntries>>> = ({ signal }) => listEntries(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rafflesListEntries>>> = ({ signal }) => rafflesListEntries(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listEntries>>>
-export type ListEntriesQueryError = ErrorType<void>
+export type RafflesListEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof rafflesListEntries>>>
+export type RafflesListEntriesQueryError = ErrorType<void>
 
 
-export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<void>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>> & Pick<
+export function useRafflesListEntries<TData = Awaited<ReturnType<typeof rafflesListEntries>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listEntries>>,
+          Awaited<ReturnType<typeof rafflesListEntries>>,
           TError,
-          Awaited<ReturnType<typeof listEntries>>
+          Awaited<ReturnType<typeof rafflesListEntries>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>> & Pick<
+export function useRafflesListEntries<TData = Awaited<ReturnType<typeof rafflesListEntries>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listEntries>>,
+          Awaited<ReturnType<typeof rafflesListEntries>>,
           TError,
-          Awaited<ReturnType<typeof listEntries>>
+          Awaited<ReturnType<typeof rafflesListEntries>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesListEntries<TData = Awaited<ReturnType<typeof rafflesListEntries>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar las entradas del sorteo
  */
 
-export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useRafflesListEntries<TData = Awaited<ReturnType<typeof rafflesListEntries>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rafflesListEntries>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListEntriesQueryOptions(id,options)
+  const queryOptions = getRafflesListEntriesQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -450,7 +450,7 @@ export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, 
 /**
  * @summary Agregar una entrada al sorteo
  */
-export const addEntry = (
+export const rafflesAddEntry = (
     id: string,
     addEntryDto: BodyType<AddEntryDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -467,11 +467,11 @@ export const addEntry = (
   
 
 
-export const getAddEntryMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof addEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext> => {
+export const getRafflesAddEntryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof rafflesAddEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext> => {
 
-const mutationKey = ['addEntry'];
+const mutationKey = ['rafflesAddEntry'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -481,10 +481,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addEntry>>, {id: string;data: BodyType<AddEntryDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rafflesAddEntry>>, {id: string;data: BodyType<AddEntryDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  addEntry(id,data,requestOptions)
+          return  rafflesAddEntry(id,data,requestOptions)
         }
 
         
@@ -492,30 +492,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AddEntryMutationResult = NonNullable<Awaited<ReturnType<typeof addEntry>>>
-    export type AddEntryMutationBody = BodyType<AddEntryDto>
-    export type AddEntryMutationError = ErrorType<void>
+    export type RafflesAddEntryMutationResult = NonNullable<Awaited<ReturnType<typeof rafflesAddEntry>>>
+    export type RafflesAddEntryMutationBody = BodyType<AddEntryDto>
+    export type RafflesAddEntryMutationError = ErrorType<void>
 
     /**
  * @summary Agregar una entrada al sorteo
  */
-export const useAddEntry = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRafflesAddEntry = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddEntry>>, TError,{id: string;data: BodyType<AddEntryDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof addEntry>>,
+        Awaited<ReturnType<typeof rafflesAddEntry>>,
         TError,
         {id: string;data: BodyType<AddEntryDto>},
         TContext
       > => {
 
-      const mutationOptions = getAddEntryMutationOptions(options);
+      const mutationOptions = getRafflesAddEntryMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Cargar participantes por email (emite codigo de reclamo)
  */
-export const addByEmail = (
+export const rafflesAddByEmail = (
     id: string,
     addParticipantsByEmailDto: BodyType<AddParticipantsByEmailDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -532,11 +532,11 @@ export const addByEmail = (
   
 
 
-export const getAddByEmailMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof addByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext> => {
+export const getRafflesAddByEmailMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof rafflesAddByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext> => {
 
-const mutationKey = ['addByEmail'];
+const mutationKey = ['rafflesAddByEmail'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -546,10 +546,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addByEmail>>, {id: string;data: BodyType<AddParticipantsByEmailDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rafflesAddByEmail>>, {id: string;data: BodyType<AddParticipantsByEmailDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  addByEmail(id,data,requestOptions)
+          return  rafflesAddByEmail(id,data,requestOptions)
         }
 
         
@@ -557,30 +557,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AddByEmailMutationResult = NonNullable<Awaited<ReturnType<typeof addByEmail>>>
-    export type AddByEmailMutationBody = BodyType<AddParticipantsByEmailDto>
-    export type AddByEmailMutationError = ErrorType<void>
+    export type RafflesAddByEmailMutationResult = NonNullable<Awaited<ReturnType<typeof rafflesAddByEmail>>>
+    export type RafflesAddByEmailMutationBody = BodyType<AddParticipantsByEmailDto>
+    export type RafflesAddByEmailMutationError = ErrorType<void>
 
     /**
  * @summary Cargar participantes por email (emite codigo de reclamo)
  */
-export const useAddByEmail = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRafflesAddByEmail = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesAddByEmail>>, TError,{id: string;data: BodyType<AddParticipantsByEmailDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof addByEmail>>,
+        Awaited<ReturnType<typeof rafflesAddByEmail>>,
         TError,
         {id: string;data: BodyType<AddParticipantsByEmailDto>},
         TContext
       > => {
 
-      const mutationOptions = getAddByEmailMutationOptions(options);
+      const mutationOptions = getRafflesAddByEmailMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Sortear un ganador y cerrar el sorteo
  */
-export const draw = (
+export const rafflesDraw = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -594,11 +594,11 @@ export const draw = (
   
 
 
-export const getDrawMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draw>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof draw>>, TError,{id: string}, TContext> => {
+export const getRafflesDrawMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesDraw>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof rafflesDraw>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['draw'];
+const mutationKey = ['rafflesDraw'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -608,10 +608,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof draw>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rafflesDraw>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  draw(id,requestOptions)
+          return  rafflesDraw(id,requestOptions)
         }
 
         
@@ -619,23 +619,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DrawMutationResult = NonNullable<Awaited<ReturnType<typeof draw>>>
+    export type RafflesDrawMutationResult = NonNullable<Awaited<ReturnType<typeof rafflesDraw>>>
     
-    export type DrawMutationError = ErrorType<void>
+    export type RafflesDrawMutationError = ErrorType<void>
 
     /**
  * @summary Sortear un ganador y cerrar el sorteo
  */
-export const useDraw = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draw>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useRafflesDraw = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rafflesDraw>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof draw>>,
+        Awaited<ReturnType<typeof rafflesDraw>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getDrawMutationOptions(options);
+      const mutationOptions = getRafflesDrawMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -27,7 +27,7 @@ import type {
 import type {
   CreatePreferenceDto,
   Payment,
-  WebhookBody
+  PaymentsWebhookBody
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -39,9 +39,101 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Listar pagos
+ */
+export const paymentsList = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Payment[]>(
+      {url: `/v1/payments`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPaymentsListQueryKey = () => {
+    return [
+    `/v1/payments`
+    ] as const;
+    }
+
+    
+export const getPaymentsListQueryOptions = <TData = Awaited<ReturnType<typeof paymentsList>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsListQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsList>>> = ({ signal }) => paymentsList(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsListQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsList>>>
+export type PaymentsListQueryError = ErrorType<void>
+
+
+export function usePaymentsList<TData = Awaited<ReturnType<typeof paymentsList>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsList>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsList<TData = Awaited<ReturnType<typeof paymentsList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsList>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsList<TData = Awaited<ReturnType<typeof paymentsList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar pagos
+ */
+
+export function usePaymentsList<TData = Awaited<ReturnType<typeof paymentsList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Marcar pago en efectivo como cobrado
  */
-export const markPaid = (
+export const paymentsMarkPaid = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -55,11 +147,11 @@ export const markPaid = (
   
 
 
-export const getMarkPaidMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markPaid>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof markPaid>>, TError,{id: string}, TContext> => {
+export const getPaymentsMarkPaidMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkPaid>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkPaid>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['markPaid'];
+const mutationKey = ['paymentsMarkPaid'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -69,10 +161,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markPaid>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsMarkPaid>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  markPaid(id,requestOptions)
+          return  paymentsMarkPaid(id,requestOptions)
         }
 
         
@@ -80,30 +172,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type MarkPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markPaid>>>
+    export type PaymentsMarkPaidMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsMarkPaid>>>
     
-    export type MarkPaidMutationError = ErrorType<void>
+    export type PaymentsMarkPaidMutationError = ErrorType<void>
 
     /**
  * @summary Marcar pago en efectivo como cobrado
  */
-export const useMarkPaid = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markPaid>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePaymentsMarkPaid = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkPaid>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof markPaid>>,
+        Awaited<ReturnType<typeof paymentsMarkPaid>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getMarkPaidMutationOptions(options);
+      const mutationOptions = getPaymentsMarkPaidMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Crear preferencia de pago de MercadoPago
  */
-export const createPreference = (
+export const paymentsCreatePreference = (
     id: string,
     createPreferenceDto: BodyType<CreatePreferenceDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -120,11 +212,11 @@ export const createPreference = (
   
 
 
-export const getCreatePreferenceMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createPreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext> => {
+export const getPaymentsCreatePreferenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsCreatePreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsCreatePreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext> => {
 
-const mutationKey = ['createPreference'];
+const mutationKey = ['paymentsCreatePreference'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -134,10 +226,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPreference>>, {id: string;data: BodyType<CreatePreferenceDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsCreatePreference>>, {id: string;data: BodyType<CreatePreferenceDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  createPreference(id,data,requestOptions)
+          return  paymentsCreatePreference(id,data,requestOptions)
         }
 
         
@@ -145,31 +237,31 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreatePreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof createPreference>>>
-    export type CreatePreferenceMutationBody = BodyType<CreatePreferenceDto>
-    export type CreatePreferenceMutationError = ErrorType<void>
+    export type PaymentsCreatePreferenceMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsCreatePreference>>>
+    export type PaymentsCreatePreferenceMutationBody = BodyType<CreatePreferenceDto>
+    export type PaymentsCreatePreferenceMutationError = ErrorType<void>
 
     /**
  * @summary Crear preferencia de pago de MercadoPago
  */
-export const useCreatePreference = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePaymentsCreatePreference = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsCreatePreference>>, TError,{id: string;data: BodyType<CreatePreferenceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createPreference>>,
+        Awaited<ReturnType<typeof paymentsCreatePreference>>,
         TError,
         {id: string;data: BodyType<CreatePreferenceDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreatePreferenceMutationOptions(options);
+      const mutationOptions = getPaymentsCreatePreferenceMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Webhook publico de MercadoPago
  */
-export const webhook = (
-    webhookBody: BodyType<WebhookBody>,
+export const paymentsWebhook = (
+    paymentsWebhookBody: BodyType<PaymentsWebhookBody>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -177,18 +269,18 @@ export const webhook = (
       return customInstance<void>(
       {url: `/v1/payments/mp/webhook`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: webhookBody, signal
+      data: paymentsWebhookBody, signal
     },
       options);
     }
   
 
 
-export const getWebhookMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof webhook>>, TError,{data: BodyType<WebhookBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof webhook>>, TError,{data: BodyType<WebhookBody>}, TContext> => {
+export const getPaymentsWebhookMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsWebhook>>, TError,{data: BodyType<PaymentsWebhookBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsWebhook>>, TError,{data: BodyType<PaymentsWebhookBody>}, TContext> => {
 
-const mutationKey = ['webhook'];
+const mutationKey = ['paymentsWebhook'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -198,10 +290,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof webhook>>, {data: BodyType<WebhookBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsWebhook>>, {data: BodyType<PaymentsWebhookBody>}> = (props) => {
           const {data} = props ?? {};
 
-          return  webhook(data,requestOptions)
+          return  paymentsWebhook(data,requestOptions)
         }
 
         
@@ -209,30 +301,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type WebhookMutationResult = NonNullable<Awaited<ReturnType<typeof webhook>>>
-    export type WebhookMutationBody = BodyType<WebhookBody>
-    export type WebhookMutationError = ErrorType<unknown>
+    export type PaymentsWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsWebhook>>>
+    export type PaymentsWebhookMutationBody = BodyType<PaymentsWebhookBody>
+    export type PaymentsWebhookMutationError = ErrorType<unknown>
 
     /**
  * @summary Webhook publico de MercadoPago
  */
-export const useWebhook = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof webhook>>, TError,{data: BodyType<WebhookBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePaymentsWebhook = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsWebhook>>, TError,{data: BodyType<PaymentsWebhookBody>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof webhook>>,
+        Awaited<ReturnType<typeof paymentsWebhook>>,
         TError,
-        {data: BodyType<WebhookBody>},
+        {data: BodyType<PaymentsWebhookBody>},
         TContext
       > => {
 
-      const mutationOptions = getWebhookMutationOptions(options);
+      const mutationOptions = getPaymentsWebhookMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Obtener la URL para conectar la cuenta de MercadoPago
  */
-export const connect = (
+export const mpOAuthConnect = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -247,69 +339,69 @@ export const connect = (
 
 
 
-export const getConnectQueryKey = () => {
+export const getMpOAuthConnectQueryKey = () => {
     return [
     `/payments/mp/oauth/connect`
     ] as const;
     }
 
     
-export const getConnectQueryOptions = <TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMpOAuthConnectQueryOptions = <TData = Awaited<ReturnType<typeof mpOAuthConnect>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getConnectQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getMpOAuthConnectQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof connect>>> = ({ signal }) => connect(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mpOAuthConnect>>> = ({ signal }) => mpOAuthConnect(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ConnectQueryResult = NonNullable<Awaited<ReturnType<typeof connect>>>
-export type ConnectQueryError = ErrorType<unknown>
+export type MpOAuthConnectQueryResult = NonNullable<Awaited<ReturnType<typeof mpOAuthConnect>>>
+export type MpOAuthConnectQueryError = ErrorType<unknown>
 
 
-export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>> & Pick<
+export function useMpOAuthConnect<TData = Awaited<ReturnType<typeof mpOAuthConnect>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof connect>>,
+          Awaited<ReturnType<typeof mpOAuthConnect>>,
           TError,
-          Awaited<ReturnType<typeof connect>>
+          Awaited<ReturnType<typeof mpOAuthConnect>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>> & Pick<
+export function useMpOAuthConnect<TData = Awaited<ReturnType<typeof mpOAuthConnect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof connect>>,
+          Awaited<ReturnType<typeof mpOAuthConnect>>,
           TError,
-          Awaited<ReturnType<typeof connect>>
+          Awaited<ReturnType<typeof mpOAuthConnect>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMpOAuthConnect<TData = Awaited<ReturnType<typeof mpOAuthConnect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Obtener la URL para conectar la cuenta de MercadoPago
  */
 
-export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof connect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMpOAuthConnect<TData = Awaited<ReturnType<typeof mpOAuthConnect>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthConnect>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getConnectQueryOptions(options)
+  const queryOptions = getMpOAuthConnectQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -324,7 +416,7 @@ export function useConnect<TData = Awaited<ReturnType<typeof connect>>, TError =
 /**
  * @summary Estado de conexion de MercadoPago
  */
-export const status = (
+export const mpOAuthStatus = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -339,69 +431,69 @@ export const status = (
 
 
 
-export const getStatusQueryKey = () => {
+export const getMpOAuthStatusQueryKey = () => {
     return [
     `/payments/mp/oauth/status`
     ] as const;
     }
 
     
-export const getStatusQueryOptions = <TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMpOAuthStatusQueryOptions = <TData = Awaited<ReturnType<typeof mpOAuthStatus>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getStatusQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getMpOAuthStatusQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof status>>> = ({ signal }) => status(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof mpOAuthStatus>>> = ({ signal }) => mpOAuthStatus(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type StatusQueryResult = NonNullable<Awaited<ReturnType<typeof status>>>
-export type StatusQueryError = ErrorType<unknown>
+export type MpOAuthStatusQueryResult = NonNullable<Awaited<ReturnType<typeof mpOAuthStatus>>>
+export type MpOAuthStatusQueryError = ErrorType<unknown>
 
 
-export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>> & Pick<
+export function useMpOAuthStatus<TData = Awaited<ReturnType<typeof mpOAuthStatus>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof status>>,
+          Awaited<ReturnType<typeof mpOAuthStatus>>,
           TError,
-          Awaited<ReturnType<typeof status>>
+          Awaited<ReturnType<typeof mpOAuthStatus>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>> & Pick<
+export function useMpOAuthStatus<TData = Awaited<ReturnType<typeof mpOAuthStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof status>>,
+          Awaited<ReturnType<typeof mpOAuthStatus>>,
           TError,
-          Awaited<ReturnType<typeof status>>
+          Awaited<ReturnType<typeof mpOAuthStatus>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMpOAuthStatus<TData = Awaited<ReturnType<typeof mpOAuthStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Estado de conexion de MercadoPago
  */
 
-export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = ErrorType<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof status>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMpOAuthStatus<TData = Awaited<ReturnType<typeof mpOAuthStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mpOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getStatusQueryOptions(options)
+  const queryOptions = getMpOAuthStatusQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -416,7 +508,7 @@ export function useStatus<TData = Awaited<ReturnType<typeof status>>, TError = E
 /**
  * @summary Desconectar la cuenta de MercadoPago
  */
-export const disconnect = (
+export const mpOAuthDisconnect = (
     
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -429,11 +521,11 @@ export const disconnect = (
   
 
 
-export const getDisconnectMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext> => {
+export const getMpOAuthDisconnectMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mpOAuthDisconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof mpOAuthDisconnect>>, TError,void, TContext> => {
 
-const mutationKey = ['disconnect'];
+const mutationKey = ['mpOAuthDisconnect'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -443,10 +535,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disconnect>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mpOAuthDisconnect>>, void> = () => {
           
 
-          return  disconnect(requestOptions)
+          return  mpOAuthDisconnect(requestOptions)
         }
 
         
@@ -454,23 +546,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DisconnectMutationResult = NonNullable<Awaited<ReturnType<typeof disconnect>>>
+    export type MpOAuthDisconnectMutationResult = NonNullable<Awaited<ReturnType<typeof mpOAuthDisconnect>>>
     
-    export type DisconnectMutationError = ErrorType<unknown>
+    export type MpOAuthDisconnectMutationError = ErrorType<unknown>
 
     /**
  * @summary Desconectar la cuenta de MercadoPago
  */
-export const useDisconnect = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useMpOAuthDisconnect = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mpOAuthDisconnect>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof disconnect>>,
+        Awaited<ReturnType<typeof mpOAuthDisconnect>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getDisconnectMutationOptions(options);
+      const mutationOptions = getMpOAuthDisconnectMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -10,7 +10,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { useAuth } from "@/components/auth-provider";
-import { useRequestClaimCode, useClaim } from "@/lib/api/generated/endpoints/auth/auth";
+import { homeForUser } from "@/lib/auth-routing";
+import { useAuthRequestClaimCode, useAuthClaim } from "@/lib/api/generated/endpoints/auth/auth";
 import { setAccessToken } from "@/lib/api/axios-instance";
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 
@@ -32,8 +33,8 @@ export function ClaimAccount() {
   const [resent, setResent] = useState(false);
   const [claimed, setClaimed] = useState(false);
 
-  const requestCode = useRequestClaimCode();
-  const claim = useClaim();
+  const requestCode = useAuthRequestClaimCode();
+  const claim = useAuthClaim();
 
   function resendCode() {
     setError(null);
@@ -50,13 +51,7 @@ export function ClaimAccount() {
   // Tras activar, derivamos según el rol (un profesional creado por admin va al panel).
   useEffect(() => {
     if (!claimed || !user) return;
-    if (user.roles.includes("professional")) {
-      router.replace(user.professionalId ? "/app" : "/onboarding");
-    } else if (user.roles.includes("admin")) {
-      router.replace("/admin/profesionales");
-    } else {
-      router.replace("/mis-turnos");
-    }
+    router.replace(homeForUser(user));
   }, [claimed, user, router]);
 
   function sendCode(e: React.FormEvent) {

@@ -13,4 +13,5 @@ export interface CreateScheduleRuleDto {
   startTime: string;
   endTime: string;
   kind?: CreateScheduleRuleDtoKind;
+  serviceIds?: string[];
 }

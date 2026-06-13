@@ -133,19 +133,49 @@ export interface BookWithDepositResult {
   mpInitPoint?: string | null;
 }
 
-/** Roles del usuario autenticado (`GET /auth/me`, API-GAPS §1). */
-export type AccountRole = "admin" | "professional" | "client";
+/** Roles del usuario autenticado (alineado a AppRole del contrato). */
+export type AccountRole = "admin" | "professional" | "comercial" | "client";
 
-/** Respuesta esperada de `GET /auth/me`. */
+/** Sesión normalizada del front a partir de `GET /auth/me` (AuthMeDto). */
 export interface MeResponse {
   id: string;
   email: string;
   fullName: string;
   roles: AccountRole[];
-  /** Si es profesional, su tenant. */
+  /** Si es profesional (trabajador), su tenant. */
   professionalId?: string | null;
+  /** Comercios que administra como comercial (+ su comercio-de-uno). */
+  comercioIds?: string[];
   /** Si el back lo informa: true/false. `undefined` = no sabemos (no mostramos aviso). */
   emailVerified?: boolean;
+}
+
+/** Membership con el comercio embebido (respuesta de `/comercios/memberships/mine`). */
+export interface MembershipWithComercio {
+  id: string;
+  professionalId: string;
+  comercioId: string;
+  status: "invited" | "active" | "inactive";
+  comercio?: {
+    id: string;
+    name: string;
+    slug: string;
+    address?: string | null;
+    isPersonal: boolean;
+  };
+}
+
+/** Membership con el profesional embebido (respuesta del roster `/comercios/{id}/members`). */
+export interface MembershipWithProfessional {
+  id: string;
+  professionalId: string;
+  comercioId: string;
+  status: "invited" | "active" | "inactive";
+  professional?: {
+    id: string;
+    fullName?: string;
+    email?: string;
+  };
 }
 
 /**

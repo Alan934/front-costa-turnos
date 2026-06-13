@@ -6,43 +6,51 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { useServices, useDeactivateService } from "@/lib/api/catalog";
+import { useActiveComercio } from "@/components/comercio-context";
+import { useComercioServices, useDeactivateComercioService } from "@/lib/api/catalog";
 import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration } from "@/lib/format";
 import type { Service } from "@/lib/api/generated/model/service";
 import { ServiceFormDialog } from "./service-form-dialog";
 
 export function ServicesManager() {
-  const { data, isLoading, isError, refetch } = useServices();
-  const deactivate = useDeactivateService();
+  const { active, activeId, loading: comercioLoading } = useActiveComercio();
+  const { data, isLoading, isError, refetch } = useComercioServices(activeId ?? undefined);
+  const deactivate = useDeactivateComercioService(activeId ?? "");
   const [editing, setEditing] = useState<Service | null>(null);
   const [creating, setCreating] = useState(false);
 
   const services = (data ?? []).filter((s) => s.isActive);
+  // Mientras no haya comercio activo resuelto, mostramos skeletons (no listas vacías).
+  const showLoading = comercioLoading || (!!activeId && isLoading);
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-6 sm:px-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight">Servicios</h1>
-          <p className="text-sm text-muted-foreground">Lo que ofrecés, con precio y seña</p>
+          <p className="text-sm text-muted-foreground">
+            Lo que ofrecés{active && !active.isPersonal ? ` en ${active.name}` : ""}, con precio y seña
+          </p>
         </div>
-        <Button size="sm" onClick={() => setCreating(true)}>
+        <Button size="sm" disabled={!activeId} onClick={() => setCreating(true)}>
           <Plus className="size-4" />
           <span className="hidden sm:inline">Nuevo servicio</span>
         </Button>
       </div>
 
       <div className="mt-6">
-        {isLoading && (
+        {showLoading && (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full rounded-xl" />
             ))}
           </div>
         )}
-        {isError && <ErrorState message="No pudimos cargar tus servicios." onRetry={() => refetch()} />}
-        {data && services.length === 0 && (
+        {!showLoading && isError && (
+          <ErrorState message="No pudimos cargar tus servicios." onRetry={() => refetch()} />
+        )}
+        {!showLoading && data && services.length === 0 && (
           <EmptyState
             icon={<Scissors className="size-5" />}
             title="Todavía no cargaste servicios"
@@ -55,7 +63,7 @@ export function ServicesManager() {
             }
           />
         )}
-        {services.length > 0 && (
+        {!showLoading && services.length > 0 && (
           <ul className="space-y-2.5">
             {services.map((s) => {
               const pay = paymentSummary(s);
@@ -102,8 +110,12 @@ export function ServicesManager() {
         )}
       </div>
 
-      {creating && <ServiceFormDialog onClose={() => setCreating(false)} />}
-      {editing && <ServiceFormDialog service={editing} onClose={() => setEditing(null)} />}
+      {creating && activeId && (
+        <ServiceFormDialog comercioId={activeId} onClose={() => setCreating(false)} />
+      )}
+      {editing && activeId && (
+        <ServiceFormDialog comercioId={activeId} service={editing} onClose={() => setEditing(null)} />
+      )}
     </div>
   );
 }

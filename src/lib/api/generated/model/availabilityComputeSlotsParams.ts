@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ComputeSlotsParams = {
+export type AvailabilityComputeSlotsParams = {
 staffId: string;
 serviceId: string;
 /**

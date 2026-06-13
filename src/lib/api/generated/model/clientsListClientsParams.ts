@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ListParams = {
-staffId?: string;
+export type ClientsListClientsParams = {
+/**
+ * Busca por nombre, email o telefono
+ */
+q?: string;
 };

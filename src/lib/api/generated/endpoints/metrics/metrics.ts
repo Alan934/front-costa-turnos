@@ -22,7 +22,7 @@ import type {
 
 import type {
   MetricsOverviewDto,
-  OverviewParams
+  MetricsOverviewParams
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -36,8 +36,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Metricas del negocio del profesional
  */
-export const overview = (
-    params?: OverviewParams,
+export const metricsOverview = (
+    params?: MetricsOverviewParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -52,69 +52,69 @@ export const overview = (
 
 
 
-export const getOverviewQueryKey = (params?: OverviewParams,) => {
+export const getMetricsOverviewQueryKey = (params?: MetricsOverviewParams,) => {
     return [
     `/v1/metrics/overview`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getOverviewQueryOptions = <TData = Awaited<ReturnType<typeof overview>>, TError = ErrorType<void>>(params?: OverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMetricsOverviewQueryOptions = <TData = Awaited<ReturnType<typeof metricsOverview>>, TError = ErrorType<void>>(params?: MetricsOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getOverviewQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getMetricsOverviewQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof overview>>> = ({ signal }) => overview(params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof metricsOverview>>> = ({ signal }) => metricsOverview(params, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type OverviewQueryResult = NonNullable<Awaited<ReturnType<typeof overview>>>
-export type OverviewQueryError = ErrorType<void>
+export type MetricsOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof metricsOverview>>>
+export type MetricsOverviewQueryError = ErrorType<void>
 
 
-export function useOverview<TData = Awaited<ReturnType<typeof overview>>, TError = ErrorType<void>>(
- params: undefined |  OverviewParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData>> & Pick<
+export function useMetricsOverview<TData = Awaited<ReturnType<typeof metricsOverview>>, TError = ErrorType<void>>(
+ params: undefined |  MetricsOverviewParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof overview>>,
+          Awaited<ReturnType<typeof metricsOverview>>,
           TError,
-          Awaited<ReturnType<typeof overview>>
+          Awaited<ReturnType<typeof metricsOverview>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOverview<TData = Awaited<ReturnType<typeof overview>>, TError = ErrorType<void>>(
- params?: OverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData>> & Pick<
+export function useMetricsOverview<TData = Awaited<ReturnType<typeof metricsOverview>>, TError = ErrorType<void>>(
+ params?: MetricsOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof overview>>,
+          Awaited<ReturnType<typeof metricsOverview>>,
           TError,
-          Awaited<ReturnType<typeof overview>>
+          Awaited<ReturnType<typeof metricsOverview>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useOverview<TData = Awaited<ReturnType<typeof overview>>, TError = ErrorType<void>>(
- params?: OverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMetricsOverview<TData = Awaited<ReturnType<typeof metricsOverview>>, TError = ErrorType<void>>(
+ params?: MetricsOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Metricas del negocio del profesional
  */
 
-export function useOverview<TData = Awaited<ReturnType<typeof overview>>, TError = ErrorType<void>>(
- params?: OverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof overview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useMetricsOverview<TData = Awaited<ReturnType<typeof metricsOverview>>, TError = ErrorType<void>>(
+ params?: MetricsOverviewParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof metricsOverview>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getOverviewQueryOptions(params,options)
+  const queryOptions = getMetricsOverviewQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

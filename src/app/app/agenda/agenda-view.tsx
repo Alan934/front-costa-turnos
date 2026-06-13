@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
-import { useListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
 import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
@@ -30,7 +30,7 @@ export function AgendaView() {
   const [creating, setCreating] = useState(false);
   const [dayList, setDayList] = useState<Date | null>(null);
 
-  const staffQuery = useListStaff();
+  const staffQuery = useProfessionalsListStaff();
   const servicesQuery = useServices();
   const staffList = (staffQuery.data ?? []).filter((s: Staff) => s.isActive);
   const services = servicesQuery.data ?? [];

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CalendarClock } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { homeForUser } from "@/lib/auth-routing";
 import { setAccessToken } from "@/lib/api/axios-instance";
 
 /**
@@ -38,13 +39,7 @@ export function AuthCallback() {
 
   useEffect(() => {
     if (!user) return;
-    if (user.roles.includes("professional")) {
-      router.replace(user.professionalId ? "/app" : "/onboarding");
-    } else if (user.roles.includes("admin")) {
-      router.replace("/admin/profesionales");
-    } else {
-      router.replace("/mis-turnos");
-    }
+    router.replace(homeForUser(user));
   }, [user, router]);
 
   return (

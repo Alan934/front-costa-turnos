@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Store, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -10,48 +11,81 @@ import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
+import { homeForUser } from "@/lib/auth-routing";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { ReactNode } from "react";
-import type { MeResponse } from "@/mocks/contract-extensions";
 
 type Tab = "login" | "registro";
+type RegType = "cliente" | "profesional";
+
+const DEFAULT_TZ = "America/Argentina/Buenos_Aires";
+
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 export function LoginRegister() {
   const [tab, setTab] = useState<Tab>("login");
+  const [regType, setRegType] = useState<RegType>("cliente");
   const router = useRouter();
-  const { login, register } = useAuth();
+  const searchParams = useSearchParams();
+  const { login, register, registerProfessional } = useAuth();
+
+  // `next` permite volver al destino original (p. ej. aceptar una invitación) tras autenticarse.
+  // Solo aceptamos rutas internas para evitar redirecciones abiertas.
+  const rawNext = searchParams.get("next");
+  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [address, setAddress] = useState("");
   const [error, setError] = useState<ReactNode>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function routeByRole(user: MeResponse) {
-    if (user.roles.includes("professional")) {
-      // Profesional sin tenant todavía: completa el onboarding primero.
-      router.replace(user.professionalId ? "/app" : "/onboarding");
-    } else if (user.roles.includes("admin")) {
-      router.replace("/admin/profesionales");
-    } else {
-      router.replace("/mis-turnos");
-    }
-  }
+  const isPro = tab === "registro" && regType === "profesional";
+
+  useEffect(() => {
+    if (!slugTouched) setSlug(toSlug(businessName));
+  }, [businessName, slugTouched]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
+      if (tab === "registro" && regType === "profesional") {
+        // Profesional: crea cuenta + profesional + comercio-de-uno + trial, en una.
+        await registerProfessional({
+          email,
+          password,
+          fullName,
+          businessName: businessName.trim(),
+          slug,
+          timezone: DEFAULT_TZ,
+          address: address.trim() || undefined,
+        });
+        // Si vino de una invitación (next), volvemos ahí; si no, sigue el onboarding.
+        router.replace(next ?? "/onboarding");
+        return;
+      }
       if (tab === "registro") {
-        // Registrarse acá = crear tu cuenta para gestionar turnos → onboarding del negocio.
-        await register({ email, password, fullName });
-        router.replace("/onboarding");
+        // Cliente.
+        const user = await register({ email, password, fullName });
+        router.replace(next ?? homeForUser(user));
         return;
       }
       const user = await login({ email, password });
-      routeByRole(user);
+      router.replace(next ?? homeForUser(user));
     } catch (err) {
       const ax = err as AxiosError<{ message?: string }>;
       const status = ax.response?.status;
@@ -108,6 +142,26 @@ export function LoginRegister() {
         <span className="h-px flex-1 bg-border" />o con tu email<span className="h-px flex-1 bg-border" />
       </div>
 
+      {/* ¿Cliente o profesional? (solo al registrarse) */}
+      {tab === "registro" && (
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <RegTypeCard
+            active={regType === "cliente"}
+            onClick={() => { setRegType("cliente"); setError(null); }}
+            icon={<User className="size-4" />}
+            title="Soy cliente"
+            hint="Para reservar turnos"
+          />
+          <RegTypeCard
+            active={regType === "profesional"}
+            onClick={() => { setRegType("profesional"); setError(null); }}
+            icon={<Store className="size-4" />}
+            title="Tengo un negocio"
+            hint="Gestiono mis turnos"
+          />
+        </div>
+      )}
+
       <form onSubmit={onSubmit} className="space-y-3.5">
         {tab === "registro" && (
           <div>
@@ -160,6 +214,47 @@ export function LoginRegister() {
           />
         </div>
 
+        {/* Datos del negocio (registro profesional) */}
+        {isPro && (
+          <>
+            <div>
+              <Label htmlFor="businessName">Nombre del negocio</Label>
+              <Input
+                id="businessName"
+                className="mt-1.5"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="Peluquería del Pueblo"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="slug">Tu enlace público</Label>
+              <div className="mt-1.5 flex items-center rounded-lg border border-input bg-card pl-3 focus-within:ring-2 focus-within:ring-ring">
+                <span className="select-none text-sm text-muted-foreground">/r/</span>
+                <input
+                  id="slug"
+                  value={slug}
+                  onChange={(e) => { setSlugTouched(true); setSlug(toSlug(e.target.value)); }}
+                  placeholder="mi-negocio"
+                  className="h-10 w-full bg-transparent px-2 text-sm outline-none"
+                  required
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="address">Dirección <span className="text-muted-foreground">(opcional)</span></Label>
+              <Input
+                id="address"
+                className="mt-1.5"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Belgrano 245, Costa de Araujo"
+              />
+            </div>
+          </>
+        )}
+
         {error && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
             {error}
@@ -177,6 +272,37 @@ export function LoginRegister() {
         </Button>
       </form>
     </AuthShell>
+  );
+}
+
+function RegTypeCard({
+  active,
+  onClick,
+  icon,
+  title,
+  hint,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: ReactNode;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-start gap-0.5 rounded-xl border p-3 text-left transition-colors",
+        active ? "border-accent bg-accent/10" : "border-border hover:border-accent/50",
+      )}
+    >
+      <span className={cn("flex items-center gap-1.5 text-sm font-medium", active ? "text-accent" : "text-foreground")}>
+        {icon}
+        {title}
+      </span>
+      <span className="text-xs text-muted-foreground">{hint}</span>
+    </button>
   );
 }
 

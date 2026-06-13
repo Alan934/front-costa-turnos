@@ -44,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Onboarding del professional (tenant)
  */
-export const onboard = (
+export const professionalsOnboard = (
     onboardProfessionalDto: BodyType<OnboardProfessionalDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -60,11 +60,11 @@ export const onboard = (
   
 
 
-export const getOnboardMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof onboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof onboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext> => {
+export const getProfessionalsOnboardMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsOnboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsOnboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext> => {
 
-const mutationKey = ['onboard'];
+const mutationKey = ['professionalsOnboard'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -74,10 +74,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof onboard>>, {data: BodyType<OnboardProfessionalDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsOnboard>>, {data: BodyType<OnboardProfessionalDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  onboard(data,requestOptions)
+          return  professionalsOnboard(data,requestOptions)
         }
 
         
@@ -85,30 +85,122 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type OnboardMutationResult = NonNullable<Awaited<ReturnType<typeof onboard>>>
-    export type OnboardMutationBody = BodyType<OnboardProfessionalDto>
-    export type OnboardMutationError = ErrorType<void>
+    export type ProfessionalsOnboardMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsOnboard>>>
+    export type ProfessionalsOnboardMutationBody = BodyType<OnboardProfessionalDto>
+    export type ProfessionalsOnboardMutationError = ErrorType<void>
 
     /**
  * @summary Onboarding del professional (tenant)
  */
-export const useOnboard = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof onboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useProfessionalsOnboard = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsOnboard>>, TError,{data: BodyType<OnboardProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof onboard>>,
+        Awaited<ReturnType<typeof professionalsOnboard>>,
         TError,
         {data: BodyType<OnboardProfessionalDto>},
         TContext
       > => {
 
-      const mutationOptions = getOnboardMutationOptions(options);
+      const mutationOptions = getProfessionalsOnboardMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * @summary Obtener el professional propio
+ */
+export const professionalsGetMine = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Professional>(
+      {url: `/v1/professionals/me`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProfessionalsGetMineQueryKey = () => {
+    return [
+    `/v1/professionals/me`
+    ] as const;
+    }
+
+    
+export const getProfessionalsGetMineQueryOptions = <TData = Awaited<ReturnType<typeof professionalsGetMine>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProfessionalsGetMineQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof professionalsGetMine>>> = ({ signal }) => professionalsGetMine(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProfessionalsGetMineQueryResult = NonNullable<Awaited<ReturnType<typeof professionalsGetMine>>>
+export type ProfessionalsGetMineQueryError = ErrorType<void>
+
+
+export function useProfessionalsGetMine<TData = Awaited<ReturnType<typeof professionalsGetMine>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsGetMine>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsGetMine>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsGetMine<TData = Awaited<ReturnType<typeof professionalsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsGetMine>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsGetMine>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsGetMine<TData = Awaited<ReturnType<typeof professionalsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Obtener el professional propio
+ */
+
+export function useProfessionalsGetMine<TData = Awaited<ReturnType<typeof professionalsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProfessionalsGetMineQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Actualizar el professional propio
  */
-export const updateMine = (
+export const professionalsUpdateMine = (
     updateProfessionalDto: BodyType<UpdateProfessionalDto>,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -123,11 +215,11 @@ export const updateMine = (
   
 
 
-export const getUpdateMineMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext> => {
+export const getProfessionalsUpdateMineMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext> => {
 
-const mutationKey = ['updateMine'];
+const mutationKey = ['professionalsUpdateMine'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -137,10 +229,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMine>>, {data: BodyType<UpdateProfessionalDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsUpdateMine>>, {data: BodyType<UpdateProfessionalDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  updateMine(data,requestOptions)
+          return  professionalsUpdateMine(data,requestOptions)
         }
 
         
@@ -148,30 +240,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateMineMutationResult = NonNullable<Awaited<ReturnType<typeof updateMine>>>
-    export type UpdateMineMutationBody = BodyType<UpdateProfessionalDto>
-    export type UpdateMineMutationError = ErrorType<void>
+    export type ProfessionalsUpdateMineMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsUpdateMine>>>
+    export type ProfessionalsUpdateMineMutationBody = BodyType<UpdateProfessionalDto>
+    export type ProfessionalsUpdateMineMutationError = ErrorType<void>
 
     /**
  * @summary Actualizar el professional propio
  */
-export const useUpdateMine = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useProfessionalsUpdateMine = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateMine>>, TError,{data: BodyType<UpdateProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateMine>>,
+        Awaited<ReturnType<typeof professionalsUpdateMine>>,
         TError,
         {data: BodyType<UpdateProfessionalDto>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateMineMutationOptions(options);
+      const mutationOptions = getProfessionalsUpdateMineMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar el staff del professional
  */
-export const listStaff = (
+export const professionalsListStaff = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -186,69 +278,69 @@ export const listStaff = (
 
 
 
-export const getListStaffQueryKey = () => {
+export const getProfessionalsListStaffQueryKey = () => {
     return [
     `/v1/professionals/staff`
     ] as const;
     }
 
     
-export const getListStaffQueryOptions = <TData = Awaited<ReturnType<typeof listStaff>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getProfessionalsListStaffQueryOptions = <TData = Awaited<ReturnType<typeof professionalsListStaff>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListStaffQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getProfessionalsListStaffQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStaff>>> = ({ signal }) => listStaff(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof professionalsListStaff>>> = ({ signal }) => professionalsListStaff(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListStaffQueryResult = NonNullable<Awaited<ReturnType<typeof listStaff>>>
-export type ListStaffQueryError = ErrorType<void>
+export type ProfessionalsListStaffQueryResult = NonNullable<Awaited<ReturnType<typeof professionalsListStaff>>>
+export type ProfessionalsListStaffQueryError = ErrorType<void>
 
 
-export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>> & Pick<
+export function useProfessionalsListStaff<TData = Awaited<ReturnType<typeof professionalsListStaff>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listStaff>>,
+          Awaited<ReturnType<typeof professionalsListStaff>>,
           TError,
-          Awaited<ReturnType<typeof listStaff>>
+          Awaited<ReturnType<typeof professionalsListStaff>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>> & Pick<
+export function useProfessionalsListStaff<TData = Awaited<ReturnType<typeof professionalsListStaff>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listStaff>>,
+          Awaited<ReturnType<typeof professionalsListStaff>>,
           TError,
-          Awaited<ReturnType<typeof listStaff>>
+          Awaited<ReturnType<typeof professionalsListStaff>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useProfessionalsListStaff<TData = Awaited<ReturnType<typeof professionalsListStaff>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar el staff del professional
  */
 
-export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useProfessionalsListStaff<TData = Awaited<ReturnType<typeof professionalsListStaff>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsListStaff>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListStaffQueryOptions(options)
+  const queryOptions = getProfessionalsListStaffQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -263,7 +355,7 @@ export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TErr
 /**
  * @summary Crear un staff
  */
-export const createStaff = (
+export const professionalsCreateStaff = (
     createStaffDto: BodyType<CreateStaffDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -279,11 +371,11 @@ export const createStaff = (
   
 
 
-export const getCreateStaffMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext> => {
+export const getProfessionalsCreateStaffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsCreateStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsCreateStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext> => {
 
-const mutationKey = ['createStaff'];
+const mutationKey = ['professionalsCreateStaff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -293,10 +385,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createStaff>>, {data: BodyType<CreateStaffDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsCreateStaff>>, {data: BodyType<CreateStaffDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  createStaff(data,requestOptions)
+          return  professionalsCreateStaff(data,requestOptions)
         }
 
         
@@ -304,30 +396,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof createStaff>>>
-    export type CreateStaffMutationBody = BodyType<CreateStaffDto>
-    export type CreateStaffMutationError = ErrorType<void>
+    export type ProfessionalsCreateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsCreateStaff>>>
+    export type ProfessionalsCreateStaffMutationBody = BodyType<CreateStaffDto>
+    export type ProfessionalsCreateStaffMutationError = ErrorType<void>
 
     /**
  * @summary Crear un staff
  */
-export const useCreateStaff = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useProfessionalsCreateStaff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsCreateStaff>>, TError,{data: BodyType<CreateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createStaff>>,
+        Awaited<ReturnType<typeof professionalsCreateStaff>>,
         TError,
         {data: BodyType<CreateStaffDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateStaffMutationOptions(options);
+      const mutationOptions = getProfessionalsCreateStaffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Actualizar un staff
  */
-export const updateStaff = (
+export const professionalsUpdateStaff = (
     id: string,
     updateStaffDto: BodyType<UpdateStaffDto>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -343,11 +435,11 @@ export const updateStaff = (
   
 
 
-export const getUpdateStaffMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext> => {
+export const getProfessionalsUpdateStaffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext> => {
 
-const mutationKey = ['updateStaff'];
+const mutationKey = ['professionalsUpdateStaff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -357,10 +449,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStaff>>, {id: string;data: BodyType<UpdateStaffDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsUpdateStaff>>, {id: string;data: BodyType<UpdateStaffDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateStaff(id,data,requestOptions)
+          return  professionalsUpdateStaff(id,data,requestOptions)
         }
 
         
@@ -368,30 +460,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof updateStaff>>>
-    export type UpdateStaffMutationBody = BodyType<UpdateStaffDto>
-    export type UpdateStaffMutationError = ErrorType<void>
+    export type ProfessionalsUpdateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsUpdateStaff>>>
+    export type ProfessionalsUpdateStaffMutationBody = BodyType<UpdateStaffDto>
+    export type ProfessionalsUpdateStaffMutationError = ErrorType<void>
 
     /**
  * @summary Actualizar un staff
  */
-export const useUpdateStaff = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useProfessionalsUpdateStaff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsUpdateStaff>>, TError,{id: string;data: BodyType<UpdateStaffDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateStaff>>,
+        Awaited<ReturnType<typeof professionalsUpdateStaff>>,
         TError,
         {id: string;data: BodyType<UpdateStaffDto>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateStaffMutationOptions(options);
+      const mutationOptions = getProfessionalsUpdateStaffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Desactivar un staff
  */
-export const deactivateStaff = (
+export const professionalsDeactivateStaff = (
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -404,11 +496,11 @@ export const deactivateStaff = (
   
 
 
-export const getDeactivateStaffMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateStaff>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivateStaff>>, TError,{id: string}, TContext> => {
+export const getProfessionalsDeactivateStaffMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsDeactivateStaff>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsDeactivateStaff>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['deactivateStaff'];
+const mutationKey = ['professionalsDeactivateStaff'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -418,10 +510,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivateStaff>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsDeactivateStaff>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivateStaff(id,requestOptions)
+          return  professionalsDeactivateStaff(id,requestOptions)
         }
 
         
@@ -429,23 +521,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeactivateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof deactivateStaff>>>
+    export type ProfessionalsDeactivateStaffMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsDeactivateStaff>>>
     
-    export type DeactivateStaffMutationError = ErrorType<void>
+    export type ProfessionalsDeactivateStaffMutationError = ErrorType<void>
 
     /**
  * @summary Desactivar un staff
  */
-export const useDeactivateStaff = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivateStaff>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useProfessionalsDeactivateStaff = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsDeactivateStaff>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivateStaff>>,
+        Awaited<ReturnType<typeof professionalsDeactivateStaff>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getDeactivateStaffMutationOptions(options);
+      const mutationOptions = getProfessionalsDeactivateStaffMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

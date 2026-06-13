@@ -28,8 +28,8 @@ import type {
   Appointment,
   BookAppointmentDto,
   BookWithDepositDto,
-  PublicPageDto,
-  SlotsParams
+  PublicBookingSlotsParams,
+  PublicPageDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -41,9 +41,201 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Obtener la pagina publica de reservas
+ */
+export const publicBookingPage = (
+    slug: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PublicPageDto>(
+      {url: `/r/${slug}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingPageQueryKey = (slug?: string,) => {
+    return [
+    `/r/${slug}`
+    ] as const;
+    }
+
+    
+export const getPublicBookingPageQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingPage>>, TError = ErrorType<void>>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingPageQueryKey(slug);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingPage>>> = ({ signal }) => publicBookingPage(slug, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingPageQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingPage>>>
+export type PublicBookingPageQueryError = ErrorType<void>
+
+
+export function usePublicBookingPage<TData = Awaited<ReturnType<typeof publicBookingPage>>, TError = ErrorType<void>>(
+ slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingPage>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingPage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingPage<TData = Awaited<ReturnType<typeof publicBookingPage>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingPage>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingPage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingPage<TData = Awaited<ReturnType<typeof publicBookingPage>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Obtener la pagina publica de reservas
+ */
+
+export function usePublicBookingPage<TData = Awaited<ReturnType<typeof publicBookingPage>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingPage>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingPageQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Calcular slots disponibles
+ */
+export const publicBookingSlots = (
+    slug: string,
+    params: PublicBookingSlotsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/r/${slug}/slots`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingSlotsQueryKey = (slug?: string,
+    params?: PublicBookingSlotsParams,) => {
+    return [
+    `/r/${slug}/slots`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPublicBookingSlotsQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingSlots>>, TError = ErrorType<void>>(slug: string,
+    params: PublicBookingSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingSlotsQueryKey(slug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingSlots>>> = ({ signal }) => publicBookingSlots(slug,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingSlots>>>
+export type PublicBookingSlotsQueryError = ErrorType<void>
+
+
+export function usePublicBookingSlots<TData = Awaited<ReturnType<typeof publicBookingSlots>>, TError = ErrorType<void>>(
+ slug: string,
+    params: PublicBookingSlotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingSlots>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingSlots<TData = Awaited<ReturnType<typeof publicBookingSlots>>, TError = ErrorType<void>>(
+ slug: string,
+    params: PublicBookingSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingSlots>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingSlots<TData = Awaited<ReturnType<typeof publicBookingSlots>>, TError = ErrorType<void>>(
+ slug: string,
+    params: PublicBookingSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Calcular slots disponibles
+ */
+
+export function usePublicBookingSlots<TData = Awaited<ReturnType<typeof publicBookingSlots>>, TError = ErrorType<void>>(
+ slug: string,
+    params: PublicBookingSlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingSlots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingSlotsQueryOptions(slug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Reservar un turno desde la pagina publica
  */
-export const book = (
+export const publicBookingBook = (
     slug: string,
     bookAppointmentDto: BodyType<BookAppointmentDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -60,11 +252,11 @@ export const book = (
   
 
 
-export const getBookMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof book>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof book>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext> => {
+export const getPublicBookingBookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingBook>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicBookingBook>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext> => {
 
-const mutationKey = ['book'];
+const mutationKey = ['publicBookingBook'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -74,10 +266,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof book>>, {slug: string;data: BodyType<BookAppointmentDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicBookingBook>>, {slug: string;data: BodyType<BookAppointmentDto>}> = (props) => {
           const {slug,data} = props ?? {};
 
-          return  book(slug,data,requestOptions)
+          return  publicBookingBook(slug,data,requestOptions)
         }
 
         
@@ -85,30 +277,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type BookMutationResult = NonNullable<Awaited<ReturnType<typeof book>>>
-    export type BookMutationBody = BodyType<BookAppointmentDto>
-    export type BookMutationError = ErrorType<void>
+    export type PublicBookingBookMutationResult = NonNullable<Awaited<ReturnType<typeof publicBookingBook>>>
+    export type PublicBookingBookMutationBody = BodyType<BookAppointmentDto>
+    export type PublicBookingBookMutationError = ErrorType<void>
 
     /**
  * @summary Reservar un turno desde la pagina publica
  */
-export const useBook = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof book>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePublicBookingBook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingBook>>, TError,{slug: string;data: BodyType<BookAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof book>>,
+        Awaited<ReturnType<typeof publicBookingBook>>,
         TError,
         {slug: string;data: BodyType<BookAppointmentDto>},
         TContext
       > => {
 
-      const mutationOptions = getBookMutationOptions(options);
+      const mutationOptions = getPublicBookingBookMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Reservar un turno con sena desde la pagina publica
  */
-export const bookWithDeposit = (
+export const publicBookingBookWithDeposit = (
     slug: string,
     bookWithDepositDto: BodyType<BookWithDepositDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -125,11 +317,11 @@ export const bookWithDeposit = (
   
 
 
-export const getBookWithDepositMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof bookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext> => {
+export const getPublicBookingBookWithDepositMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingBookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicBookingBookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext> => {
 
-const mutationKey = ['bookWithDeposit'];
+const mutationKey = ['publicBookingBookWithDeposit'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -139,10 +331,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bookWithDeposit>>, {slug: string;data: BodyType<BookWithDepositDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicBookingBookWithDeposit>>, {slug: string;data: BodyType<BookWithDepositDto>}> = (props) => {
           const {slug,data} = props ?? {};
 
-          return  bookWithDeposit(slug,data,requestOptions)
+          return  publicBookingBookWithDeposit(slug,data,requestOptions)
         }
 
         
@@ -150,215 +342,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type BookWithDepositMutationResult = NonNullable<Awaited<ReturnType<typeof bookWithDeposit>>>
-    export type BookWithDepositMutationBody = BodyType<BookWithDepositDto>
-    export type BookWithDepositMutationError = ErrorType<void>
+    export type PublicBookingBookWithDepositMutationResult = NonNullable<Awaited<ReturnType<typeof publicBookingBookWithDeposit>>>
+    export type PublicBookingBookWithDepositMutationBody = BodyType<BookWithDepositDto>
+    export type PublicBookingBookWithDepositMutationError = ErrorType<void>
 
     /**
  * @summary Reservar un turno con sena desde la pagina publica
  */
-export const useBookWithDeposit = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const usePublicBookingBookWithDeposit = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingBookWithDeposit>>, TError,{slug: string;data: BodyType<BookWithDepositDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof bookWithDeposit>>,
+        Awaited<ReturnType<typeof publicBookingBookWithDeposit>>,
         TError,
         {slug: string;data: BodyType<BookWithDepositDto>},
         TContext
       > => {
 
-      const mutationOptions = getBookWithDepositMutationOptions(options);
+      const mutationOptions = getPublicBookingBookWithDepositMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
-    /**
- * @summary Obtener la pagina publica de reservas
- */
-export const page = (
-    slug: string,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<PublicPageDto>(
-      {url: `/r/${slug}`, method: 'GET', signal
-    },
-      options);
-    }
-  
-
-
-
-export const getPageQueryKey = (slug?: string,) => {
-    return [
-    `/r/${slug}`
-    ] as const;
-    }
-
     
-export const getPageQueryOptions = <TData = Awaited<ReturnType<typeof page>>, TError = ErrorType<void>>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getPageQueryKey(slug);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof page>>> = ({ signal }) => page(slug, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type PageQueryResult = NonNullable<Awaited<ReturnType<typeof page>>>
-export type PageQueryError = ErrorType<void>
-
-
-export function usePage<TData = Awaited<ReturnType<typeof page>>, TError = ErrorType<void>>(
- slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof page>>,
-          TError,
-          Awaited<ReturnType<typeof page>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePage<TData = Awaited<ReturnType<typeof page>>, TError = ErrorType<void>>(
- slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof page>>,
-          TError,
-          Awaited<ReturnType<typeof page>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePage<TData = Awaited<ReturnType<typeof page>>, TError = ErrorType<void>>(
- slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Obtener la pagina publica de reservas
- */
-
-export function usePage<TData = Awaited<ReturnType<typeof page>>, TError = ErrorType<void>>(
- slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof page>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getPageQueryOptions(slug,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-
-/**
- * @summary Calcular slots disponibles
- */
-export const slots = (
-    slug: string,
-    params: SlotsParams,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-      
-      
-      return customInstance<void>(
-      {url: `/r/${slug}/slots`, method: 'GET',
-        params, signal
-    },
-      options);
-    }
-  
-
-
-
-export const getSlotsQueryKey = (slug?: string,
-    params?: SlotsParams,) => {
-    return [
-    `/r/${slug}/slots`, ...(params ? [params]: [])
-    ] as const;
-    }
-
-    
-export const getSlotsQueryOptions = <TData = Awaited<ReturnType<typeof slots>>, TError = ErrorType<void>>(slug: string,
-    params: SlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getSlotsQueryKey(slug,params);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof slots>>> = ({ signal }) => slots(slug,params, requestOptions, signal);
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type SlotsQueryResult = NonNullable<Awaited<ReturnType<typeof slots>>>
-export type SlotsQueryError = ErrorType<void>
-
-
-export function useSlots<TData = Awaited<ReturnType<typeof slots>>, TError = ErrorType<void>>(
- slug: string,
-    params: SlotsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof slots>>,
-          TError,
-          Awaited<ReturnType<typeof slots>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSlots<TData = Awaited<ReturnType<typeof slots>>, TError = ErrorType<void>>(
- slug: string,
-    params: SlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof slots>>,
-          TError,
-          Awaited<ReturnType<typeof slots>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useSlots<TData = Awaited<ReturnType<typeof slots>>, TError = ErrorType<void>>(
- slug: string,
-    params: SlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Calcular slots disponibles
- */
-
-export function useSlots<TData = Awaited<ReturnType<typeof slots>>, TError = ErrorType<void>>(
- slug: string,
-    params: SlotsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof slots>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getSlotsQueryOptions(slug,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-

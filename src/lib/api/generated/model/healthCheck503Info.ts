@@ -9,7 +9,7 @@
 /**
  * @nullable
  */
-export type Check200Info = {[key: string]: {
+export type HealthCheck503Info = {[key: string]: {
   status: string;
   [key: string]: unknown;
  }} | null;

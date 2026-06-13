@@ -40,7 +40,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Obtener mi suscripcion
  */
-export const getMine = (
+export const subscriptionsGetMine = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -55,69 +55,69 @@ export const getMine = (
 
 
 
-export const getGetMineQueryKey = () => {
+export const getSubscriptionsGetMineQueryKey = () => {
     return [
     `/v1/subscription`
     ] as const;
     }
 
     
-export const getGetMineQueryOptions = <TData = Awaited<ReturnType<typeof getMine>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getSubscriptionsGetMineQueryOptions = <TData = Awaited<ReturnType<typeof subscriptionsGetMine>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetMineQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getSubscriptionsGetMineQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMine>>> = ({ signal }) => getMine(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof subscriptionsGetMine>>> = ({ signal }) => subscriptionsGetMine(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetMineQueryResult = NonNullable<Awaited<ReturnType<typeof getMine>>>
-export type GetMineQueryError = ErrorType<void>
+export type SubscriptionsGetMineQueryResult = NonNullable<Awaited<ReturnType<typeof subscriptionsGetMine>>>
+export type SubscriptionsGetMineQueryError = ErrorType<void>
 
 
-export function useGetMine<TData = Awaited<ReturnType<typeof getMine>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData>> & Pick<
+export function useSubscriptionsGetMine<TData = Awaited<ReturnType<typeof subscriptionsGetMine>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMine>>,
+          Awaited<ReturnType<typeof subscriptionsGetMine>>,
           TError,
-          Awaited<ReturnType<typeof getMine>>
+          Awaited<ReturnType<typeof subscriptionsGetMine>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMine<TData = Awaited<ReturnType<typeof getMine>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData>> & Pick<
+export function useSubscriptionsGetMine<TData = Awaited<ReturnType<typeof subscriptionsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMine>>,
+          Awaited<ReturnType<typeof subscriptionsGetMine>>,
           TError,
-          Awaited<ReturnType<typeof getMine>>
+          Awaited<ReturnType<typeof subscriptionsGetMine>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMine<TData = Awaited<ReturnType<typeof getMine>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useSubscriptionsGetMine<TData = Awaited<ReturnType<typeof subscriptionsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Obtener mi suscripcion
  */
 
-export function useGetMine<TData = Awaited<ReturnType<typeof getMine>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useSubscriptionsGetMine<TData = Awaited<ReturnType<typeof subscriptionsGetMine>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsGetMine>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetMineQueryOptions(options)
+  const queryOptions = getSubscriptionsGetMineQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -132,7 +132,7 @@ export function useGetMine<TData = Awaited<ReturnType<typeof getMine>>, TError =
 /**
  * @summary Listar pagos de la suscripcion
  */
-export const payments = (
+export const subscriptionsPayments = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -147,69 +147,69 @@ export const payments = (
 
 
 
-export const getPaymentsQueryKey = () => {
+export const getSubscriptionsPaymentsQueryKey = () => {
     return [
     `/v1/subscription/payments`
     ] as const;
     }
 
     
-export const getPaymentsQueryOptions = <TData = Awaited<ReturnType<typeof payments>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getSubscriptionsPaymentsQueryOptions = <TData = Awaited<ReturnType<typeof subscriptionsPayments>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getPaymentsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getSubscriptionsPaymentsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof payments>>> = ({ signal }) => payments(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof subscriptionsPayments>>> = ({ signal }) => subscriptionsPayments(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type PaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof payments>>>
-export type PaymentsQueryError = ErrorType<void>
+export type SubscriptionsPaymentsQueryResult = NonNullable<Awaited<ReturnType<typeof subscriptionsPayments>>>
+export type SubscriptionsPaymentsQueryError = ErrorType<void>
 
 
-export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData>> & Pick<
+export function useSubscriptionsPayments<TData = Awaited<ReturnType<typeof subscriptionsPayments>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof payments>>,
+          Awaited<ReturnType<typeof subscriptionsPayments>>,
           TError,
-          Awaited<ReturnType<typeof payments>>
+          Awaited<ReturnType<typeof subscriptionsPayments>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData>> & Pick<
+export function useSubscriptionsPayments<TData = Awaited<ReturnType<typeof subscriptionsPayments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof payments>>,
+          Awaited<ReturnType<typeof subscriptionsPayments>>,
           TError,
-          Awaited<ReturnType<typeof payments>>
+          Awaited<ReturnType<typeof subscriptionsPayments>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useSubscriptionsPayments<TData = Awaited<ReturnType<typeof subscriptionsPayments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar pagos de la suscripcion
  */
 
-export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof payments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useSubscriptionsPayments<TData = Awaited<ReturnType<typeof subscriptionsPayments>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof subscriptionsPayments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getPaymentsQueryOptions(options)
+  const queryOptions = getSubscriptionsPaymentsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -224,7 +224,7 @@ export function usePayments<TData = Awaited<ReturnType<typeof payments>>, TError
 /**
  * @summary Crear el checkout de MercadoPago para pagar la suscripcion
  */
-export const checkout = (
+export const subscriptionsCheckout = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -238,11 +238,11 @@ export const checkout = (
   
 
 
-export const getCheckoutMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext> => {
+export const getSubscriptionsCheckoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscriptionsCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscriptionsCheckout>>, TError,void, TContext> => {
 
-const mutationKey = ['checkout'];
+const mutationKey = ['subscriptionsCheckout'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -252,10 +252,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkout>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscriptionsCheckout>>, void> = () => {
           
 
-          return  checkout(requestOptions)
+          return  subscriptionsCheckout(requestOptions)
         }
 
         
@@ -263,23 +263,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof checkout>>>
+    export type SubscriptionsCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof subscriptionsCheckout>>>
     
-    export type CheckoutMutationError = ErrorType<void>
+    export type SubscriptionsCheckoutMutationError = ErrorType<void>
 
     /**
  * @summary Crear el checkout de MercadoPago para pagar la suscripcion
  */
-export const useCheckout = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useSubscriptionsCheckout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscriptionsCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof checkout>>,
+        Awaited<ReturnType<typeof subscriptionsCheckout>>,
         TError,
         void,
         TContext
       > => {
 
-      const mutationOptions = getCheckoutMutationOptions(options);
+      const mutationOptions = getSubscriptionsCheckoutMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

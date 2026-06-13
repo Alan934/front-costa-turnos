@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
 import { useServices } from "@/lib/api/catalog";
-import { useListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
-import { useListSchedule } from "@/lib/api/generated/endpoints/availability/availability";
+import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useAvailabilityListSchedule } from "@/lib/api/generated/endpoints/availability/availability";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 
 /**
@@ -14,14 +14,14 @@ import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
  */
 export function SetupChecklist() {
   const services = useServices();
-  const staff = useListStaff();
+  const staff = useProfessionalsListStaff();
 
   const activeServices = (services.data ?? []).filter((s) => s.isActive);
   const activeStaff = (staff.data ?? []).filter((s) => s.isActive);
   const firstStaffId = activeStaff[0]?.id;
 
   // Solo consultamos el horario del primer miembro del equipo (si hay).
-  const schedule = useListSchedule(firstStaffId ?? "", {
+  const schedule = useAvailabilityListSchedule(firstStaffId ?? "", {
     query: { enabled: !!firstStaffId },
   });
 

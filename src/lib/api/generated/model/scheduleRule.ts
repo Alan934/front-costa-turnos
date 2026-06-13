@@ -12,8 +12,10 @@ export interface ScheduleRule {
   createdAt: string;
   updatedAt: string;
   staffId: string;
+  membershipId: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;
   kind: ScheduleRuleKind;
+  serviceIds: string[];
 }

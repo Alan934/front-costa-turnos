@@ -5,11 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { MetricsRange } from './metricsRange';
 
-/**
- * @nullable
- */
-export type Check503Error = {[key: string]: {
-  status: string;
-  [key: string]: unknown;
- }} | null;
+export type MetricsOverviewParams = {
+range?: MetricsRange;
+};

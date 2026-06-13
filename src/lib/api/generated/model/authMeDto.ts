@@ -15,7 +15,9 @@ export interface AuthMeDto {
   emailVerified: boolean;
   roles: AppRole[];
   isPlatformAdmin: boolean;
-  /** tenant que administra */
+  /** professional (trabajador) */
   professionalId?: string;
   staffId?: string;
+  /** comercios que administra como comercial (+ su comercio-de-uno) */
+  comercioIds?: string[];
 }

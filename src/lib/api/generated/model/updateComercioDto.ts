@@ -6,10 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-/**
- * @nullable
- */
-export type Check200Error = {[key: string]: {
-  status: string;
-  [key: string]: unknown;
- }} | null;
+export interface UpdateComercioDto {
+  name?: string;
+  address?: string;
+  timezone?: string;
+}

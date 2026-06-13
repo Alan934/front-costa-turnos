@@ -41,7 +41,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Registrar consentimiento
  */
-export const recordConsent = (
+export const legalRecordConsent = (
     recordConsentDto: BodyType<RecordConsentDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -57,11 +57,11 @@ export const recordConsent = (
   
 
 
-export const getRecordConsentMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof recordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext> => {
+export const getLegalRecordConsentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legalRecordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof legalRecordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext> => {
 
-const mutationKey = ['recordConsent'];
+const mutationKey = ['legalRecordConsent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -71,10 +71,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordConsent>>, {data: BodyType<RecordConsentDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof legalRecordConsent>>, {data: BodyType<RecordConsentDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  recordConsent(data,requestOptions)
+          return  legalRecordConsent(data,requestOptions)
         }
 
         
@@ -82,30 +82,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RecordConsentMutationResult = NonNullable<Awaited<ReturnType<typeof recordConsent>>>
-    export type RecordConsentMutationBody = BodyType<RecordConsentDto>
-    export type RecordConsentMutationError = ErrorType<void>
+    export type LegalRecordConsentMutationResult = NonNullable<Awaited<ReturnType<typeof legalRecordConsent>>>
+    export type LegalRecordConsentMutationBody = BodyType<RecordConsentDto>
+    export type LegalRecordConsentMutationError = ErrorType<void>
 
     /**
  * @summary Registrar consentimiento
  */
-export const useRecordConsent = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useLegalRecordConsent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof legalRecordConsent>>, TError,{data: BodyType<RecordConsentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof recordConsent>>,
+        Awaited<ReturnType<typeof legalRecordConsent>>,
         TError,
         {data: BodyType<RecordConsentDto>},
         TContext
       > => {
 
-      const mutationOptions = getRecordConsentMutationOptions(options);
+      const mutationOptions = getLegalRecordConsentMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar mis consentimientos
  */
-export const myConsents = (
+export const legalMyConsents = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -120,69 +120,69 @@ export const myConsents = (
 
 
 
-export const getMyConsentsQueryKey = () => {
+export const getLegalMyConsentsQueryKey = () => {
     return [
     `/v1/consent/mine`
     ] as const;
     }
 
     
-export const getMyConsentsQueryOptions = <TData = Awaited<ReturnType<typeof myConsents>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getLegalMyConsentsQueryOptions = <TData = Awaited<ReturnType<typeof legalMyConsents>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getMyConsentsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getLegalMyConsentsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof myConsents>>> = ({ signal }) => myConsents(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof legalMyConsents>>> = ({ signal }) => legalMyConsents(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type MyConsentsQueryResult = NonNullable<Awaited<ReturnType<typeof myConsents>>>
-export type MyConsentsQueryError = ErrorType<void>
+export type LegalMyConsentsQueryResult = NonNullable<Awaited<ReturnType<typeof legalMyConsents>>>
+export type LegalMyConsentsQueryError = ErrorType<void>
 
 
-export function useMyConsents<TData = Awaited<ReturnType<typeof myConsents>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData>> & Pick<
+export function useLegalMyConsents<TData = Awaited<ReturnType<typeof legalMyConsents>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof myConsents>>,
+          Awaited<ReturnType<typeof legalMyConsents>>,
           TError,
-          Awaited<ReturnType<typeof myConsents>>
+          Awaited<ReturnType<typeof legalMyConsents>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMyConsents<TData = Awaited<ReturnType<typeof myConsents>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData>> & Pick<
+export function useLegalMyConsents<TData = Awaited<ReturnType<typeof legalMyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof myConsents>>,
+          Awaited<ReturnType<typeof legalMyConsents>>,
           TError,
-          Awaited<ReturnType<typeof myConsents>>
+          Awaited<ReturnType<typeof legalMyConsents>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMyConsents<TData = Awaited<ReturnType<typeof myConsents>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useLegalMyConsents<TData = Awaited<ReturnType<typeof legalMyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar mis consentimientos
  */
 
-export function useMyConsents<TData = Awaited<ReturnType<typeof myConsents>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof myConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useLegalMyConsents<TData = Awaited<ReturnType<typeof legalMyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalMyConsents>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getMyConsentsQueryOptions(options)
+  const queryOptions = getLegalMyConsentsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -197,7 +197,7 @@ export function useMyConsents<TData = Awaited<ReturnType<typeof myConsents>>, TE
 /**
  * @summary Listar registros de auditoria
  */
-export const audit = (
+export const legalAudit = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -212,69 +212,69 @@ export const audit = (
 
 
 
-export const getAuditQueryKey = () => {
+export const getLegalAuditQueryKey = () => {
     return [
     `/v1/audit-log`
     ] as const;
     }
 
     
-export const getAuditQueryOptions = <TData = Awaited<ReturnType<typeof audit>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getLegalAuditQueryOptions = <TData = Awaited<ReturnType<typeof legalAudit>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAuditQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getLegalAuditQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof audit>>> = ({ signal }) => audit(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof legalAudit>>> = ({ signal }) => legalAudit(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type AuditQueryResult = NonNullable<Awaited<ReturnType<typeof audit>>>
-export type AuditQueryError = ErrorType<void>
+export type LegalAuditQueryResult = NonNullable<Awaited<ReturnType<typeof legalAudit>>>
+export type LegalAuditQueryError = ErrorType<void>
 
 
-export function useAudit<TData = Awaited<ReturnType<typeof audit>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData>> & Pick<
+export function useLegalAudit<TData = Awaited<ReturnType<typeof legalAudit>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof audit>>,
+          Awaited<ReturnType<typeof legalAudit>>,
           TError,
-          Awaited<ReturnType<typeof audit>>
+          Awaited<ReturnType<typeof legalAudit>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAudit<TData = Awaited<ReturnType<typeof audit>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData>> & Pick<
+export function useLegalAudit<TData = Awaited<ReturnType<typeof legalAudit>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof audit>>,
+          Awaited<ReturnType<typeof legalAudit>>,
           TError,
-          Awaited<ReturnType<typeof audit>>
+          Awaited<ReturnType<typeof legalAudit>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAudit<TData = Awaited<ReturnType<typeof audit>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useLegalAudit<TData = Awaited<ReturnType<typeof legalAudit>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar registros de auditoria
  */
 
-export function useAudit<TData = Awaited<ReturnType<typeof audit>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof audit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useLegalAudit<TData = Awaited<ReturnType<typeof legalAudit>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof legalAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getAuditQueryOptions(options)
+  const queryOptions = getLegalAuditQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

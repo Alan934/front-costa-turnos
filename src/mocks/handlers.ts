@@ -22,6 +22,8 @@ import {
   adminProfessionals,
   adminMetrics,
   SLUG,
+  COMERCIO_ID,
+  MEMBERSHIP_ID,
 } from "./seed";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
@@ -132,6 +134,8 @@ function createBooking(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     professionalId: professional.id,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
     staffId: String(body.staffId ?? staff[0].id),
     personId: "per_nuevo",
     serviceId,
@@ -398,6 +402,7 @@ export const handlers: RequestHandler[] = [
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       professionalId: professional.id,
+      membershipId: MEMBERSHIP_ID,
       name: String(body.name ?? "Servicio"),
       durationMinutes: Number(body.durationMinutes ?? 30),
       priceCents: Number(body.priceCents ?? 0),
@@ -458,10 +463,12 @@ export const handlers: RequestHandler[] = [
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       staffId: String(params.staffId),
+      membershipId: MEMBERSHIP_ID,
       dayOfWeek: Number(body.dayOfWeek ?? 1),
       startTime: String(body.startTime ?? "09:00"),
       endTime: String(body.endTime ?? "18:00"),
       kind: (body.kind as ScheduleRuleKind) ?? ScheduleRuleKind.work,
+      serviceIds: Array.isArray(body.serviceIds) ? (body.serviceIds as string[]) : [],
     };
     scheduleRules.push(rule);
     return HttpResponse.json(rule, { status: 201 });
@@ -481,6 +488,7 @@ export const handlers: RequestHandler[] = [
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       staffId: String(params.staffId),
+      membershipId: MEMBERSHIP_ID,
       startAt: String(body.startAt ?? new Date().toISOString()),
       endAt: String(body.endAt ?? new Date().toISOString()),
       // reason está mal tipado en el contrato (objeto|null); guardamos string libre.

@@ -6,16 +6,26 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  CreateServiceDto,
   Service,
   UpdateServiceDto
 } from '../../model';
@@ -29,9 +39,257 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Listar servicios del catalogo
+ */
+export const catalogList = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service[]>(
+      {url: `/v1/services`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getCatalogListQueryKey = () => {
+    return [
+    `/v1/services`
+    ] as const;
+    }
+
+    
+export const getCatalogListQueryOptions = <TData = Awaited<ReturnType<typeof catalogList>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogListQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogList>>> = ({ signal }) => catalogList(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogListQueryResult = NonNullable<Awaited<ReturnType<typeof catalogList>>>
+export type CatalogListQueryError = ErrorType<void>
+
+
+export function useCatalogList<TData = Awaited<ReturnType<typeof catalogList>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogList>>,
+          TError,
+          Awaited<ReturnType<typeof catalogList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogList<TData = Awaited<ReturnType<typeof catalogList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogList>>,
+          TError,
+          Awaited<ReturnType<typeof catalogList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogList<TData = Awaited<ReturnType<typeof catalogList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar servicios del catalogo
+ */
+
+export function useCatalogList<TData = Awaited<ReturnType<typeof catalogList>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogListQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear un servicio
+ */
+export const catalogCreate = (
+    createServiceDto: BodyType<CreateServiceDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/services`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createServiceDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getCatalogCreateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogCreate>>, TError,{data: BodyType<CreateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogCreate>>, TError,{data: BodyType<CreateServiceDto>}, TContext> => {
+
+const mutationKey = ['catalogCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogCreate>>, {data: BodyType<CreateServiceDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  catalogCreate(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CatalogCreateMutationResult = NonNullable<Awaited<ReturnType<typeof catalogCreate>>>
+    export type CatalogCreateMutationBody = BodyType<CreateServiceDto>
+    export type CatalogCreateMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear un servicio
+ */
+export const useCatalogCreate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogCreate>>, TError,{data: BodyType<CreateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof catalogCreate>>,
+        TError,
+        {data: BodyType<CreateServiceDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getCatalogCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Obtener un servicio por id
+ */
+export const catalogGet = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/services/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getCatalogGetQueryKey = (id?: string,) => {
+    return [
+    `/v1/services/${id}`
+    ] as const;
+    }
+
+    
+export const getCatalogGetQueryOptions = <TData = Awaited<ReturnType<typeof catalogGet>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCatalogGetQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof catalogGet>>> = ({ signal }) => catalogGet(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CatalogGetQueryResult = NonNullable<Awaited<ReturnType<typeof catalogGet>>>
+export type CatalogGetQueryError = ErrorType<void>
+
+
+export function useCatalogGet<TData = Awaited<ReturnType<typeof catalogGet>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof catalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogGet<TData = Awaited<ReturnType<typeof catalogGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof catalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof catalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCatalogGet<TData = Awaited<ReturnType<typeof catalogGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Obtener un servicio por id
+ */
+
+export function useCatalogGet<TData = Awaited<ReturnType<typeof catalogGet>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof catalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCatalogGetQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Actualizar un servicio
  */
-export const update = (
+export const catalogUpdate = (
     id: string,
     updateServiceDto: BodyType<UpdateServiceDto>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -47,11 +305,11 @@ export const update = (
   
 
 
-export const getUpdateMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof update>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext> => {
+export const getCatalogUpdateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogUpdate>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogUpdate>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext> => {
 
-const mutationKey = ['update'];
+const mutationKey = ['catalogUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -61,10 +319,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof update>>, {id: string;data: BodyType<UpdateServiceDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogUpdate>>, {id: string;data: BodyType<UpdateServiceDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  update(id,data,requestOptions)
+          return  catalogUpdate(id,data,requestOptions)
         }
 
         
@@ -72,30 +330,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateMutationResult = NonNullable<Awaited<ReturnType<typeof update>>>
-    export type UpdateMutationBody = BodyType<UpdateServiceDto>
-    export type UpdateMutationError = ErrorType<void>
+    export type CatalogUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof catalogUpdate>>>
+    export type CatalogUpdateMutationBody = BodyType<UpdateServiceDto>
+    export type CatalogUpdateMutationError = ErrorType<void>
 
     /**
  * @summary Actualizar un servicio
  */
-export const useUpdate = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof update>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useCatalogUpdate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogUpdate>>, TError,{id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof update>>,
+        Awaited<ReturnType<typeof catalogUpdate>>,
         TError,
         {id: string;data: BodyType<UpdateServiceDto>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateMutationOptions(options);
+      const mutationOptions = getCatalogUpdateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Desactivar un servicio
  */
-export const deactivate = (
+export const catalogDeactivate = (
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -108,11 +366,11 @@ export const deactivate = (
   
 
 
-export const getDeactivateMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deactivate>>, TError,{id: string}, TContext> => {
+export const getCatalogDeactivateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogDeactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof catalogDeactivate>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['deactivate'];
+const mutationKey = ['catalogDeactivate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -122,10 +380,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deactivate>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof catalogDeactivate>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  deactivate(id,requestOptions)
+          return  catalogDeactivate(id,requestOptions)
         }
 
         
@@ -133,23 +391,406 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof deactivate>>>
+    export type CatalogDeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof catalogDeactivate>>>
     
-    export type DeactivateMutationError = ErrorType<void>
+    export type CatalogDeactivateMutationError = ErrorType<void>
 
     /**
  * @summary Desactivar un servicio
  */
-export const useDeactivate = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useCatalogDeactivate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof catalogDeactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deactivate>>,
+        Awaited<ReturnType<typeof catalogDeactivate>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getDeactivateMutationOptions(options);
+      const mutationOptions = getCatalogDeactivateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Listar servicios del profesional en este comercio
+ */
+export const comercioCatalogList = (
+    comercioId: unknown,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service[]>(
+      {url: `/v1/comercios/${comercioId}/services`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioCatalogListQueryKey = (comercioId?: unknown,) => {
+    return [
+    `/v1/comercios/${comercioId}/services`
+    ] as const;
+    }
+
+    
+export const getComercioCatalogListQueryOptions = <TData = Awaited<ReturnType<typeof comercioCatalogList>>, TError = ErrorType<unknown>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioCatalogListQueryKey(comercioId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioCatalogList>>> = ({ signal }) => comercioCatalogList(comercioId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioCatalogListQueryResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogList>>>
+export type ComercioCatalogListQueryError = ErrorType<unknown>
+
+
+export function useComercioCatalogList<TData = Awaited<ReturnType<typeof comercioCatalogList>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogList>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogList<TData = Awaited<ReturnType<typeof comercioCatalogList>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogList>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogList<TData = Awaited<ReturnType<typeof comercioCatalogList>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar servicios del profesional en este comercio
+ */
+
+export function useComercioCatalogList<TData = Awaited<ReturnType<typeof comercioCatalogList>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioCatalogListQueryOptions(comercioId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear un servicio del profesional en este comercio
+ */
+export const comercioCatalogCreate = (
+    comercioId: unknown,
+    createServiceDto: BodyType<CreateServiceDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/comercios/${comercioId}/services`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createServiceDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getComercioCatalogCreateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreate>>, TError,{comercioId: unknown;data: BodyType<CreateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreate>>, TError,{comercioId: unknown;data: BodyType<CreateServiceDto>}, TContext> => {
+
+const mutationKey = ['comercioCatalogCreate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioCatalogCreate>>, {comercioId: unknown;data: BodyType<CreateServiceDto>}> = (props) => {
+          const {comercioId,data} = props ?? {};
+
+          return  comercioCatalogCreate(comercioId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioCatalogCreateMutationResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogCreate>>>
+    export type ComercioCatalogCreateMutationBody = BodyType<CreateServiceDto>
+    export type ComercioCatalogCreateMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Crear un servicio del profesional en este comercio
+ */
+export const useComercioCatalogCreate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreate>>, TError,{comercioId: unknown;data: BodyType<CreateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioCatalogCreate>>,
+        TError,
+        {comercioId: unknown;data: BodyType<CreateServiceDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioCatalogCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Obtener un servicio por id (en este comercio)
+ */
+export const comercioCatalogGet = (
+    comercioId: unknown,
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/comercios/${comercioId}/services/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioCatalogGetQueryKey = (comercioId?: unknown,
+    id?: string,) => {
+    return [
+    `/v1/comercios/${comercioId}/services/${id}`
+    ] as const;
+    }
+
+    
+export const getComercioCatalogGetQueryOptions = <TData = Awaited<ReturnType<typeof comercioCatalogGet>>, TError = ErrorType<void>>(comercioId: unknown,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioCatalogGetQueryKey(comercioId,id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioCatalogGet>>> = ({ signal }) => comercioCatalogGet(comercioId,id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId && id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioCatalogGetQueryResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogGet>>>
+export type ComercioCatalogGetQueryError = ErrorType<void>
+
+
+export function useComercioCatalogGet<TData = Awaited<ReturnType<typeof comercioCatalogGet>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogGet<TData = Awaited<ReturnType<typeof comercioCatalogGet>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogGet<TData = Awaited<ReturnType<typeof comercioCatalogGet>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Obtener un servicio por id (en este comercio)
+ */
+
+export function useComercioCatalogGet<TData = Awaited<ReturnType<typeof comercioCatalogGet>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioCatalogGetQueryOptions(comercioId,id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Actualizar un servicio (en este comercio)
+ */
+export const comercioCatalogUpdate = (
+    comercioId: unknown,
+    id: string,
+    updateServiceDto: BodyType<UpdateServiceDto>,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/comercios/${comercioId}/services/${id}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: updateServiceDto
+    },
+      options);
+    }
+  
+
+
+export const getComercioCatalogUpdateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogUpdate>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogUpdate>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateServiceDto>}, TContext> => {
+
+const mutationKey = ['comercioCatalogUpdate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioCatalogUpdate>>, {comercioId: unknown;id: string;data: BodyType<UpdateServiceDto>}> = (props) => {
+          const {comercioId,id,data} = props ?? {};
+
+          return  comercioCatalogUpdate(comercioId,id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioCatalogUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogUpdate>>>
+    export type ComercioCatalogUpdateMutationBody = BodyType<UpdateServiceDto>
+    export type ComercioCatalogUpdateMutationError = ErrorType<void>
+
+    /**
+ * @summary Actualizar un servicio (en este comercio)
+ */
+export const useComercioCatalogUpdate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogUpdate>>, TError,{comercioId: unknown;id: string;data: BodyType<UpdateServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioCatalogUpdate>>,
+        TError,
+        {comercioId: unknown;id: string;data: BodyType<UpdateServiceDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioCatalogUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Desactivar un servicio (en este comercio)
+ */
+export const comercioCatalogDeactivate = (
+    comercioId: unknown,
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<Service>(
+      {url: `/v1/comercios/${comercioId}/services/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getComercioCatalogDeactivateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeactivate>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeactivate>>, TError,{comercioId: unknown;id: string}, TContext> => {
+
+const mutationKey = ['comercioCatalogDeactivate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioCatalogDeactivate>>, {comercioId: unknown;id: string}> = (props) => {
+          const {comercioId,id} = props ?? {};
+
+          return  comercioCatalogDeactivate(comercioId,id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioCatalogDeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogDeactivate>>>
+    
+    export type ComercioCatalogDeactivateMutationError = ErrorType<void>
+
+    /**
+ * @summary Desactivar un servicio (en este comercio)
+ */
+export const useComercioCatalogDeactivate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeactivate>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioCatalogDeactivate>>,
+        TError,
+        {comercioId: unknown;id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioCatalogDeactivateMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

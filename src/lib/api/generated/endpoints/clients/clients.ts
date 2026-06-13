@@ -26,11 +26,12 @@ import type {
 
 import type {
   ClientNote,
+  ClientsListClientsParams,
+  CreateClientDto,
   CreateClientNoteDto,
   CreateFichaFieldDto,
   EnrichedClientDto,
   FichaField,
-  ListClientsParams,
   UpdateClientFichaDto,
   UpdateFichaFieldDto
 } from '../../model';
@@ -46,7 +47,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * @summary Listar campos de ficha
  */
-export const listFichaFields = (
+export const clientsListFichaFields = (
     
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -61,69 +62,69 @@ export const listFichaFields = (
 
 
 
-export const getListFichaFieldsQueryKey = () => {
+export const getClientsListFichaFieldsQueryKey = () => {
     return [
     `/v1/clients/ficha-fields`
     ] as const;
     }
 
     
-export const getListFichaFieldsQueryOptions = <TData = Awaited<ReturnType<typeof listFichaFields>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getClientsListFichaFieldsQueryOptions = <TData = Awaited<ReturnType<typeof clientsListFichaFields>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListFichaFieldsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getClientsListFichaFieldsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFichaFields>>> = ({ signal }) => listFichaFields(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientsListFichaFields>>> = ({ signal }) => clientsListFichaFields(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListFichaFieldsQueryResult = NonNullable<Awaited<ReturnType<typeof listFichaFields>>>
-export type ListFichaFieldsQueryError = ErrorType<void>
+export type ClientsListFichaFieldsQueryResult = NonNullable<Awaited<ReturnType<typeof clientsListFichaFields>>>
+export type ClientsListFichaFieldsQueryError = ErrorType<void>
 
 
-export function useListFichaFields<TData = Awaited<ReturnType<typeof listFichaFields>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData>> & Pick<
+export function useClientsListFichaFields<TData = Awaited<ReturnType<typeof clientsListFichaFields>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listFichaFields>>,
+          Awaited<ReturnType<typeof clientsListFichaFields>>,
           TError,
-          Awaited<ReturnType<typeof listFichaFields>>
+          Awaited<ReturnType<typeof clientsListFichaFields>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListFichaFields<TData = Awaited<ReturnType<typeof listFichaFields>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData>> & Pick<
+export function useClientsListFichaFields<TData = Awaited<ReturnType<typeof clientsListFichaFields>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listFichaFields>>,
+          Awaited<ReturnType<typeof clientsListFichaFields>>,
           TError,
-          Awaited<ReturnType<typeof listFichaFields>>
+          Awaited<ReturnType<typeof clientsListFichaFields>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListFichaFields<TData = Awaited<ReturnType<typeof listFichaFields>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListFichaFields<TData = Awaited<ReturnType<typeof clientsListFichaFields>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar campos de ficha
  */
 
-export function useListFichaFields<TData = Awaited<ReturnType<typeof listFichaFields>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListFichaFields<TData = Awaited<ReturnType<typeof clientsListFichaFields>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListFichaFields>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListFichaFieldsQueryOptions(options)
+  const queryOptions = getClientsListFichaFieldsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -138,7 +139,7 @@ export function useListFichaFields<TData = Awaited<ReturnType<typeof listFichaFi
 /**
  * @summary Crear un campo de ficha
  */
-export const createFichaField = (
+export const clientsCreateFichaField = (
     createFichaFieldDto: BodyType<CreateFichaFieldDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -154,11 +155,11 @@ export const createFichaField = (
   
 
 
-export const getCreateFichaFieldMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof createFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext> => {
+export const getClientsCreateFichaFieldMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsCreateFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsCreateFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext> => {
 
-const mutationKey = ['createFichaField'];
+const mutationKey = ['clientsCreateFichaField'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -168,10 +169,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createFichaField>>, {data: BodyType<CreateFichaFieldDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsCreateFichaField>>, {data: BodyType<CreateFichaFieldDto>}> = (props) => {
           const {data} = props ?? {};
 
-          return  createFichaField(data,requestOptions)
+          return  clientsCreateFichaField(data,requestOptions)
         }
 
         
@@ -179,30 +180,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CreateFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof createFichaField>>>
-    export type CreateFichaFieldMutationBody = BodyType<CreateFichaFieldDto>
-    export type CreateFichaFieldMutationError = ErrorType<void>
+    export type ClientsCreateFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof clientsCreateFichaField>>>
+    export type ClientsCreateFichaFieldMutationBody = BodyType<CreateFichaFieldDto>
+    export type ClientsCreateFichaFieldMutationError = ErrorType<void>
 
     /**
  * @summary Crear un campo de ficha
  */
-export const useCreateFichaField = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsCreateFichaField = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsCreateFichaField>>, TError,{data: BodyType<CreateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof createFichaField>>,
+        Awaited<ReturnType<typeof clientsCreateFichaField>>,
         TError,
         {data: BodyType<CreateFichaFieldDto>},
         TContext
       > => {
 
-      const mutationOptions = getCreateFichaFieldMutationOptions(options);
+      const mutationOptions = getClientsCreateFichaFieldMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Actualizar un campo de ficha
  */
-export const updateFichaField = (
+export const clientsUpdateFichaField = (
     id: string,
     updateFichaFieldDto: BodyType<UpdateFichaFieldDto>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -218,11 +219,11 @@ export const updateFichaField = (
   
 
 
-export const getUpdateFichaFieldMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext> => {
+export const getClientsUpdateFichaFieldMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext> => {
 
-const mutationKey = ['updateFichaField'];
+const mutationKey = ['clientsUpdateFichaField'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -232,10 +233,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFichaField>>, {id: string;data: BodyType<UpdateFichaFieldDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsUpdateFichaField>>, {id: string;data: BodyType<UpdateFichaFieldDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateFichaField(id,data,requestOptions)
+          return  clientsUpdateFichaField(id,data,requestOptions)
         }
 
         
@@ -243,30 +244,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof updateFichaField>>>
-    export type UpdateFichaFieldMutationBody = BodyType<UpdateFichaFieldDto>
-    export type UpdateFichaFieldMutationError = ErrorType<void>
+    export type ClientsUpdateFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof clientsUpdateFichaField>>>
+    export type ClientsUpdateFichaFieldMutationBody = BodyType<UpdateFichaFieldDto>
+    export type ClientsUpdateFichaFieldMutationError = ErrorType<void>
 
     /**
  * @summary Actualizar un campo de ficha
  */
-export const useUpdateFichaField = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsUpdateFichaField = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFichaField>>, TError,{id: string;data: BodyType<UpdateFichaFieldDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateFichaField>>,
+        Awaited<ReturnType<typeof clientsUpdateFichaField>>,
         TError,
         {id: string;data: BodyType<UpdateFichaFieldDto>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateFichaFieldMutationOptions(options);
+      const mutationOptions = getClientsUpdateFichaFieldMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Eliminar un campo de ficha
  */
-export const deleteFichaField = (
+export const clientsDeleteFichaField = (
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -279,11 +280,11 @@ export const deleteFichaField = (
   
 
 
-export const getDeleteFichaFieldMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFichaField>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteFichaField>>, TError,{id: string}, TContext> => {
+export const getClientsDeleteFichaFieldMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsDeleteFichaField>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsDeleteFichaField>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['deleteFichaField'];
+const mutationKey = ['clientsDeleteFichaField'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -293,10 +294,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteFichaField>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsDeleteFichaField>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  deleteFichaField(id,requestOptions)
+          return  clientsDeleteFichaField(id,requestOptions)
         }
 
         
@@ -304,31 +305,31 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof deleteFichaField>>>
+    export type ClientsDeleteFichaFieldMutationResult = NonNullable<Awaited<ReturnType<typeof clientsDeleteFichaField>>>
     
-    export type DeleteFichaFieldMutationError = ErrorType<void>
+    export type ClientsDeleteFichaFieldMutationError = ErrorType<void>
 
     /**
  * @summary Eliminar un campo de ficha
  */
-export const useDeleteFichaField = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteFichaField>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsDeleteFichaField = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsDeleteFichaField>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteFichaField>>,
+        Awaited<ReturnType<typeof clientsDeleteFichaField>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getDeleteFichaFieldMutationOptions(options);
+      const mutationOptions = getClientsDeleteFichaFieldMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar clientes (con datos de la persona)
  */
-export const listClients = (
-    params?: ListClientsParams,
+export const clientsListClients = (
+    params?: ClientsListClientsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -343,69 +344,69 @@ export const listClients = (
 
 
 
-export const getListClientsQueryKey = (params?: ListClientsParams,) => {
+export const getClientsListClientsQueryKey = (params?: ClientsListClientsParams,) => {
     return [
     `/v1/clients`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getListClientsQueryOptions = <TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getClientsListClientsQueryOptions = <TData = Awaited<ReturnType<typeof clientsListClients>>, TError = ErrorType<void>>(params?: ClientsListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListClientsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getClientsListClientsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClients>>> = ({ signal }) => listClients(params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientsListClients>>> = ({ signal }) => clientsListClients(params, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListClientsQueryResult = NonNullable<Awaited<ReturnType<typeof listClients>>>
-export type ListClientsQueryError = ErrorType<void>
+export type ClientsListClientsQueryResult = NonNullable<Awaited<ReturnType<typeof clientsListClients>>>
+export type ClientsListClientsQueryError = ErrorType<void>
 
 
-export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
- params: undefined |  ListClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+export function useClientsListClients<TData = Awaited<ReturnType<typeof clientsListClients>>, TError = ErrorType<void>>(
+ params: undefined |  ClientsListClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listClients>>,
+          Awaited<ReturnType<typeof clientsListClients>>,
           TError,
-          Awaited<ReturnType<typeof listClients>>
+          Awaited<ReturnType<typeof clientsListClients>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
- params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+export function useClientsListClients<TData = Awaited<ReturnType<typeof clientsListClients>>, TError = ErrorType<void>>(
+ params?: ClientsListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listClients>>,
+          Awaited<ReturnType<typeof clientsListClients>>,
           TError,
-          Awaited<ReturnType<typeof listClients>>
+          Awaited<ReturnType<typeof clientsListClients>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
- params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListClients<TData = Awaited<ReturnType<typeof clientsListClients>>, TError = ErrorType<void>>(
+ params?: ClientsListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar clientes (con datos de la persona)
  */
 
-export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<void>>(
- params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListClients<TData = Awaited<ReturnType<typeof clientsListClients>>, TError = ErrorType<void>>(
+ params?: ClientsListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListClientsQueryOptions(params,options)
+  const queryOptions = getClientsListClientsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -418,9 +419,73 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
 
 
 /**
+ * @summary Crear un cliente
+ */
+export const clientsCreateClient = (
+    createClientDto: BodyType<CreateClientDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<EnrichedClientDto>(
+      {url: `/v1/clients`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createClientDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getClientsCreateClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsCreateClient>>, TError,{data: BodyType<CreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsCreateClient>>, TError,{data: BodyType<CreateClientDto>}, TContext> => {
+
+const mutationKey = ['clientsCreateClient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsCreateClient>>, {data: BodyType<CreateClientDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  clientsCreateClient(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClientsCreateClientMutationResult = NonNullable<Awaited<ReturnType<typeof clientsCreateClient>>>
+    export type ClientsCreateClientMutationBody = BodyType<CreateClientDto>
+    export type ClientsCreateClientMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear un cliente
+ */
+export const useClientsCreateClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsCreateClient>>, TError,{data: BodyType<CreateClientDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clientsCreateClient>>,
+        TError,
+        {data: BodyType<CreateClientDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getClientsCreateClientMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Obtener un cliente por id (con datos de la persona)
  */
-export const getClient = (
+export const clientsGetClient = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -435,69 +500,69 @@ export const getClient = (
 
 
 
-export const getGetClientQueryKey = (id?: string,) => {
+export const getClientsGetClientQueryKey = (id?: string,) => {
     return [
     `/v1/clients/${id}`
     ] as const;
     }
 
     
-export const getGetClientQueryOptions = <TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getClientsGetClientQueryOptions = <TData = Awaited<ReturnType<typeof clientsGetClient>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetClientQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getClientsGetClientQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClient>>> = ({ signal }) => getClient(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientsGetClient>>> = ({ signal }) => clientsGetClient(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetClientQueryResult = NonNullable<Awaited<ReturnType<typeof getClient>>>
-export type GetClientQueryError = ErrorType<void>
+export type ClientsGetClientQueryResult = NonNullable<Awaited<ReturnType<typeof clientsGetClient>>>
+export type ClientsGetClientQueryError = ErrorType<void>
 
 
-export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData>> & Pick<
+export function useClientsGetClient<TData = Awaited<ReturnType<typeof clientsGetClient>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getClient>>,
+          Awaited<ReturnType<typeof clientsGetClient>>,
           TError,
-          Awaited<ReturnType<typeof getClient>>
+          Awaited<ReturnType<typeof clientsGetClient>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData>> & Pick<
+export function useClientsGetClient<TData = Awaited<ReturnType<typeof clientsGetClient>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getClient>>,
+          Awaited<ReturnType<typeof clientsGetClient>>,
           TError,
-          Awaited<ReturnType<typeof getClient>>
+          Awaited<ReturnType<typeof clientsGetClient>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsGetClient<TData = Awaited<ReturnType<typeof clientsGetClient>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Obtener un cliente por id (con datos de la persona)
  */
 
-export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsGetClient<TData = Awaited<ReturnType<typeof clientsGetClient>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsGetClient>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetClientQueryOptions(id,options)
+  const queryOptions = getClientsGetClientQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -512,7 +577,7 @@ export function useGetClient<TData = Awaited<ReturnType<typeof getClient>>, TErr
 /**
  * @summary Archivar un cliente
  */
-export const archiveClient = (
+export const clientsArchiveClient = (
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -525,11 +590,11 @@ export const archiveClient = (
   
 
 
-export const getArchiveClientMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof archiveClient>>, TError,{id: string}, TContext> => {
+export const getClientsArchiveClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsArchiveClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsArchiveClient>>, TError,{id: string}, TContext> => {
 
-const mutationKey = ['archiveClient'];
+const mutationKey = ['clientsArchiveClient'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -539,10 +604,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof archiveClient>>, {id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsArchiveClient>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  archiveClient(id,requestOptions)
+          return  clientsArchiveClient(id,requestOptions)
         }
 
         
@@ -550,30 +615,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type ArchiveClientMutationResult = NonNullable<Awaited<ReturnType<typeof archiveClient>>>
+    export type ClientsArchiveClientMutationResult = NonNullable<Awaited<ReturnType<typeof clientsArchiveClient>>>
     
-    export type ArchiveClientMutationError = ErrorType<void>
+    export type ClientsArchiveClientMutationError = ErrorType<void>
 
     /**
  * @summary Archivar un cliente
  */
-export const useArchiveClient = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof archiveClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsArchiveClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsArchiveClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof archiveClient>>,
+        Awaited<ReturnType<typeof clientsArchiveClient>>,
         TError,
         {id: string},
         TContext
       > => {
 
-      const mutationOptions = getArchiveClientMutationOptions(options);
+      const mutationOptions = getClientsArchiveClientMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Actualizar la ficha de un cliente
  */
-export const updateFicha = (
+export const clientsUpdateFicha = (
     id: string,
     updateClientFichaDto: BodyType<UpdateClientFichaDto>,
  options?: SecondParameter<typeof customInstance>,) => {
@@ -589,11 +654,11 @@ export const updateFicha = (
   
 
 
-export const getUpdateFichaMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext> => {
+export const getClientsUpdateFichaMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext> => {
 
-const mutationKey = ['updateFicha'];
+const mutationKey = ['clientsUpdateFicha'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -603,10 +668,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFicha>>, {id: string;data: BodyType<UpdateClientFichaDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsUpdateFicha>>, {id: string;data: BodyType<UpdateClientFichaDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  updateFicha(id,data,requestOptions)
+          return  clientsUpdateFicha(id,data,requestOptions)
         }
 
         
@@ -614,30 +679,30 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UpdateFichaMutationResult = NonNullable<Awaited<ReturnType<typeof updateFicha>>>
-    export type UpdateFichaMutationBody = BodyType<UpdateClientFichaDto>
-    export type UpdateFichaMutationError = ErrorType<void>
+    export type ClientsUpdateFichaMutationResult = NonNullable<Awaited<ReturnType<typeof clientsUpdateFicha>>>
+    export type ClientsUpdateFichaMutationBody = BodyType<UpdateClientFichaDto>
+    export type ClientsUpdateFichaMutationError = ErrorType<void>
 
     /**
  * @summary Actualizar la ficha de un cliente
  */
-export const useUpdateFicha = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsUpdateFicha = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsUpdateFicha>>, TError,{id: string;data: BodyType<UpdateClientFichaDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateFicha>>,
+        Awaited<ReturnType<typeof clientsUpdateFicha>>,
         TError,
         {id: string;data: BodyType<UpdateClientFichaDto>},
         TContext
       > => {
 
-      const mutationOptions = getUpdateFichaMutationOptions(options);
+      const mutationOptions = getClientsUpdateFichaMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
     /**
  * @summary Listar notas privadas de un cliente
  */
-export const listNotes = (
+export const clientsListNotes = (
     id: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -652,69 +717,69 @@ export const listNotes = (
 
 
 
-export const getListNotesQueryKey = (id?: string,) => {
+export const getClientsListNotesQueryKey = (id?: string,) => {
     return [
     `/v1/clients/${id}/notes`
     ] as const;
     }
 
     
-export const getListNotesQueryOptions = <TData = Awaited<ReturnType<typeof listNotes>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getClientsListNotesQueryOptions = <TData = Awaited<ReturnType<typeof clientsListNotes>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListNotesQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getClientsListNotesQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotes>>> = ({ signal }) => listNotes(id, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientsListNotes>>> = ({ signal }) => clientsListNotes(id, requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListNotesQueryResult = NonNullable<Awaited<ReturnType<typeof listNotes>>>
-export type ListNotesQueryError = ErrorType<void>
+export type ClientsListNotesQueryResult = NonNullable<Awaited<ReturnType<typeof clientsListNotes>>>
+export type ClientsListNotesQueryError = ErrorType<void>
 
 
-export function useListNotes<TData = Awaited<ReturnType<typeof listNotes>>, TError = ErrorType<void>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData>> & Pick<
+export function useClientsListNotes<TData = Awaited<ReturnType<typeof clientsListNotes>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listNotes>>,
+          Awaited<ReturnType<typeof clientsListNotes>>,
           TError,
-          Awaited<ReturnType<typeof listNotes>>
+          Awaited<ReturnType<typeof clientsListNotes>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListNotes<TData = Awaited<ReturnType<typeof listNotes>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData>> & Pick<
+export function useClientsListNotes<TData = Awaited<ReturnType<typeof clientsListNotes>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listNotes>>,
+          Awaited<ReturnType<typeof clientsListNotes>>,
           TError,
-          Awaited<ReturnType<typeof listNotes>>
+          Awaited<ReturnType<typeof clientsListNotes>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListNotes<TData = Awaited<ReturnType<typeof listNotes>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListNotes<TData = Awaited<ReturnType<typeof clientsListNotes>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
  * @summary Listar notas privadas de un cliente
  */
 
-export function useListNotes<TData = Awaited<ReturnType<typeof listNotes>>, TError = ErrorType<void>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useClientsListNotes<TData = Awaited<ReturnType<typeof clientsListNotes>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientsListNotes>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListNotesQueryOptions(id,options)
+  const queryOptions = getClientsListNotesQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -729,7 +794,7 @@ export function useListNotes<TData = Awaited<ReturnType<typeof listNotes>>, TErr
 /**
  * @summary Agregar una nota privada a un cliente
  */
-export const addNote = (
+export const clientsAddNote = (
     id: string,
     createClientNoteDto: BodyType<CreateClientNoteDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
@@ -746,11 +811,11 @@ export const addNote = (
   
 
 
-export const getAddNoteMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof addNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext> => {
+export const getClientsAddNoteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsAddNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsAddNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext> => {
 
-const mutationKey = ['addNote'];
+const mutationKey = ['clientsAddNote'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -760,10 +825,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addNote>>, {id: string;data: BodyType<CreateClientNoteDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsAddNote>>, {id: string;data: BodyType<CreateClientNoteDto>}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  addNote(id,data,requestOptions)
+          return  clientsAddNote(id,data,requestOptions)
         }
 
         
@@ -771,23 +836,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type AddNoteMutationResult = NonNullable<Awaited<ReturnType<typeof addNote>>>
-    export type AddNoteMutationBody = BodyType<CreateClientNoteDto>
-    export type AddNoteMutationError = ErrorType<void>
+    export type ClientsAddNoteMutationResult = NonNullable<Awaited<ReturnType<typeof clientsAddNote>>>
+    export type ClientsAddNoteMutationBody = BodyType<CreateClientNoteDto>
+    export type ClientsAddNoteMutationError = ErrorType<void>
 
     /**
  * @summary Agregar una nota privada a un cliente
  */
-export const useAddNote = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+export const useClientsAddNote = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsAddNote>>, TError,{id: string;data: BodyType<CreateClientNoteDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof addNote>>,
+        Awaited<ReturnType<typeof clientsAddNote>>,
         TError,
         {id: string;data: BodyType<CreateClientNoteDto>},
         TContext
       > => {
 
-      const mutationOptions = getAddNoteMutationOptions(options);
+      const mutationOptions = getClientsAddNoteMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -13,6 +13,7 @@ export type AppRole = typeof AppRole[keyof typeof AppRole];
 export const AppRole = {
   platform_admin: 'platform_admin',
   professional: 'professional',
+  comercial: 'comercial',
   staff: 'staff',
   client: 'client',
 } as const;

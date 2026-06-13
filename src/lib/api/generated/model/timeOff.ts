@@ -11,6 +11,7 @@ export interface TimeOff {
   createdAt: string;
   updatedAt: string;
   staffId: string;
+  membershipId: string;
   startAt: string;
   endAt: string;
   /** @nullable */

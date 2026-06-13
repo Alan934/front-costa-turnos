@@ -14,11 +14,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
-import { useListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import {
-  useStart,
-  useComplete,
-  useNoShow,
+  useAppointmentsStart,
+  useAppointmentsComplete,
+  useAppointmentsNoShow,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useWaitingRoom, type ConnectionState } from "@/lib/realtime/use-waiting-room";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
@@ -28,7 +28,7 @@ import type { Staff } from "@/lib/api/generated/model/staff";
 import type { WaitingItem } from "@/mocks/contract-extensions";
 
 export function StaffWaitingRoomControl() {
-  const staffQuery = useListStaff();
+  const staffQuery = useProfessionalsListStaff();
   const staffList = (staffQuery.data ?? []).filter((s: Staff) => s.isActive);
   const [activeStaffId, setActiveStaffId] = useState<string | null>(null);
   const staffId = activeStaffId ?? staffList[0]?.id ?? "";
@@ -80,9 +80,9 @@ function RoomBoard({ staffId }: { staffId: string }) {
   const { room, isLoading, isError, refetch, connection, invalidate } =
     useWaitingRoom(staffId);
 
-  const start = useStart();
-  const complete = useComplete();
-  const noShow = useNoShow();
+  const start = useAppointmentsStart();
+  const complete = useAppointmentsComplete();
+  const noShow = useAppointmentsNoShow();
   const busy = start.isPending || complete.isPending || noShow.isPending;
 
   function act(mutate: { mutate: (v: { id: string }, o: object) => void }, id: string) {

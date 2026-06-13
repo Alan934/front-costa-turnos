@@ -13,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
-  useConfirm,
-  useStart,
-  useComplete,
-  useNoShow,
+  useAppointmentsConfirm,
+  useAppointmentsStart,
+  useAppointmentsComplete,
+  useAppointmentsNoShow,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
@@ -41,10 +41,10 @@ export function AppointmentDetail({
   onChanged: () => void;
 }) {
   const service = services.find((s) => s.id === appointment.serviceId);
-  const confirm = useConfirm();
-  const start = useStart();
-  const complete = useComplete();
-  const noShow = useNoShow();
+  const confirm = useAppointmentsConfirm();
+  const start = useAppointmentsStart();
+  const complete = useAppointmentsComplete();
+  const noShow = useAppointmentsNoShow();
   const cancel = useCancelAppointment();
   const busy =
     confirm.isPending ||

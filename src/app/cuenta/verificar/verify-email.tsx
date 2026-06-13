@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
-import { useRequestEmailCode, useVerifyEmail } from "@/lib/api/generated/endpoints/auth/auth";
+import { useAuthRequestEmailCode, useAuthVerifyEmail } from "@/lib/api/generated/endpoints/auth/auth";
 
 type Step = "email" | "codigo" | "listo";
 
@@ -19,8 +19,8 @@ export function VerifyEmail() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const requestCode = useRequestEmailCode();
-  const verify = useVerifyEmail();
+  const requestCode = useAuthRequestEmailCode();
+  const verify = useAuthVerifyEmail();
 
   // Si llega ?email= (p.ej. tras registrarse), lo precargamos.
   useEffect(() => {

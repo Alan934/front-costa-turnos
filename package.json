@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "api:gen": "orval --config ./orval.config.ts",
+    "api:patch": "node ./scripts/patch-openapi.mjs",
+    "api:gen": "node ./scripts/patch-openapi.mjs && orval --config ./orval.config.ts",
     "msw:init": "msw init public/ --save"
   },
   "dependencies": {

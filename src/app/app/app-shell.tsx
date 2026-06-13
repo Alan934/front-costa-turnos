@@ -3,12 +3,13 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, Menu, X, LogOut } from "lucide-react";
+import { CalendarClock, Menu, X, LogOut, Building2, ChevronDown } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { useAuth } from "@/components/auth-provider";
+import { useActiveComercio } from "@/components/comercio-context";
 import { Avatar } from "@/components/avatar";
 import { useProfessional } from "@/lib/api/professional";
 import { APP_NAV } from "./nav";
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Sidebar desktop */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-card lg:flex">
         <Brand />
+        <ComercioSwitcher />
         <NavList onNavigate={() => {}} />
         <SidebarFooter />
       </aside>
@@ -72,6 +74,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <X className="size-4" />
               </button>
             </div>
+            <ComercioSwitcher />
             <NavList onNavigate={() => setOpen(false)} />
             <SidebarFooter />
           </div>
@@ -99,6 +102,39 @@ function Brand() {
         Costa Turnos
       </span>
     </Link>
+  );
+}
+
+/**
+ * Selector del comercio activo. Servicios y Horarios operan sobre el comercio elegido acá.
+ * Se oculta si el profesional solo tiene un comercio (su comercio-de-uno).
+ */
+function ComercioSwitcher() {
+  const { options, activeId, setActiveId } = useActiveComercio();
+  if (options.length <= 1) return null;
+
+  return (
+    <div className="px-3 pb-1 pt-1">
+      <label htmlFor="comercio-switch" className="sr-only">
+        Comercio activo
+      </label>
+      <div className="relative">
+        <Building2 className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <select
+          id="comercio-switch"
+          value={activeId ?? ""}
+          onChange={(e) => setActiveId(e.target.value)}
+          className="h-10 w-full appearance-none rounded-lg border border-border bg-background pl-9 pr-9 text-sm font-medium outline-none focus:ring-2 focus:ring-ring"
+        >
+          {options.map((o) => (
+            <option key={o.comercioId} value={o.comercioId}>
+              {o.isPersonal ? `${o.name} (tu negocio)` : o.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      </div>
+    </div>
   );
 }
 
