@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Building2, ChevronDown } from "lucide-react";
 import { ErrorState, EmptyState, SkeletonList } from "@/components/state-views";
 import { useMyComercios } from "@/lib/api/comercios";
+import { titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Comercio } from "@/lib/api/generated/model/comercio";
 import { ComercioDetails } from "./comercio-details";
@@ -89,7 +90,7 @@ function ComercioSwitcher({
         >
           {list.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name}
+              {titleCaseName(c.name)}
             </option>
           ))}
         </select>

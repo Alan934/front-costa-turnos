@@ -22,7 +22,7 @@ import {
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useWaitingRoom, type ConnectionState } from "@/lib/realtime/use-waiting-room";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import { formatTime } from "@/lib/format";
+import { formatTime, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { WaitingItem } from "@/mocks/contract-extensions";
@@ -63,7 +63,7 @@ export function StaffWaitingRoomControl() {
                       : "border-border text-muted-foreground hover:border-accent/50",
                   )}
                 >
-                  {s.displayName}
+                  {titleCaseName(s.displayName)}
                 </button>
               ))}
             </div>
@@ -129,7 +129,7 @@ function RoomBoard({ staffId }: { staffId: string }) {
                 <span className="text-status-serving-foreground">#{serving.ticketNumber}</span>{" "}
                 {serving.displayName}
               </p>
-              <p className="text-sm text-status-serving-foreground/80">{serving.serviceName}</p>
+              <p className="text-sm text-status-serving-foreground/80">{titleCaseName(serving.serviceName)}</p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -208,7 +208,7 @@ function QueueRow({ item, isNext }: { item: WaitingItem; isNext: boolean }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{item.displayName}</p>
         <p className="truncate text-xs text-muted-foreground">
-          {formatTime(item.startAt)} · {item.serviceName}
+          {formatTime(item.startAt)} · {titleCaseName(item.serviceName)}
         </p>
       </div>
       <AppointmentStatusBadge status={item.status} isProvisional={provisional} />

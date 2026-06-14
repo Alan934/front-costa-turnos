@@ -22,7 +22,7 @@ import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
 import { dayRange, isSameLocalDay, personDisplayName } from "@/lib/agenda";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import { formatMoney, formatTime } from "@/lib/format";
+import { formatMoney, formatTime, titleCaseName } from "@/lib/format";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { PublicPageBranding } from "@/mocks/contract-extensions";
 
@@ -146,7 +146,7 @@ export function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{personDisplayName(a.personId)}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {services.data?.find((s) => s.id === a.serviceId)?.name ?? "Servicio"}
+                        {titleCaseName(services.data?.find((s) => s.id === a.serviceId)?.name ?? "") || "Servicio"}
                       </p>
                     </div>
                     <AppointmentStatusBadge status={a.status} isProvisional={a.isProvisional} />

@@ -9,7 +9,7 @@ import { ErrorState, EmptyState } from "@/components/state-views";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useComercioServices, useDeactivateComercioService } from "@/lib/api/catalog";
 import { paymentSummary } from "@/lib/deposit";
-import { formatMoney, formatDuration } from "@/lib/format";
+import { formatMoney, formatDuration, titleCaseName } from "@/lib/format";
 import type { Service } from "@/lib/api/generated/model/service";
 import { ServiceFormDialog } from "./service-form-dialog";
 
@@ -73,7 +73,7 @@ export function ServicesManager() {
                   className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{s.name}</p>
+                    <p className="font-medium">{titleCaseName(s.name)}</p>
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
                         <Clock3 className="size-3.5" />
@@ -95,7 +95,7 @@ export function ServicesManager() {
                       aria-label="Desactivar"
                       className="text-muted-foreground hover:text-destructive"
                       onClick={() => {
-                        if (confirm(`¿Desactivar "${s.name}"? Dejará de aparecer para reservar.`)) {
+                        if (confirm(`¿Desactivar "${titleCaseName(s.name)}"? Dejará de aparecer para reservar.`)) {
                           deactivate.mutate(s.id);
                         }
                       }}

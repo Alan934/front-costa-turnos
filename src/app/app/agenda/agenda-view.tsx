@@ -11,7 +11,7 @@ import { useServices } from "@/lib/api/catalog";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useComercioSchedule, useComercioTimeOff } from "@/lib/api/availability-comercio";
 import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
-import { formatDateLong, formatDayChip } from "@/lib/format";
+import { formatDateLong, formatDayChip, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -39,8 +39,12 @@ export function AgendaView() {
   // que el profesional no atiende y por qué (cerrado habitual / feriado / vacaciones).
   const scheduleQuery = useComercioSchedule(activeId ?? undefined);
   const timeOffQuery = useComercioTimeOff(activeId ?? undefined);
-  const staffList = (staffQuery.data ?? []).filter((s: Staff) => s.isActive);
-  const services = servicesQuery.data ?? [];
+  // Normalizamos los nombres a mostrar (el back todavía no normaliza staff/servicios).
+  // Son datos solo de lectura en la agenda: no alimentan ningún formulario de edición.
+  const staffList = (staffQuery.data ?? [])
+    .filter((s: Staff) => s.isActive)
+    .map((s: Staff) => ({ ...s, displayName: titleCaseName(s.displayName) }));
+  const services = (servicesQuery.data ?? []).map((s) => ({ ...s, name: titleCaseName(s.name) }));
   const scheduleRules = scheduleQuery.data ?? [];
   const timeOff = timeOffQuery.data ?? [];
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState, EmptyState, SkeletonList } from "@/components/state-views";
 import { useMyMemberships } from "@/lib/api/comercios";
+import { titleCaseName } from "@/lib/format";
 import type { MembershipWithComercio } from "@/mocks/contract-extensions";
 import { MembershipAddressDialog } from "./membership-address-dialog";
 
@@ -61,7 +62,9 @@ export function MyComerciosView() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 font-medium">
-                      <span className="truncate">{m.comercio?.name ?? "Comercio"}</span>
+                      <span className="truncate">
+                        {m.comercio?.name ? titleCaseName(m.comercio.name) : "Comercio"}
+                      </span>
                       {personal && <Badge variant="muted">Tu negocio</Badge>}
                     </p>
                     {shownAddress && (
@@ -104,7 +107,7 @@ export function MyComerciosView() {
       {editing && (
         <MembershipAddressDialog
           comercioId={editing.comercioId}
-          comercioName={editing.comercio?.name ?? "este comercio"}
+          comercioName={editing.comercio?.name ? titleCaseName(editing.comercio.name) : "este comercio"}
           comercioAddress={editing.comercio?.address ?? null}
           currentAddress={editing.address ?? null}
           currentMinBookingHours={editing.minBookingHours ?? 0}

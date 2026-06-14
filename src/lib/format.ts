@@ -100,6 +100,47 @@ export function isSameDay(a: DateInput, b: DateInput): boolean {
   );
 }
 
+/**
+ * Conectores que en español NO se capitalizan en un título salvo que abran el nombre.
+ * "peluquería de aristides" → "Peluquería de Aristides".
+ */
+const LOWERCASE_CONNECTORS = new Set([
+  "de", "del", "la", "las", "el", "los", "y", "e", "o", "u", "da", "do", "dos", "das",
+]);
+
+/**
+ * Normaliza un nombre propio a "Title Case" en español, respetando conectores en minúscula
+ * (excepto la primera palabra). Tolera entradas en mayúsculas, minúsculas o mezcladas:
+ * "alan Sanjurjo" → "Alan Sanjurjo", "PELUQUERÍA DE ARISTIDES" → "Peluquería de Aristides".
+ * Mantiene separadores como guiones internos ("garcía-pérez" → "García-Pérez").
+ *
+ * Pensado para datos que el back todavía no normaliza (nombre de comercio, displayName de
+ * profesional, nombre de servicio). Para fecha/plata usar los otros helpers de este archivo.
+ */
+export function titleCaseName(input: string | null | undefined): string {
+  if (!input) return "";
+  const capitalizeToken = (token: string): string =>
+    // Capitaliza la primera letra de cada sub-palabra separada por guion ("-") o apóstrofo.
+    token
+      .split(/([-'’])/)
+      .map((part) =>
+        /[-'’]/.test(part) || part === ""
+          ? part
+          : part.charAt(0).toLocaleUpperCase(LOCALE) + part.slice(1).toLocaleLowerCase(LOCALE),
+      )
+      .join("");
+
+  const words = input.trim().split(/\s+/);
+  return words
+    .map((word, i) => {
+      const lower = word.toLocaleLowerCase(LOCALE);
+      // Conectores van en minúscula salvo que abran el nombre.
+      if (i > 0 && LOWERCASE_CONNECTORS.has(lower)) return lower;
+      return capitalizeToken(word);
+    })
+    .join(" ");
+}
+
 /** Duración legible a partir de minutos: "1 h 30 min", "45 min". */
 export function formatDuration(minutes: number | null | undefined): string {
   if (minutes == null || minutes <= 0) return "—";

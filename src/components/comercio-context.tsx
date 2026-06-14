@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useMyMemberships } from "@/lib/api/comercios";
+import { titleCaseName } from "@/lib/format";
 import type { MembershipWithComercio } from "@/mocks/contract-extensions";
 
 /** Un comercio donde el profesional puede operar (derivado de su membresía activa). */
@@ -39,7 +40,8 @@ function toOptions(memberships: MembershipWithComercio[] | undefined): ComercioO
     .filter((m) => m.status === "active" && m.comercio)
     .map((m) => ({
       comercioId: m.comercioId,
-      name: m.comercio!.name,
+      // `name` es solo para mostrar (selector, "en {name}"); nunca se escribe de vuelta al back.
+      name: titleCaseName(m.comercio!.name),
       isPersonal: m.comercio!.isPersonal,
     }));
 }

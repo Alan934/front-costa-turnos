@@ -27,7 +27,7 @@ import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { useAuth } from "@/components/auth-provider";
 import { useMyAppointments, useCancelMyAppointment } from "@/lib/api/me-appointments";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import { formatDateLong, formatTime } from "@/lib/format";
+import { formatDateLong, formatTime, titleCaseName } from "@/lib/format";
 import type { MyAppointment } from "@/mocks/contract-extensions";
 
 const TERMINAL: AppointmentStatus[] = [
@@ -183,8 +183,8 @@ function AppointmentCard({
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-display font-semibold">{appt.business.name}</p>
-          <p className="text-sm text-muted-foreground">{appt.serviceName}</p>
+          <p className="font-display font-semibold">{titleCaseName(appt.business.name)}</p>
+          <p className="text-sm text-muted-foreground">{titleCaseName(appt.serviceName)}</p>
         </div>
         <AppointmentStatusBadge status={appt.status} isProvisional={appt.isProvisional} />
       </div>
@@ -255,7 +255,7 @@ function AppointmentCard({
           <DialogHeader>
             <DialogTitle>¿Cancelar este turno?</DialogTitle>
             <DialogDescription>
-              {appt.serviceName} en {appt.business.name},{" "}
+              {titleCaseName(appt.serviceName)} en {titleCaseName(appt.business.name)},{" "}
               {formatDateLong(appt.startAt)} a las {formatTime(appt.startAt)}.
             </DialogDescription>
           </DialogHeader>

@@ -10,6 +10,7 @@
  */
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
+import { titleCaseName } from "@/lib/format";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
@@ -23,6 +24,16 @@ export function useComercioPublicPage(slug: string) {
     queryKey: ["comercio-public-page", slug],
     queryFn: ({ signal }) =>
       customInstance<ComercioPublicPageDto>({ url: `/r/${slug}`, method: "GET", signal }),
+    // Normalizamos a "Title Case" lo que se muestra (comercio + profesionales). Es la cara
+    // pública y solo lectura, así que no hay riesgo de pisar formularios de edición.
+    select: (page): ComercioPublicPageDto => ({
+      ...page,
+      name: titleCaseName(page.name),
+      professionals: page.professionals.map((p) => ({
+        ...p,
+        displayName: titleCaseName(p.displayName),
+      })),
+    }),
     enabled: !!slug,
   });
 }
@@ -37,6 +48,11 @@ export function usePublicProfessional(slug: string, membershipId: string | null)
         method: "GET",
         signal,
       }),
+    select: (detail): PublicProfessionalDetailDto => ({
+      ...detail,
+      displayName: titleCaseName(detail.displayName),
+      services: detail.services.map((s) => ({ ...s, name: titleCaseName(s.name) })),
+    }),
     enabled: !!slug && !!membershipId,
   });
 }

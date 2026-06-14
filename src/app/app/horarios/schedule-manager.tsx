@@ -28,7 +28,7 @@ import {
   useDeleteComercioTimeOff,
 } from "@/lib/api/availability-comercio";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -230,6 +230,7 @@ function RuleChip({
     ? rule.serviceIds
         .map((id) => services.find((s) => s.id === id)?.name)
         .filter((n): n is string => !!n)
+        .map(titleCaseName)
     : [];
 
   return (
@@ -382,7 +383,7 @@ function WorkRuleDialog({
                           onChange={() => toggle(s.id)}
                           className="size-4 accent-[var(--color-accent)]"
                         />
-                        {s.name}
+                        {titleCaseName(s.name)}
                       </label>
                     ))
                   )}

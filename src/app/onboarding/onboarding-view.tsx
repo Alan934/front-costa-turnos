@@ -28,7 +28,7 @@ import { availabilityCreateScheduleRule } from "@/lib/api/generated/endpoints/av
 import { useServices, useCreateService } from "@/lib/api/catalog";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { paymentSummary } from "@/lib/deposit";
-import { formatMoney, formatDuration } from "@/lib/format";
+import { formatMoney, formatDuration, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -278,7 +278,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
           {services.map((s: Service) => (
             <li key={s.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 text-sm">
               <div>
-                <p className="font-medium">{s.name}</p>
+                <p className="font-medium">{titleCaseName(s.name)}</p>
                 <p className="text-xs text-muted-foreground">{formatDuration(s.durationMinutes)} · {formatMoney(s.priceCents)}</p>
               </div>
               {paymentSummary(s) && <Badge variant="muted">{paymentSummary(s)}</Badge>}
@@ -366,7 +366,7 @@ function StaffStep({ onNext }: { onNext: () => void }) {
               <span className="grid size-9 place-items-center rounded-full bg-accent/10 font-display text-sm font-semibold text-accent">
                 {s.displayName.charAt(0).toUpperCase()}
               </span>
-              <span className="font-medium">{s.displayName}</span>
+              <span className="font-medium">{titleCaseName(s.displayName)}</span>
             </li>
           ))}
         </ul>
