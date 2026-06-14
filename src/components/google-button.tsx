@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { env } from "@/lib/env";
 
 /** Botón "Continuar con Google". Redirige al endpoint OAuth del backend. */
 export function GoogleButton({ label = "Continuar con Google" }: { label?: string }) {
   const [redirecting, setRedirecting] = useState(false);
+
+  // Al volver atrás, el navegador puede restaurar la página desde el bfcache con el
+  // estado "redirecting" todavía en true, dejando el botón pegado en "Redirigiendo…".
+  // pageshow con event.persisted detecta esa restauración y reseteamos el estado.
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) setRedirecting(false);
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   function go() {
     setRedirecting(true); // feedback mientras se va a Google (la página se descarga)
