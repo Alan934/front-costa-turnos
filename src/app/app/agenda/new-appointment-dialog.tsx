@@ -14,6 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { customInstance } from "@/lib/api/axios-instance";
+import {
+  getApiErrorMessage,
+  getApiValidationMessages,
+  matchFieldErrors,
+} from "@/lib/api/error-message";
 import { formatDateLong, formatDuration, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
@@ -62,6 +67,32 @@ export function NewAppointmentDialog({
     onSuccess: onCreated,
   });
 
+  // Errores por campo (cuando es validación 400).
+  const fieldErrors = create.isError
+    ? matchFieldErrors(getApiValidationMessages(create.error), [
+        "fullName",
+        "phone",
+        "email",
+        "staffId",
+        "serviceId",
+        "startAt",
+      ])
+    : {};
+
+  // El backend valida el teléfono según la provincia (no siempre 10 dígitos);
+  // mostramos un mensaje neutral en vez del texto crudo que asume 10 dígitos.
+  if (fieldErrors.phone) {
+    fieldErrors.phone = "Revisá el número de teléfono.";
+  }
+
+  // Mensaje principal: si el único problema es el teléfono, usamos ese copy;
+  // si no, mostramos el mensaje del backend.
+  const errorMessage = !create.isError
+    ? null
+    : Object.keys(fieldErrors).length === 1 && fieldErrors.phone
+      ? fieldErrors.phone
+      : getApiErrorMessage(create.error);
+
   const canSubmit = !!serviceId && !!staffId && !!time;
 
   return (
@@ -77,7 +108,9 @@ export function NewAppointmentDialog({
         <div className="space-y-4 px-6 pb-2">
           {/* Servicio */}
           <div>
-            <Label>Servicio</Label>
+            <Label>
+              Servicio <span className="text-destructive">*</span>
+            </Label>
             <div className="mt-1.5 space-y-2">
               {services.map((s) => (
                 <button
@@ -101,18 +134,26 @@ export function NewAppointmentDialog({
                 </button>
               ))}
             </div>
+            {fieldErrors.serviceId && (
+              <p className="mt-1 text-xs text-destructive">{fieldErrors.serviceId}</p>
+            )}
           </div>
 
           {/* Staff + hora */}
           <div className="grid grid-cols-2 gap-3">
             {staff.length > 1 && (
               <div>
-                <Label htmlFor="na-staff">Profesional</Label>
+                <Label htmlFor="na-staff">
+                  Profesional <span className="text-destructive">*</span>
+                </Label>
                 <select
                   id="na-staff"
                   value={staffId}
                   onChange={(e) => setStaffId(e.target.value)}
-                  className="mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    "mt-1.5 h-10 w-full rounded-lg border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    fieldErrors.staffId ? "border-destructive" : "border-input",
+                  )}
                 >
                   {staff.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -120,17 +161,25 @@ export function NewAppointmentDialog({
                     </option>
                   ))}
                 </select>
+                {fieldErrors.staffId && (
+                  <p className="mt-1 text-xs text-destructive">{fieldErrors.staffId}</p>
+                )}
               </div>
             )}
             <div className={staff.length > 1 ? "" : "col-span-2"}>
-              <Label htmlFor="na-time">Hora</Label>
+              <Label htmlFor="na-time">
+                Hora <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="na-time"
                 type="time"
-                className="mt-1.5"
+                className={cn("mt-1.5", fieldErrors.startAt && "border-destructive")}
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
               />
+              {fieldErrors.startAt && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.startAt}</p>
+              )}
             </div>
           </div>
 
@@ -139,15 +188,29 @@ export function NewAppointmentDialog({
             <Label htmlFor="na-name">Cliente</Label>
             <Input
               id="na-name"
-              className="mt-1.5"
+              className={cn("mt-1.5", fieldErrors.fullName && "border-destructive")}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Nombre del cliente"
             />
+            {fieldErrors.fullName && (
+              <p className="mt-1 text-xs text-destructive">{fieldErrors.fullName}</p>
+            )}
+            {(fieldErrors.phone || fieldErrors.email) && (
+              <p className="mt-1 text-xs text-destructive">
+                {fieldErrors.phone ?? fieldErrors.email}
+              </p>
+            )}
           </div>
 
-          {create.isError && (
-            <p className="text-sm text-destructive">No pudimos crear el turno. Probá de nuevo.</p>
+          <p className="text-xs text-muted-foreground">
+            Los campos con <span className="text-destructive">*</span> son obligatorios.
+          </p>
+
+          {errorMessage && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
           )}
         </div>
 
