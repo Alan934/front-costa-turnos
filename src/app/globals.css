@@ -222,4 +222,15 @@
   .delay-4 { animation-delay: 220ms; }
   .delay-5 { animation-delay: 290ms; }
   .delay-6 { animation-delay: 360ms; }
+
+  /* Rayado diagonal sutil para marcar días sin atención en la agenda (sobre el fondo del elemento). */
+  .bg-off {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--color-muted-foreground) 14%, transparent) 0,
+      color-mix(in oklch, var(--color-muted-foreground) 14%, transparent) 1px,
+      transparent 1px,
+      transparent 7px
+    );
+  }
 }

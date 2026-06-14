@@ -1,14 +1,21 @@
 "use client";
 
-import { CalendarX2 } from "lucide-react";
+import { CalendarX2, CalendarOff } from "lucide-react";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
-import { personDisplayName, isSameLocalDay } from "@/lib/agenda";
+import {
+  personDisplayName,
+  isSameLocalDay,
+  closedWeekdays,
+  dayOffStatus,
+} from "@/lib/agenda";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { Staff } from "@/lib/api/generated/model/staff";
+import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
+import type { TimeOff } from "@/lib/api/generated/model/timeOff";
 
 /**
  * Vista del día como lista de tarjetas, ordenada por hora. Reemplaza a la grilla horaria para
@@ -19,12 +26,16 @@ export function DayList({
   appointments,
   services,
   staff,
+  scheduleRules,
+  timeOff,
   onSelect,
 }: {
   date: Date;
   appointments: Appointment[];
   services: Service[];
   staff: Staff[];
+  scheduleRules: ScheduleRule[];
+  timeOff: TimeOff[];
   onSelect: (a: Appointment) => void;
 }) {
   const items = appointments
@@ -33,6 +44,24 @@ export function DayList({
 
   const multiStaff = staff.length > 1;
   const active = items.filter((a) => a.status !== "cancelled").length;
+  const off = dayOffStatus(date, closedWeekdays(scheduleRules), timeOff);
+
+  // Día sin atención y sin turnos: solo el aviso de por qué no se atiende.
+  if (off && items.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl p-4 sm:p-6">
+        <EmptyState
+          icon={<CalendarOff className="size-5" />}
+          title={off.kind === "timeoff" ? off.reason : "No atendés este día"}
+          message={
+            off.kind === "timeoff"
+              ? "Este día está bloqueado en tus horarios."
+              : "Este día figura como cerrado en tus horarios. Igual podés crear un turno con “Nuevo turno”."
+          }
+        />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -48,6 +77,21 @@ export function DayList({
 
   return (
     <div className="mx-auto max-w-2xl p-4 sm:p-6">
+      {off && (
+        <div className="mb-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
+          <CalendarOff className="mt-0.5 size-4 shrink-0 text-warning" />
+          <p>
+            <span className="font-medium">No atendés este día</span>
+            <span className="text-muted-foreground"> · {off.reason}</span>
+            {items.length > 0 && (
+              <span className="text-muted-foreground">
+                {" "}
+                — hay turnos cargados de todas formas.
+              </span>
+            )}
+          </p>
+        </div>
+      )}
       <p className="mb-3 text-sm text-muted-foreground">
         <span className="font-medium text-foreground">{active}</span>{" "}
         {active === 1 ? "turno" : "turnos"} este día

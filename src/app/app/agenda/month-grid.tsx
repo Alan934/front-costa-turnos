@@ -1,8 +1,19 @@
 "use client";
 
-import { monthGridDays, countByDay, loadLevel, dayKey, isToday } from "@/lib/agenda";
+import { CalendarOff } from "lucide-react";
+import {
+  monthGridDays,
+  countByDay,
+  loadLevel,
+  dayKey,
+  isToday,
+  closedWeekdays,
+  dayOffStatus,
+} from "@/lib/agenda";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
+import type { TimeOff } from "@/lib/api/generated/model/timeOff";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -23,16 +34,21 @@ const LOAD_BG = [
 export function MonthGrid({
   date,
   appointments,
+  scheduleRules,
+  timeOff,
   onPickDay,
   onOpenDay,
 }: {
   date: Date;
   appointments: Appointment[];
+  scheduleRules: ScheduleRule[];
+  timeOff: TimeOff[];
   onPickDay: (d: Date) => void;
   onOpenDay: (d: Date) => void;
 }) {
   const days = monthGridDays(date);
   const counts = countByDay(appointments);
+  const closed = closedWeekdays(scheduleRules);
   const month = date.getMonth();
 
   return (
@@ -52,6 +68,13 @@ export function MonthGrid({
             const count = counts[dayKey(d)] ?? 0;
             const level = loadLevel(count);
             const today = isToday(d);
+            const off = dayOffStatus(d, closed, timeOff);
+
+            const title = off
+              ? `No atiende: ${off.reason}`
+              : count > 0
+                ? `${count} ${count === 1 ? "turno" : "turnos"} · doble click para ver`
+                : "Sin turnos";
 
             return (
               <button
@@ -59,28 +82,40 @@ export function MonthGrid({
                 type="button"
                 onClick={() => onPickDay(d)}
                 onDoubleClick={() => onOpenDay(d)}
-                title={count > 0 ? `${count} ${count === 1 ? "turno" : "turnos"} · doble click para ver` : "Sin turnos"}
+                title={title}
                 className={cn(
                   "flex min-h-[68px] flex-col rounded-lg border p-1.5 text-left transition-colors sm:min-h-[92px]",
-                  LOAD_BG[level],
-                  today ? "border-accent ring-1 ring-accent" : "border-border hover:border-accent/50",
+                  // Días sin atención: fondo a rayas atenuado en vez del tinte de carga.
+                  off ? "bg-off bg-muted/40 text-muted-foreground" : LOAD_BG[level],
+                  today
+                    ? "border-accent ring-2 ring-accent ring-offset-1 ring-offset-background"
+                    : "border-border hover:border-accent/50",
                   !inMonth && "opacity-40",
                 )}
               >
                 <span
                   className={cn(
-                    "font-display text-sm font-semibold tabular-nums",
-                    today && "grid size-6 place-items-center rounded-full bg-accent text-accent-foreground",
+                    "font-display tabular-nums",
+                    today
+                      ? "grid size-7 place-items-center rounded-full bg-accent text-base font-bold text-accent-foreground shadow-sm"
+                      : "text-sm font-semibold",
                   )}
                 >
                   {d.getDate()}
                 </span>
 
-                {count > 0 && (
-                  <span className="mt-auto flex items-center gap-1 self-start rounded-md bg-background/70 px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
-                    <span className="size-1.5 rounded-full bg-accent" />
-                    {count}
+                {off ? (
+                  <span className="mt-auto flex items-center gap-1 self-start text-[10px] font-medium leading-tight sm:text-[11px]">
+                    <CalendarOff className="size-3 shrink-0" />
+                    <span className="truncate">{off.reason}</span>
                   </span>
+                ) : (
+                  count > 0 && (
+                    <span className="mt-auto flex items-center gap-1 self-start rounded-md bg-background/70 px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
+                      <span className="size-1.5 rounded-full bg-accent" />
+                      {count}
+                    </span>
+                  )
                 )}
               </button>
             );

@@ -5,6 +5,9 @@
  */
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
+import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
+import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
+import type { TimeOff } from "@/lib/api/generated/model/timeOff";
 
 export const DAY_START_HOUR = 8;
 export const DAY_END_HOUR = 20;
@@ -112,6 +115,56 @@ export function loadLevel(count: number): 0 | 1 | 2 | 3 | 4 {
   if (count <= 4) return 2;
   if (count <= 7) return 3;
   return 4;
+}
+
+/**
+ * Por qué el profesional no atiende un día.
+ *  - `closed`: ese día de la semana no tiene franjas de trabajo cargadas (cerrado habitual).
+ *  - `timeoff`: cae dentro de un bloqueo puntual (feriado, vacaciones, etc.) — trae el motivo.
+ */
+export interface DayOff {
+  kind: "closed" | "timeoff";
+  /** Texto a mostrar: motivo del bloqueo o "Cerrado". */
+  reason: string;
+}
+
+/** Días de la semana (0=dom … 6=sáb) que NO tienen ninguna franja de trabajo. */
+export function closedWeekdays(rules: ScheduleRule[]): Set<number> {
+  const worked = new Set<number>();
+  for (const r of rules) {
+    if (r.kind === ScheduleRuleKind.work) worked.add(r.dayOfWeek);
+  }
+  const closed = new Set<number>();
+  for (let d = 0; d < 7; d++) if (!worked.has(d)) closed.add(d);
+  return closed;
+}
+
+/** Bloqueo (time-off) que cubre el día, si lo hay. */
+export function timeOffForDay(day: Date, timeOff: TimeOff[]): TimeOff | undefined {
+  const dayStart = startOfDay(day).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+  return timeOff.find((t) => {
+    const from = new Date(t.startAt).getTime();
+    const to = new Date(t.endAt).getTime();
+    // Se solapa con el día si empieza antes del fin del día y termina después de su inicio.
+    return from < dayEnd && to > dayStart;
+  });
+}
+
+/**
+ * Determina si el profesional no atiende ese día y por qué. El time-off (bloqueo puntual)
+ * tiene prioridad sobre el cierre habitual: si justo cae en un día cerrado, igual mostramos
+ * el motivo del bloqueo. Devuelve `null` cuando el día es laborable.
+ */
+export function dayOffStatus(
+  day: Date,
+  closed: Set<number>,
+  timeOff: TimeOff[],
+): DayOff | null {
+  const block = timeOffForDay(day, timeOff);
+  if (block) return { kind: "timeoff", reason: block.reason?.trim() || "Bloqueado" };
+  if (closed.has(day.getDay())) return { kind: "closed", reason: "Cerrado" };
+  return null;
 }
 
 export interface PositionedAppointment {

@@ -8,6 +8,8 @@ import { ErrorState } from "@/components/state-views";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
+import { useActiveComercio } from "@/components/comercio-context";
+import { useComercioSchedule, useComercioTimeOff } from "@/lib/api/availability-comercio";
 import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
 import { formatDateLong, formatDayChip } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -32,8 +34,15 @@ export function AgendaView() {
 
   const staffQuery = useProfessionalsListStaff();
   const servicesQuery = useServices();
+  const { activeId } = useActiveComercio();
+  // Horario semanal y bloqueos del comercio activo: para marcar en el calendario los días
+  // que el profesional no atiende y por qué (cerrado habitual / feriado / vacaciones).
+  const scheduleQuery = useComercioSchedule(activeId ?? undefined);
+  const timeOffQuery = useComercioTimeOff(activeId ?? undefined);
   const staffList = (staffQuery.data ?? []).filter((s: Staff) => s.isActive);
   const services = servicesQuery.data ?? [];
+  const scheduleRules = scheduleQuery.data ?? [];
+  const timeOff = timeOffQuery.data ?? [];
 
   // En semana mostramos un staff; en día, todos (columnas) o el filtrado.
   const weekStaffId = activeStaffId ?? staffList[0]?.id ?? "";
@@ -145,6 +154,8 @@ export function AgendaView() {
             staff={activeStaffId ? staffList.filter((s) => s.id === activeStaffId) : staffList}
             appointments={appointments}
             services={services}
+            scheduleRules={scheduleRules}
+            timeOff={timeOff}
             onSelect={setSelected}
           />
         ) : view === "semana" ? (
@@ -152,6 +163,8 @@ export function AgendaView() {
             date={date}
             appointments={appointments}
             services={services}
+            scheduleRules={scheduleRules}
+            timeOff={timeOff}
             staffName={staffList.find((s) => s.id === weekStaffId)?.displayName ?? ""}
             onSelect={setSelected}
           />
@@ -159,6 +172,8 @@ export function AgendaView() {
           <MonthGrid
             date={date}
             appointments={appointments}
+            scheduleRules={scheduleRules}
+            timeOff={timeOff}
             onPickDay={(d) => {
               setDate(d);
               setView("dia");
