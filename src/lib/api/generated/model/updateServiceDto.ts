@@ -8,15 +8,9 @@
 
 export interface UpdateServiceDto {
   name?: string;
-  /**
-   * duracion en minutos
-   * @minimum 1
-   */
+  /** duracion en minutos */
   durationMinutes?: number;
-  /**
-   * precio (pago completo) en centavos
-   * @minimum 0
-   */
+  /** precio (pago completo) en centavos */
   priceCents?: number;
   /** Permitir reservar con seña */
   allowDeposit?: boolean;
@@ -24,10 +18,7 @@ export interface UpdateServiceDto {
   allowFullPayment?: boolean;
   /** Permitir reservar sin pagar */
   allowNoPayment?: boolean;
-  /**
-   * monto de la seña en centavos
-   * @minimum 0
-   */
+  /** monto de la seña en centavos */
   depositAmountCents?: number;
   isActive?: boolean;
 }

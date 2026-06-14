@@ -5,7 +5,6 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Raffle } from './raffle';
 
 export interface RafflePrize {
   id: string;
@@ -15,5 +14,4 @@ export interface RafflePrize {
   /** @nullable */
   photoKey?: string | null;
   displayOrder: number;
-  raffle?: Raffle;
 }

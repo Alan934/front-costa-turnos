@@ -5,8 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Professional } from './professional';
-import type { StaffAccount } from './staffAccount';
+import type { StaffAccountId } from './staffAccountId';
 
 export interface Staff {
   id: string;
@@ -14,10 +13,7 @@ export interface Staff {
   updatedAt: string;
   professionalId: string;
   /** @nullable */
-  accountId?: string | null;
+  accountId?: StaffAccountId;
   displayName: string;
   isActive: boolean;
-  professional?: Professional;
-  /** @nullable */
-  account?: StaffAccount;
 }

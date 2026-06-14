@@ -7,7 +7,6 @@
  */
 import type { SubscriptionPaymentStatus } from './subscriptionPaymentStatus';
 import type { SubscriptionPaymentMethod } from './subscriptionPaymentMethod';
-import type { Subscription } from './subscription';
 
 export interface SubscriptionPayment {
   id: string;
@@ -23,5 +22,4 @@ export interface SubscriptionPayment {
   mercadopagoRef?: string | null;
   /** @nullable */
   paidAt?: string | null;
-  subscription?: Subscription;
 }

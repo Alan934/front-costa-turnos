@@ -158,6 +158,11 @@ export interface MembershipWithComercio {
   status: "invited" | "active" | "inactive";
   /** Ubicación propia del profesional en este comercio (Fase 3). null = usa la del comercio. */
   address?: string | null;
+  /**
+   * Anticipación mínima de reserva, en horas: un cliente solo puede reservar un turno que empiece
+   * al menos estas horas en el futuro. 0 = sin restricción. La configura el profesional por comercio.
+   */
+  minBookingHours?: number;
   comercio?: {
     id: string;
     name: string;

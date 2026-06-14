@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, MapPin, User, Pencil } from "lucide-react";
+import { Building2, MapPin, User, Pencil, Clock3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState, EmptyState, SkeletonList } from "@/components/state-views";
@@ -50,6 +50,7 @@ export function MyComerciosView() {
               // Ubicación que ven los clientes: la propia de la membresía o, si no hay, la del comercio.
               const ownAddress = m.address?.trim();
               const shownAddress = ownAddress || m.comercio?.address;
+              const minHours = m.minBookingHours ?? 0;
               return (
                 <li
                   key={m.id}
@@ -70,6 +71,12 @@ export function MyComerciosView() {
                         {ownAddress && <span className="text-accent">· tu ubicación</span>}
                       </p>
                     )}
+                    {minHours > 0 && (
+                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                        <Clock3 className="size-3.5 shrink-0" />
+                        Reservas con {minHours} {minHours === 1 ? "hora" : "horas"} de anticipación
+                      </p>
+                    )}
                   </div>
                   {m.status === "active" && !personal && (
                     <Button
@@ -79,7 +86,7 @@ export function MyComerciosView() {
                       onClick={() => setEditing(m)}
                     >
                       <Pencil className="size-3.5" />
-                      <span className="hidden sm:inline">Ubicación</span>
+                      <span className="hidden sm:inline">Configuración</span>
                     </Button>
                   )}
                   <Badge variant={meta.variant}>{meta.label}</Badge>
@@ -100,6 +107,7 @@ export function MyComerciosView() {
           comercioName={editing.comercio?.name ?? "este comercio"}
           comercioAddress={editing.comercio?.address ?? null}
           currentAddress={editing.address ?? null}
+          currentMinBookingHours={editing.minBookingHours ?? 0}
           onClose={() => setEditing(null)}
         />
       )}

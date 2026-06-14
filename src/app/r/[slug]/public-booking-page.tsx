@@ -40,6 +40,7 @@ import type { Service } from "@/lib/api/generated/model/service";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
 import type { Slot } from "@/mocks/contract-extensions";
+import type { AxiosError } from "axios";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -517,7 +518,11 @@ function ConfirmStep({
   const book = useBookProfessional(slug, professional.membershipId);
   const bookWithDeposit = useBookProfessionalWithDeposit(slug, professional.membershipId);
   const submitting = book.isPending || bookWithDeposit.isPending;
+  // El back rechaza con 400 los turnos demasiado próximos (anticipación mínima del profesional) o
+  // ya tomados: el horario dejó de estar disponible. Otros fallos son errores técnicos genéricos.
+  const bookError = (book.error ?? bookWithDeposit.error) as AxiosError | null;
   const failed = book.isError || bookWithDeposit.isError;
+  const slotUnavailable = bookError?.response?.status === 400;
 
   const canSubmit = fullName.trim().length > 1 && phone.trim().length > 5;
 
@@ -619,7 +624,9 @@ function ConfirmStep({
 
       {failed && (
         <p className="mt-3 text-sm text-destructive">
-          No pudimos confirmar el turno. Probá de nuevo.
+          {slotUnavailable
+            ? "Ese horario ya no está disponible para reservar. Volvé atrás y elegí otro."
+            : "No pudimos confirmar el turno. Probá de nuevo."}
         </p>
       )}
 

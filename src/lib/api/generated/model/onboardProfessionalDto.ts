@@ -8,10 +8,7 @@
 
 export interface OnboardProfessionalDto {
   businessName: string;
-  /**
-   * slug unico para /r/:slug
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
+  /** slug unico para /r/:slug */
   slug: string;
   timezone?: string;
   address?: string;

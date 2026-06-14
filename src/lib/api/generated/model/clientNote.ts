@@ -5,8 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { ProfessionalClient } from './professionalClient';
-import type { ClientNoteAuthorStaff } from './clientNoteAuthorStaff';
+import type { ClientNoteAuthorStaffId } from './clientNoteAuthorStaffId';
 
 export interface ClientNote {
   id: string;
@@ -14,9 +13,6 @@ export interface ClientNote {
   updatedAt: string;
   professionalClientId: string;
   /** @nullable */
-  authorStaffId?: string | null;
+  authorStaffId?: ClientNoteAuthorStaffId;
   body: string;
-  professionalClient?: ProfessionalClient;
-  /** @nullable */
-  authorStaff?: ClientNoteAuthorStaff;
 }

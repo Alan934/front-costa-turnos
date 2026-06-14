@@ -5,9 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Appointment } from './appointment';
 
 /**
  * @nullable
  */
-export type PaymentAppointment = Appointment | null;
+export type RaffleEntryPersonId = { [key: string]: unknown } | null;

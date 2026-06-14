@@ -5,9 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Service } from './service';
 
 /**
  * @nullable
  */
-export type WaitlistEntryService = Service | null;
+export type NotificationPersonId = { [key: string]: unknown } | null;

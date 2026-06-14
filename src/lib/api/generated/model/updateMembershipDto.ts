@@ -12,4 +12,6 @@ export interface UpdateMembershipDto {
    * @nullable
    */
   address?: string | null;
+  /** Anticipación mínima de reserva, en horas. Un cliente solo puede reservar un turno que empiece al menos estas horas en el futuro. 0 = sin restricción. */
+  minBookingHours?: number;
 }

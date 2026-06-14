@@ -7,7 +7,6 @@
  */
 import type { DepositMode } from './depositMode';
 import type { ProfessionalPublicPageSettings } from './professionalPublicPageSettings';
-import type { Account } from './account';
 
 export interface Professional {
   id: string;
@@ -30,9 +29,4 @@ export interface Professional {
   mpTokenExpiresAt?: string | null;
   /** @nullable */
   mpConnectedAt?: string | null;
-  account?: Account;
-  /** @nullable */
-  mpAccessToken: string | null;
-  /** @nullable */
-  mpRefreshToken: string | null;
 }

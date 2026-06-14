@@ -65,8 +65,6 @@ export const professional: Professional = {
     address: "Belgrano 245, Costa de Araujo, Mendoza",
     phone: "+54 9 261 555-0245",
   },
-  mpAccessToken: null,
-  mpRefreshToken: null,
 };
 
 export const staff: Staff[] = [
@@ -415,8 +413,6 @@ function adminRow(args: {
     defaultDepositMode: DepositMode.hybrid,
     cancellationWindowHours: 24,
     publicPageSettings: {},
-    mpAccessToken: null,
-    mpRefreshToken: null,
   };
   const sub: Subscription = {
     id: `sub_${args.id}`,

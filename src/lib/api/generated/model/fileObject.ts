@@ -5,7 +5,6 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Professional } from './professional';
 
 export interface FileObject {
   id: string;
@@ -16,5 +15,4 @@ export interface FileObject {
   objectKey: string;
   mime: string;
   sizeBytes: string;
-  professional?: Professional;
 }

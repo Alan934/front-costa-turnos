@@ -7,7 +7,6 @@
  */
 import type { FichaFieldType } from './fichaFieldType';
 import type { FichaFieldOptions } from './fichaFieldOptions';
-import type { Professional } from './professional';
 
 export interface FichaField {
   id: string;
@@ -21,5 +20,4 @@ export interface FichaField {
   isRequired: boolean;
   isVisibleToClient: boolean;
   displayOrder: number;
-  professional?: Professional;
 }

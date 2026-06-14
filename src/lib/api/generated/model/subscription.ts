@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { SubscriptionStatus } from './subscriptionStatus';
-import type { Professional } from './professional';
 
 export interface Subscription {
   id: string;
@@ -23,5 +22,4 @@ export interface Subscription {
   amountCents: number;
   /** @nullable */
   mercadopagoPreapprovalId?: string | null;
-  professional?: Professional;
 }

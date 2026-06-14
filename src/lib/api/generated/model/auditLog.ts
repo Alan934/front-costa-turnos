@@ -5,20 +5,23 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { AuditLogAccountId } from './auditLogAccountId';
+import type { AuditLogProfessionalId } from './auditLogProfessionalId';
+import type { AuditLogEntityId } from './auditLogEntityId';
 import type { AuditLogMetadata } from './auditLogMetadata';
 
 export interface AuditLog {
   id: string;
   createdAt: string;
   /** @nullable */
-  accountId?: string | null;
+  accountId?: AuditLogAccountId;
   /** @nullable */
-  professionalId?: string | null;
+  professionalId?: AuditLogProfessionalId;
   action: string;
   /** @nullable */
   entity?: string | null;
   /** @nullable */
-  entityId?: string | null;
+  entityId?: AuditLogEntityId;
   metadata: AuditLogMetadata;
   /** @nullable */
   ip?: string | null;

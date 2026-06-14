@@ -5,19 +5,15 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Raffle } from './raffle';
-import type { RaffleEntryPerson } from './raffleEntryPerson';
+import type { RaffleEntryPersonId } from './raffleEntryPersonId';
 
 export interface RaffleEntry {
   id: string;
   createdAt: string;
   raffleId: string;
   /** @nullable */
-  personId?: string | null;
+  personId?: RaffleEntryPersonId;
   number: number;
   /** @nullable */
   label?: string | null;
-  raffle?: Raffle;
-  /** @nullable */
-  person?: RaffleEntryPerson;
 }

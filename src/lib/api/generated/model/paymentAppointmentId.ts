@@ -6,9 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface ResetPasswordDto {
-  email: string;
-  code: string;
-  /** @minLength 8 */
-  newPassword: string;
-}
+/**
+ * @nullable
+ */
+export type PaymentAppointmentId = { [key: string]: unknown } | null;

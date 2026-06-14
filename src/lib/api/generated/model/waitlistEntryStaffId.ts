@@ -6,4 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type ProfessionalClientFichaValues = { [key: string]: unknown };
+/**
+ * @nullable
+ */
+export type WaitlistEntryStaffId = { [key: string]: unknown } | null;

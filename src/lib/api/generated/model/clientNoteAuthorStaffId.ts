@@ -5,9 +5,8 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
-import type { Professional } from './professional';
 
 /**
  * @nullable
  */
-export type NotificationProfessional = Professional | null;
+export type ClientNoteAuthorStaffId = { [key: string]: unknown } | null;

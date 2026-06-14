@@ -8,9 +8,5 @@
 
 export interface VerifyEmailDto {
   email: string;
-  /**
-   * @minLength 6
-   * @maxLength 6
-   */
   code: string;
 }

@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { ConsentType } from './consentType';
-import type { Account } from './account';
 
 export interface Consent {
   id: string;
@@ -17,5 +16,4 @@ export interface Consent {
   acceptedAt: string;
   /** @nullable */
   ip?: string | null;
-  account?: Account;
 }
