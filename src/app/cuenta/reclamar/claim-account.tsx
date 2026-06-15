@@ -12,7 +12,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { useAuth } from "@/components/auth-provider";
 import { homeForUser } from "@/lib/auth-routing";
 import { useAuthRequestClaimCode, useAuthClaim } from "@/lib/api/generated/endpoints/auth/auth";
-import { setAccessToken } from "@/lib/api/axios-instance";
+import { setAuthTokens } from "@/lib/api/axios-instance";
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 
 type Step = "email" | "codigo";
@@ -74,7 +74,7 @@ export function ClaimAccount() {
       {
         onSuccess: async (tokens) => {
           const t = tokens as unknown as AuthTokensDto;
-          if (t?.accessToken) setAccessToken(t.accessToken);
+          if (t?.accessToken) setAuthTokens(t);
           await refresh();
           setClaimed(true);
         },

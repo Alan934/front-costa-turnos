@@ -12,7 +12,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   customInstance,
   setAccessToken,
+  setRefreshToken,
+  setAuthTokens,
   getAccessToken,
+  setOnSessionExpired,
+  initProactiveRefresh,
 } from "@/lib/api/axios-instance";
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 import type { LoginDto } from "@/lib/api/generated/model/loginDto";
@@ -113,6 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Cuando el refresh token ya no sirve, el interceptor avisa: limpiamos sesión en memoria
+    // y vaciamos la caché de queries para que RequireAuth redirija a /ingresar.
+    setOnSessionExpired(() => {
+      setUser(null);
+      qc.clear();
+    });
+    // Tras un reload, reprograma la renovación proactiva desde el expiresAt persistido.
+    initProactiveRefresh();
+    return () => setOnSessionExpired(null);
+  }, [qc]);
+
+  useEffect(() => {
     let active = true;
     fetchMe().then((u) => {
       if (active) {
@@ -138,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         data: dto,
       });
-      setAccessToken(tokens.accessToken);
+      setAuthTokens(tokens);
       const u = await afterAuth();
       if (!u) throw new Error("No se pudo cargar la sesión");
       return u;
@@ -153,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         data: dto,
       });
-      setAccessToken(tokens.accessToken);
+      setAuthTokens(tokens);
       const u = await afterAuth();
       if (!u) throw new Error("No se pudo cargar la sesión");
       return u;
@@ -168,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         data: dto,
       });
-      setAccessToken(tokens.accessToken);
+      setAuthTokens(tokens);
       const u = await afterAuth();
       if (!u) throw new Error("No se pudo cargar la sesión");
       return u;
@@ -183,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ignorar errores de red en logout
     }
     setAccessToken(null);
+    setRefreshToken(null);
     setUser(null);
     qc.clear();
   }, [qc]);

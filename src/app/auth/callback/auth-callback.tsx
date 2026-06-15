@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LogoMark } from "@/components/logo";
 import { useAuth } from "@/components/auth-provider";
 import { homeForUser } from "@/lib/auth-routing";
-import { setAccessToken } from "@/lib/api/axios-instance";
+import { setAccessToken, setRefreshToken } from "@/lib/api/axios-instance";
 
 /**
  * Aterrizaje del login con Google. El backend redirige a
@@ -29,6 +29,8 @@ export function AuthCallback() {
       return;
     }
     setAccessToken(accessToken);
+    const refreshToken = params.get("refresh_token");
+    if (refreshToken) setRefreshToken(refreshToken);
     refresh()
       .then(() => {
         // El routeo definitivo lo hace el efecto de abajo cuando `user` esté disponible.
