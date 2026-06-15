@@ -875,7 +875,15 @@ export const handlers: RequestHandler[] = [
     if (staffId) list = list.filter((a) => a.staffId === staffId);
     if (from) list = list.filter((a) => a.startAt >= from);
     if (to) list = list.filter((a) => a.startAt <= to);
-    return HttpResponse.json(list);
+    // Embebemos personName/serviceName en el turno (campos opcionales de Appointment): así el
+    // profesional ve el nombre del cliente y el servicio sin depender del cruce con /clients.
+    // Espeja lo que hace el backend en `GET /v1/appointments`.
+    const enriched = list.map((a) => ({
+      ...a,
+      personName: clients.find((c) => c.personId === a.personId)?.fullName,
+      serviceName: services.find((s) => s.id === a.serviceId)?.name,
+    }));
+    return HttpResponse.json(enriched);
   }),
   http.post(url("/appointments"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;

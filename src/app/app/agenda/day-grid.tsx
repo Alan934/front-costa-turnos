@@ -10,10 +10,10 @@ import {
   DAY_END_HOUR,
 } from "@/lib/agenda";
 import { AppointmentChip } from "./appointment-chip";
-import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { PersonInfo } from "@/lib/api/clients";
+import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /** Vista de día: columna de horas + una columna por staff (multi-sillón). */
 export function DayGrid({
@@ -28,7 +28,7 @@ export function DayGrid({
   staff: Staff[];
   appointments: Appointment[];
   services: Service[];
-  lookupPerson: (personId: string) => PersonInfo;
+  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const hours = gridHours();
@@ -88,7 +88,7 @@ export function DayGrid({
                       service={services.find((sv) => sv.id === a.serviceId)}
                       top={pos.top}
                       height={pos.height}
-                      personName={lookupPerson(a.personId).name}
+                      personName={lookupPerson(a.personId, a.personName).name}
                       onClick={() => onSelect(a)}
                     />
                   );

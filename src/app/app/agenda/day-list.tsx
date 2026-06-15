@@ -11,11 +11,11 @@ import {
 import type { PersonInfo } from "@/lib/api/clients";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
+import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /**
  * Vista del día como lista de tarjetas, ordenada por hora. Reemplaza a la grilla horaria para
@@ -37,7 +37,7 @@ export function DayList({
   staff: Staff[];
   scheduleRules: ScheduleRule[];
   timeOff: TimeOff[];
-  lookupPerson: (personId: string) => PersonInfo;
+  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const items = appointments
@@ -102,7 +102,7 @@ export function DayList({
         {items.map((a) => {
           const service = services.find((s) => s.id === a.serviceId);
           const staffName = staff.find((s) => s.id === a.staffId)?.displayName;
-          const person = lookupPerson(a.personId);
+          const person = lookupPerson(a.personId, a.personName);
           const cancelled = a.status === "cancelled";
           return (
             <li key={a.id}>

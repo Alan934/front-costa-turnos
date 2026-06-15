@@ -14,9 +14,9 @@ import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { isSameLocalDay } from "@/lib/agenda";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { PersonInfo } from "@/lib/api/clients";
+import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /**
  * Lista compacta de todos los turnos de un día, ordenada por hora. Pensada para no tener que
@@ -34,7 +34,7 @@ export function DayAppointmentsDialog({
   date: Date;
   appointments: Appointment[];
   services: Service[];
-  lookupPerson: (personId: string) => PersonInfo;
+  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
   onClose: () => void;
   onSelect: (a: Appointment) => void;
   onCreate: () => void;
@@ -66,7 +66,7 @@ export function DayAppointmentsDialog({
             <ul className="space-y-2">
               {items.map((a) => {
                 const service = services.find((s) => s.id === a.serviceId);
-                const person = lookupPerson(a.personId);
+                const person = lookupPerson(a.personId, a.personName);
                 const cancelled = a.status === "cancelled";
                 return (
                   <li key={a.id}>

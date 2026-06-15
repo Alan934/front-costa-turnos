@@ -47,9 +47,12 @@ export interface PersonInfo {
 
 /**
  * Resuelve el `personId` de un turno a datos humanos (nombre, teléfono, email). El contrato
- * no embebe los datos de la persona en Appointment (ver API-GAPS §2c), así que cruzamos con
- * la lista de clientes del profesional. Si la persona no está en la lista (turno de alguien
- * que aún no es cliente), caemos al nombre derivado del id (`personDisplayName`).
+ * `Appointment` no embebe los datos de la persona (ver API-GAPS §2c), así que el nombre se
+ * resuelve en este orden:
+ *   1. `embeddedName`: el nombre que el back ya trae en el turno (`Appointment.personName`),
+ *      cuando exista. Es lo más fiable y cubre incluso a quienes aún no son clientes.
+ *   2. El cruce con la lista de clientes del profesional (por `personId`).
+ *   3. Un fallback genérico ("Cliente") — nunca el UUID crudo.
  *
  * Devuelve una función estable para usar en cualquier vista de la agenda.
  */
@@ -58,10 +61,10 @@ export function usePersonLookup() {
   return useMemo(() => {
     const byPerson = new Map<string, EnrichedClient>();
     for (const c of clients ?? []) byPerson.set(c.personId, c);
-    return (personId: string): PersonInfo => {
+    return (personId: string, embeddedName?: string): PersonInfo => {
       const c = byPerson.get(personId);
       return {
-        name: c?.fullName?.trim() || personDisplayName(personId),
+        name: embeddedName?.trim() || c?.fullName?.trim() || personDisplayName(personId),
         clientId: c?.id,
         phone: c?.phone ?? undefined,
         email: c?.email ?? undefined,

@@ -191,12 +191,18 @@ export function gridHours(): number[] {
   return Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i);
 }
 
+/** Detecta un personId con forma de UUID (el id real del back), que no es legible para mostrar. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
- * Nombre legible de la persona a partir del personId. El contrato no expone el nombre
- * en Appointment (ver API-GAPS §2c); derivamos uno legible para la demo (per_sofia →
- * "Sofía"). Cuando el back lo incluya, se usa el campo real.
+ * Fallback de nombre legible a partir del personId, SOLO para cuando no tenemos el nombre real
+ * (ni embebido en el turno ni vía cruce con clientes). El contrato no expone el nombre en
+ * Appointment (ver API-GAPS §2c); para ids legibles de la demo derivamos uno (per_sofia →
+ * "Sofía"). Para un UUID real no hay nada legible que derivar, así que devolvemos "Cliente"
+ * en vez de mostrar el id crudo al profesional.
  */
 export function personDisplayName(personId: string): string {
+  if (!personId || UUID_RE.test(personId)) return "Cliente";
   const raw = personId.replace(/^per_/, "").replace(/[_-]+/g, " ").trim();
   if (!raw) return "Cliente";
   return raw

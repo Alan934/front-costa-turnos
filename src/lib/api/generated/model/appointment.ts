@@ -30,4 +30,8 @@ export interface Appointment {
   /** @nullable */
   actualStartAt?: string | null;
   createdVia: CreatedVia;
+  /** Nombre del cliente del turno */
+  personName?: string;
+  /** Nombre del servicio del turno */
+  serviceName?: string;
 }
