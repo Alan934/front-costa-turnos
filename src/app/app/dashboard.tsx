@@ -20,7 +20,8 @@ import { useAuth } from "@/components/auth-provider";
 import { useAppointments } from "@/lib/api/appointments";
 import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
-import { dayRange, isSameLocalDay, personDisplayName } from "@/lib/agenda";
+import { usePersonLookup } from "@/lib/api/clients";
+import { dayRange, isSameLocalDay } from "@/lib/agenda";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { formatMoney, formatTime, titleCaseName } from "@/lib/format";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -38,6 +39,7 @@ export function Dashboard() {
   const range = useMemo(() => dayRange(today), [today]);
   const appts = useAppointments(range);
   const services = useServices();
+  const lookupPerson = usePersonLookup();
   const pro = useProfessional();
   const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
@@ -144,7 +146,7 @@ export function Dashboard() {
                       <span className="font-display text-sm font-semibold tabular-nums">{formatTime(a.startAt)}</span>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{personDisplayName(a.personId)}</p>
+                      <p className="truncate text-sm font-medium">{lookupPerson(a.personId).name}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {titleCaseName(services.data?.find((s) => s.id === a.serviceId)?.name ?? "") || "Servicio"}
                       </p>

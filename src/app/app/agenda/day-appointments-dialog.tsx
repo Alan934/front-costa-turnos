@@ -11,11 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
-import { personDisplayName, isSameLocalDay } from "@/lib/agenda";
+import { isSameLocalDay } from "@/lib/agenda";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
+import type { PersonInfo } from "@/lib/api/clients";
 
 /**
  * Lista compacta de todos los turnos de un día, ordenada por hora. Pensada para no tener que
@@ -25,6 +26,7 @@ export function DayAppointmentsDialog({
   date,
   appointments,
   services,
+  lookupPerson,
   onClose,
   onSelect,
   onCreate,
@@ -32,6 +34,7 @@ export function DayAppointmentsDialog({
   date: Date;
   appointments: Appointment[];
   services: Service[];
+  lookupPerson: (personId: string) => PersonInfo;
   onClose: () => void;
   onSelect: (a: Appointment) => void;
   onCreate: () => void;
@@ -63,6 +66,7 @@ export function DayAppointmentsDialog({
             <ul className="space-y-2">
               {items.map((a) => {
                 const service = services.find((s) => s.id === a.serviceId);
+                const person = lookupPerson(a.personId);
                 const cancelled = a.status === "cancelled";
                 return (
                   <li key={a.id}>
@@ -83,9 +87,10 @@ export function DayAppointmentsDialog({
                         </p>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{personDisplayName(a.personId)}</p>
+                        <p className="truncate font-medium">{person.name}</p>
                         <p className="truncate text-xs text-muted-foreground">
                           {service?.name ?? "Servicio"}
+                          {person.phone ? ` · ${person.phone}` : ""}
                         </p>
                       </div>
                       <AppointmentStatusBadge status={a.status} isProvisional={a.isProvisional} />

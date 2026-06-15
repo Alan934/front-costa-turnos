@@ -4,11 +4,11 @@ import { CalendarX2, CalendarOff } from "lucide-react";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
-  personDisplayName,
   isSameLocalDay,
   closedWeekdays,
   dayOffStatus,
 } from "@/lib/agenda";
+import type { PersonInfo } from "@/lib/api/clients";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -28,6 +28,7 @@ export function DayList({
   staff,
   scheduleRules,
   timeOff,
+  lookupPerson,
   onSelect,
 }: {
   date: Date;
@@ -36,6 +37,7 @@ export function DayList({
   staff: Staff[];
   scheduleRules: ScheduleRule[];
   timeOff: TimeOff[];
+  lookupPerson: (personId: string) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const items = appointments
@@ -100,6 +102,7 @@ export function DayList({
         {items.map((a) => {
           const service = services.find((s) => s.id === a.serviceId);
           const staffName = staff.find((s) => s.id === a.staffId)?.displayName;
+          const person = lookupPerson(a.personId);
           const cancelled = a.status === "cancelled";
           return (
             <li key={a.id}>
@@ -120,9 +123,10 @@ export function DayList({
                   </p>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{personDisplayName(a.personId)}</p>
+                  <p className="truncate font-medium">{person.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {service?.name ?? "Servicio"}
+                    {person.phone ? ` · ${person.phone}` : ""}
                     {multiStaff && staffName ? ` · ${staffName}` : ""}
                   </p>
                 </div>

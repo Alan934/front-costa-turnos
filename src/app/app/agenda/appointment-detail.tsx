@@ -21,22 +21,24 @@ import {
 import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import { personDisplayName } from "@/lib/agenda";
 import { formatDateLong, formatTime, formatMoney } from "@/lib/format";
 import type { AxiosError } from "axios";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
+import type { PersonInfo } from "@/lib/api/clients";
 
 export function AppointmentDetail({
   appointment,
   services,
   staffName,
+  person,
   onClose,
   onChanged,
 }: {
   appointment: Appointment;
   services: Service[];
   staffName: string;
+  person: PersonInfo;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -74,7 +76,7 @@ export function AppointmentDetail({
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle>{personDisplayName(appointment.personId)}</DialogTitle>
+            <DialogTitle>{person.name}</DialogTitle>
             <AppointmentStatusBadge
               status={appointment.status}
               isProvisional={appointment.isProvisional}
@@ -89,6 +91,16 @@ export function AppointmentDetail({
             label="Cuándo"
             value={`${formatDateLong(appointment.startAt)} · ${formatTime(appointment.startAt)}–${formatTime(appointment.endAt)}`}
           />
+          {person.phone && (
+            <ContactRow
+              label="Teléfono"
+              value={person.phone}
+              href={`https://wa.me/${person.phone.replace(/[^\d]/g, "")}`}
+            />
+          )}
+          {person.email && (
+            <ContactRow label="Email" value={person.email} href={`mailto:${person.email}`} />
+          )}
           {service && <Row label="Precio" value={formatMoney(service.priceCents)} />}
           {appointment.isProvisional && (
             <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs text-warning-foreground">
@@ -167,6 +179,23 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-start justify-between gap-4 text-sm">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right font-medium">{value}</span>
+    </div>
+  );
+}
+
+/** Fila de contacto: el valor es un enlace (WhatsApp / email) para escribirle al cliente. */
+function ContactRow({ label, value, href }: { label: string; value: string; href: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-right font-medium text-accent hover:underline"
+      >
+        {value}
+      </a>
     </div>
   );
 }

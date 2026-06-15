@@ -5,7 +5,6 @@ import {
   gridHours,
   positionAppointment,
   isSameLocalDay,
-  personDisplayName,
   HOUR_PX,
   DAY_START_HOUR,
   DAY_END_HOUR,
@@ -14,6 +13,7 @@ import { AppointmentChip } from "./appointment-chip";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { Staff } from "@/lib/api/generated/model/staff";
+import type { PersonInfo } from "@/lib/api/clients";
 
 /** Vista de día: columna de horas + una columna por staff (multi-sillón). */
 export function DayGrid({
@@ -21,12 +21,14 @@ export function DayGrid({
   staff,
   appointments,
   services,
+  lookupPerson,
   onSelect,
 }: {
   date: Date;
   staff: Staff[];
   appointments: Appointment[];
   services: Service[];
+  lookupPerson: (personId: string) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const hours = gridHours();
@@ -86,7 +88,7 @@ export function DayGrid({
                       service={services.find((sv) => sv.id === a.serviceId)}
                       top={pos.top}
                       height={pos.height}
-                      personName={personDisplayName(a.personId)}
+                      personName={lookupPerson(a.personId).name}
                       onClick={() => onSelect(a)}
                     />
                   );

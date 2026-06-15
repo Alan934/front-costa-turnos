@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/state-views";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
+import { usePersonLookup } from "@/lib/api/clients";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useComercioSchedule, useComercioTimeOff } from "@/lib/api/availability-comercio";
 import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
@@ -34,6 +35,8 @@ export function AgendaView() {
 
   const staffQuery = useProfessionalsListStaff();
   const servicesQuery = useServices();
+  // Resuelve el personId de cada turno al nombre/contacto real del cliente (no el id).
+  const lookupPerson = usePersonLookup();
   const { activeId } = useActiveComercio();
   // Horario semanal y bloqueos del comercio activo: para marcar en el calendario los días
   // que el profesional no atiende y por qué (cerrado habitual / feriado / vacaciones).
@@ -160,6 +163,7 @@ export function AgendaView() {
             services={services}
             scheduleRules={scheduleRules}
             timeOff={timeOff}
+            lookupPerson={lookupPerson}
             onSelect={setSelected}
           />
         ) : view === "semana" ? (
@@ -170,6 +174,7 @@ export function AgendaView() {
             scheduleRules={scheduleRules}
             timeOff={timeOff}
             staffName={staffList.find((s) => s.id === weekStaffId)?.displayName ?? ""}
+            lookupPerson={lookupPerson}
             onSelect={setSelected}
           />
         ) : (
@@ -193,6 +198,7 @@ export function AgendaView() {
           appointment={selected}
           services={services}
           staffName={staffList.find((s) => s.id === selected.staffId)?.displayName ?? ""}
+          person={lookupPerson(selected.personId)}
           onClose={() => setSelected(null)}
           onChanged={() => {
             apptQuery.refetch();
@@ -207,6 +213,7 @@ export function AgendaView() {
           date={dayList}
           appointments={appointments}
           services={services}
+          lookupPerson={lookupPerson}
           onClose={() => setDayList(null)}
           onSelect={(a) => {
             setDayList(null);
