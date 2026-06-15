@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { CalendarClock } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Layout centrado para pantallas de autenticación (login, registro, reclamar). */
@@ -17,14 +16,7 @@ export function AuthShell({
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="mx-auto flex w-full max-w-md items-center justify-between px-5 py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <CalendarClock className="size-4" />
-          </span>
-          <span className="font-display text-base font-semibold tracking-tight">
-            Costa Turnos
-          </span>
-        </Link>
+        <Logo href="/" size="md" />
         <ThemeToggle />
       </header>
 

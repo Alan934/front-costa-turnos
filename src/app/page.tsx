@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  CalendarClock,
   Clock3,
   ArrowRight,
   MapPin,
@@ -14,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
@@ -104,14 +104,7 @@ export default function HomePage() {
     <div className="mx-auto max-w-6xl px-6 sm:px-8">
       {/* ---- Header ---- */}
       <header className="flex items-center justify-between py-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-xl border border-border text-accent">
-            <CalendarClock className="size-5" />
-          </span>
-          <span className="font-display text-lg font-semibold tracking-tight">
-            Costa Turnos
-          </span>
-        </Link>
+        <Logo href="/" />
         <nav className="flex items-center gap-2">
           <ThemeToggle />
           <Button variant="ghost" size="sm" asChild>

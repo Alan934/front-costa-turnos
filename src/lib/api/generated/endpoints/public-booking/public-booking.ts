@@ -27,8 +27,11 @@ import type {
 import type {
   Appointment,
   ComercioPublicPageDto,
+  DayAvailabilityDto,
   PublicBookDto,
   PublicBookWithDepositDto,
+  PublicBookingDayAvailabilityFlatParams,
+  PublicBookingDayAvailabilityParams,
   PublicBookingSlotsFlatParams,
   PublicBookingSlotsParams,
   PublicProfessionalDetailDto
@@ -341,6 +344,114 @@ export function usePublicBookingSlots<TData = Awaited<ReturnType<typeof publicBo
 
 
 /**
+ * Por cada fecha del rango devuelve status (available/closed/time_off/full) y, cuando status=time_off, el motivo cargado por el profesional. Útil para el chip deshabilitado.
+ * @summary Disponibilidad por día de un profesional (motivo cuando no es reservable)
+ */
+export const publicBookingDayAvailability = (
+    slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DayAvailabilityDto[]>(
+      {url: `/r/${slug}/professionals/${membershipId}/day-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingDayAvailabilityQueryKey = (slug?: string,
+    membershipId?: string,
+    params?: PublicBookingDayAvailabilityParams,) => {
+    return [
+    `/r/${slug}/professionals/${membershipId}/day-availability`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPublicBookingDayAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError = ErrorType<void>>(slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingDayAvailabilityQueryKey(slug,membershipId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingDayAvailability>>> = ({ signal }) => publicBookingDayAvailability(slug,membershipId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug && membershipId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingDayAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingDayAvailability>>>
+export type PublicBookingDayAvailabilityQueryError = ErrorType<void>
+
+
+export function usePublicBookingDayAvailability<TData = Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingDayAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingDayAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingDayAvailability<TData = Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingDayAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingDayAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingDayAvailability<TData = Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Disponibilidad por día de un profesional (motivo cuando no es reservable)
+ */
+
+export function usePublicBookingDayAvailability<TData = Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    params: PublicBookingDayAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingDayAvailabilityQueryOptions(slug,membershipId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Reservar un turno con un profesional del comercio
  */
 export const publicBookingBook = (
@@ -563,6 +674,108 @@ export function usePublicBookingSlotsFlat<TData = Awaited<ReturnType<typeof publ
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getPublicBookingSlotsFlatQueryOptions(slug,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @deprecated
+ * @summary Disponibilidad por día (comercio-de-uno): auto-resuelve el único profesional
+ */
+export const publicBookingDayAvailabilityFlat = (
+    slug: string,
+    params: PublicBookingDayAvailabilityFlatParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DayAvailabilityDto[]>(
+      {url: `/r/${slug}/day-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingDayAvailabilityFlatQueryKey = (slug?: string,
+    params?: PublicBookingDayAvailabilityFlatParams,) => {
+    return [
+    `/r/${slug}/day-availability`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPublicBookingDayAvailabilityFlatQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError = ErrorType<unknown>>(slug: string,
+    params: PublicBookingDayAvailabilityFlatParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingDayAvailabilityFlatQueryKey(slug,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>> = ({ signal }) => publicBookingDayAvailabilityFlat(slug,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingDayAvailabilityFlatQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>>
+export type PublicBookingDayAvailabilityFlatQueryError = ErrorType<unknown>
+
+
+export function usePublicBookingDayAvailabilityFlat<TData = Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError = ErrorType<unknown>>(
+ slug: string,
+    params: PublicBookingDayAvailabilityFlatParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingDayAvailabilityFlat<TData = Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError = ErrorType<unknown>>(
+ slug: string,
+    params: PublicBookingDayAvailabilityFlatParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingDayAvailabilityFlat<TData = Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError = ErrorType<unknown>>(
+ slug: string,
+    params: PublicBookingDayAvailabilityFlatParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @deprecated
+ * @summary Disponibilidad por día (comercio-de-uno): auto-resuelve el único profesional
+ */
+
+export function usePublicBookingDayAvailabilityFlat<TData = Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError = ErrorType<unknown>>(
+ slug: string,
+    params: PublicBookingDayAvailabilityFlatParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingDayAvailabilityFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingDayAvailabilityFlatQueryOptions(slug,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CalendarClock,
   Store,
   Link2,
   Check,
@@ -13,6 +12,7 @@ import {
   Clock,
   PartyPopper,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,12 +68,7 @@ export function OnboardingView() {
   return (
     <div className="min-h-dvh bg-background">
       <header className="mx-auto flex max-w-lg items-center justify-between px-5 py-5">
-        <span className="inline-flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
-          <span className="grid size-7 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <CalendarClock className="size-4" />
-          </span>
-          Costa Turnos
-        </span>
+        <Logo size="sm" />
         <ThemeToggle />
       </header>
 

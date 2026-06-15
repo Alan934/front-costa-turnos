@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { CalendarClock } from "lucide-react";
+import { LogoMark } from "@/components/logo";
 import { env } from "@/lib/env";
 
 /**
@@ -39,9 +39,7 @@ export function MswProvider({ children }: { children: ReactNode }) {
     return (
       <div className="grid min-h-dvh place-items-center bg-background">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <span className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-            <CalendarClock className="size-6 animate-pulse" />
-          </span>
+          <LogoMark size="xl" className="animate-pulse shadow-md" />
           <p className="font-display text-lg tracking-tight">Costa Turnos</p>
         </div>
       </div>

@@ -11,5 +11,6 @@ export interface AdminCreateClientDto {
   professionalId: string;
   fullName: string;
   email?: string;
+  /** Celular de 10 dígitos: característica + número, sin 0/15/+54. Ej: 2612465120 */
   phone?: string;
 }

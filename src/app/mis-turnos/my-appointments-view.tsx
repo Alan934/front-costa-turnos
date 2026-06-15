@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  CalendarClock,
   MapPin,
   Clock3,
   LogOut,
@@ -11,6 +10,7 @@ import {
   Eye,
   Ban,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,14 +56,7 @@ export function MyAppointmentsView() {
     <div className="mx-auto min-h-dvh max-w-2xl px-4 pb-16 sm:px-6">
       {/* Topbar */}
       <header className="flex items-center justify-between py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <CalendarClock className="size-4" />
-          </span>
-          <span className="font-display text-base font-semibold tracking-tight">
-            Costa Turnos
-          </span>
-        </Link>
+        <Logo href="/" size="md" />
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={() => logout()}>

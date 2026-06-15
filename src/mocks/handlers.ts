@@ -28,6 +28,8 @@ import {
 } from "./seed";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
+import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
+import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
@@ -58,9 +60,42 @@ const url = (path: string) => {
   return new URL(versioned, env.apiUrl).toString();
 };
 
+/** "HH:MM" → minutos desde medianoche. */
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+
+/** ¿El inicio del slot cae dentro de algún bloqueo (time-off) del staff? */
+function isBlockedByTimeOff(staffId: string, start: Date): boolean {
+  const t = start.getTime();
+  return timeOffs.some(
+    (to) =>
+      to.staffId === staffId &&
+      t >= new Date(to.startAt).getTime() &&
+      t < new Date(to.endAt).getTime(),
+  );
+}
+
+/** Bloqueo (time-off) que cubre el día calendario para ese staff, si lo hay (con su motivo). */
+function timeOffForDay(staffId: string, day: Date): TimeOff | undefined {
+  const dayStart = new Date(day);
+  dayStart.setHours(0, 0, 0, 0);
+  const start = dayStart.getTime();
+  const end = start + 24 * 60 * 60 * 1000;
+  return timeOffs.find((to) => {
+    if (to.staffId !== staffId) return false;
+    const from = new Date(to.startAt).getTime();
+    const until = new Date(to.endAt).getTime();
+    return from < end && until > start; // se solapa con el día
+  });
+}
+
 /**
  * Genera slots disponibles para un rango [from, to], un staff y un servicio.
- * Respeta la duración del servicio y deja algunos huecos ocupados para que se vea real.
+ * Respeta el horario semanal del staff (franjas `work` menos las pausas `break`) y los
+ * bloqueos (`timeOffs`), igual que el backend: días/horas sin atención NO generan slots, así
+ * la vista del cliente los muestra bloqueados. Deja algunos huecos ocupados para que se vea real.
  * Alineado al contrato: SlotsParams = { staffId, serviceId, from, to }.
  */
 function generateSlots(params: {
@@ -86,25 +121,43 @@ function generateSlots(params: {
 
   while (day <= lastDay) {
     const weekday = day.getDay(); // 0 = domingo
-    if (weekday !== 0) {
-      // cerrado los domingos
-      for (const s of targets) {
-        for (let h = 9; h < 18; h++) {
-          for (const m of [0, 30]) {
-            const start = new Date(day);
-            start.setHours(h, m, 0, 0);
-            if (start < fromDate || start > toDate) continue;
-            // ocupar algunos huecos de forma determinística
-            const taken = (h * 60 + m + (s.id === "staff_lucia" ? 0 : 90)) % 150 === 0;
-            if (taken) continue;
-            const end = new Date(start);
-            end.setMinutes(end.getMinutes() + duration);
-            out.push({
-              startAt: start.toISOString(),
-              endAt: end.toISOString(),
-              staffId: s.id,
-            });
-          }
+    for (const s of targets) {
+      // Franjas de trabajo y pausas del staff para este día de la semana.
+      const rules = scheduleRules.filter(
+        (r) => r.staffId === s.id && r.dayOfWeek === weekday,
+      );
+      const works = rules.filter((r) => r.kind === ScheduleRuleKind.work);
+      const breaks = rules.filter((r) => r.kind === ScheduleRuleKind.break);
+      // Sin franja de trabajo ese día = cerrado: no generamos slots (cliente lo ve bloqueado).
+      if (works.length === 0) continue;
+
+      for (let h = 0; h < 24; h++) {
+        for (const m of [0, 30]) {
+          const slotMin = h * 60 + m;
+          const inWork = works.some(
+            (w) => slotMin >= timeToMinutes(w.startTime) && slotMin < timeToMinutes(w.endTime),
+          );
+          if (!inWork) continue;
+          const inBreak = breaks.some(
+            (b) => slotMin >= timeToMinutes(b.startTime) && slotMin < timeToMinutes(b.endTime),
+          );
+          if (inBreak) continue;
+
+          const start = new Date(day);
+          start.setHours(h, m, 0, 0);
+          if (start < fromDate || start > toDate) continue;
+          // Bloqueos puntuales (feriados, vacaciones, turno médico…).
+          if (isBlockedByTimeOff(s.id, start)) continue;
+          // ocupar algunos huecos de forma determinística
+          const taken = (slotMin + (s.id === "staff_lucia" ? 0 : 90)) % 150 === 0;
+          if (taken) continue;
+          const end = new Date(start);
+          end.setMinutes(end.getMinutes() + duration);
+          out.push({
+            startAt: start.toISOString(),
+            endAt: end.toISOString(),
+            staffId: s.id,
+          });
         }
       }
     }
@@ -150,14 +203,81 @@ function createBooking(
   return appointment;
 }
 
-/** Slots a partir de los query params de una request (sirve a las rutas con/sin membershipId). */
-function slotsFromRequest(request: Request) {
+/**
+ * Slots a partir de los query params de una request (sirve a las rutas con/sin membershipId).
+ * `staffId` acota la disponibilidad a un staff puntual: en la reserva pública usamos el staff
+ * representativo del comercio-de-uno para que su horario y bloqueos se reflejen como cierre de día.
+ */
+function slotsFromRequest(request: Request, staffId?: string) {
   const u = new URL(request.url);
   return generateSlots({
+    staffId,
     serviceId: u.searchParams.get("serviceId") ?? undefined,
     from: u.searchParams.get("from") ?? undefined,
     to: u.searchParams.get("to") ?? undefined,
   });
+}
+
+/**
+ * Staff que representa al comercio-de-uno en la reserva pública. El detalle público expone un
+ * único "profesional" (la membresía), pero internamente hay varios staff con su propio horario;
+ * elegimos uno para que sus franjas/bloqueos definan qué días puede reservar el cliente.
+ */
+const PUBLIC_BOOKING_STAFF_ID = "staff_lucia";
+
+/**
+ * Disponibilidad por día (DayAvailabilityDto[]) para el rango de la request, alineada al back:
+ * por cada fecha devuelve `status` (closed/time_off/full/available), `bookable` y, en time_off,
+ * el `reason` cargado por el profesional. Reusa la misma lógica de slots para decidir `bookable`.
+ */
+function dayAvailabilityFromRequest(request: Request, staffId: string): DayAvailabilityDto[] {
+  const u = new URL(request.url);
+  const serviceId = u.searchParams.get("serviceId") ?? undefined;
+  const fromStr = u.searchParams.get("from");
+  const toStr = u.searchParams.get("to");
+  const fromDate = fromStr ? new Date(fromStr) : new Date();
+  const toDate = toStr ? new Date(toStr) : new Date(fromDate);
+
+  const out: DayAvailabilityDto[] = [];
+  const day = new Date(fromDate);
+  day.setHours(0, 0, 0, 0);
+  const lastDay = new Date(toDate);
+  lastDay.setHours(0, 0, 0, 0);
+
+  while (day <= lastDay) {
+    const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    const block = timeOffForDay(staffId, day);
+    const works = scheduleRules.filter(
+      (r) => r.staffId === staffId && r.dayOfWeek === day.getDay() && r.kind === ScheduleRuleKind.work,
+    );
+    // Slots libres de ESE día (acotamos el rango al día para no recorrer todo el período).
+    const dayStart = new Date(day);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(23, 59, 59, 999);
+    const freeSlots = generateSlots({
+      staffId,
+      serviceId,
+      from: dayStart.toISOString(),
+      to: dayEnd.toISOString(),
+    });
+
+    let status: DayAvailabilityStatus;
+    let reason: string | null = null;
+    if (block) {
+      status = DayAvailabilityStatus.time_off;
+      reason = (block.reason as unknown as string) ?? null;
+    } else if (works.length === 0) {
+      status = DayAvailabilityStatus.closed;
+    } else if (freeSlots.length === 0) {
+      status = DayAvailabilityStatus.full;
+    } else {
+      status = DayAvailabilityStatus.available;
+    }
+
+    out.push({ date, status, reason, bookable: status === DayAvailabilityStatus.available });
+    day.setDate(day.getDate() + 1);
+  }
+  return out;
 }
 
 /** Resultado de book-with-deposit: turno asegurado + pago + initPoint de MercadoPago. */
@@ -361,9 +481,18 @@ export const handlers: RequestHandler[] = [
   ),
   // Slots del profesional (rutas con :membershipId + las planas deprecated).
   http.get(url("/r/:slug/professionals/:membershipId/slots"), ({ request }) =>
-    HttpResponse.json(slotsFromRequest(request)),
+    HttpResponse.json(slotsFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
   ),
-  http.get(url("/r/:slug/slots"), ({ request }) => HttpResponse.json(slotsFromRequest(request))),
+  http.get(url("/r/:slug/slots"), ({ request }) =>
+    HttpResponse.json(slotsFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
+  ),
+  // Disponibilidad por día (status + motivo) para el selector de fecha del cliente.
+  http.get(url("/r/:slug/professionals/:membershipId/day-availability"), ({ request }) =>
+    HttpResponse.json(dayAvailabilityFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
+  ),
+  http.get(url("/r/:slug/day-availability"), ({ request }) =>
+    HttpResponse.json(dayAvailabilityFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
+  ),
   // Reserva sin pago.
   http.post(url("/r/:slug/professionals/:membershipId/book"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;

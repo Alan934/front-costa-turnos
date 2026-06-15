@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, Menu, X, LogOut, Building2, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, Building2, ChevronDown } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
@@ -32,14 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Topbar mobile */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden">
-        <Link href="/app" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <CalendarClock className="size-4" />
-          </span>
-          <span className="font-display text-base font-semibold tracking-tight">
-            Costa Turnos
-          </span>
-        </Link>
+        <Logo href="/app" size="md" />
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
           <button
@@ -94,14 +88,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Brand() {
   return (
-    <Link href="/app" className="flex items-center gap-2.5 px-5 py-5">
-      <span className="grid size-9 place-items-center rounded-xl bg-accent text-accent-foreground">
-        <CalendarClock className="size-5" />
-      </span>
-      <span className="font-display text-lg font-semibold tracking-tight">
-        Costa Turnos
-      </span>
-    </Link>
+    <span className="flex px-5 py-5">
+      <Logo href="/app" size="lg" />
+    </span>
   );
 }
 

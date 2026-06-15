@@ -13,6 +13,7 @@ import { customInstance } from "@/lib/api/axios-instance";
 import { titleCaseName } from "@/lib/format";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
+import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
 import type { PublicBookWithDepositDto } from "@/lib/api/generated/model/publicBookWithDepositDto";
 import type { Slot, BookWithDepositResult } from "@/mocks/contract-extensions";
@@ -61,6 +62,30 @@ export interface ProfessionalSlotsQuery {
   serviceId: string;
   from: string;
   to: string;
+}
+
+/**
+ * Disponibilidad por día del profesional para un servicio y rango. Por cada fecha devuelve
+ * `status` (available/closed/time_off/full), `bookable` y, cuando `status=time_off`, el `reason`
+ * cargado por el profesional. Es la señal confiable para deshabilitar y rotular los días en el
+ * selector de fecha del cliente (en vez de inferir "cerrado" desde la ausencia de slots).
+ */
+export function usePublicProfessionalDayAvailability(
+  slug: string,
+  membershipId: string | null,
+  params: ProfessionalSlotsQuery | null,
+) {
+  return useQuery({
+    queryKey: ["public-professional-day-availability", slug, membershipId, params],
+    queryFn: ({ signal }) =>
+      customInstance<DayAvailabilityDto[]>({
+        url: `/r/${slug}/professionals/${membershipId}/day-availability`,
+        method: "GET",
+        params: params ?? undefined,
+        signal,
+      }),
+    enabled: !!slug && !!membershipId && !!params,
+  });
 }
 
 /** Slots de un profesional para un servicio (`/r/:slug/professionals/:membershipId/slots`). */

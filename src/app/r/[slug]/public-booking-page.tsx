@@ -22,6 +22,7 @@ import {
   useComercioPublicPage,
   usePublicProfessional,
   usePublicProfessionalSlots,
+  usePublicProfessionalDayAvailability,
   useBookProfessional,
   useBookProfessionalWithDeposit,
 } from "@/lib/api/public-booking";
@@ -39,8 +40,23 @@ import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
+import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
+import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
 import type { Slot } from "@/mocks/contract-extensions";
 import type { AxiosError } from "axios";
+
+/** Clave local YYYY-MM-DD para casar una fecha con el `date` del DayAvailabilityDto. */
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Etiqueta corta para el chip de un día no reservable (motivo de time_off o "Cerrado"). */
+function dayBlockLabel(avail: DayAvailabilityDto | undefined): string {
+  if (!avail) return "Cerrado";
+  if (avail.status === DayAvailabilityStatus.time_off) return avail.reason?.trim() || "Bloqueado";
+  if (avail.status === DayAvailabilityStatus.full) return "Completo";
+  return "Cerrado";
+}
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -397,28 +413,41 @@ function SlotStep({
     return { from: from.toISOString(), to: to.toISOString() };
   }, [days]);
 
-  const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(slug, membershipId, {
-    serviceId: service.id,
-    from: range.from,
-    to: range.to,
-  });
+  const slotsParams = { serviceId: service.id, from: range.from, to: range.to };
+  const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(
+    slug,
+    membershipId,
+    slotsParams,
+  );
 
-  const daysWithSlots = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of slots ?? []) set.add(new Date(s.startAt).toDateString());
-    return set;
-  }, [slots]);
+  // Disponibilidad por día: señal confiable del back para deshabilitar/rotular cada día
+  // (cerrado vs. bloqueo con motivo), en vez de inferirlo de la presencia de slots.
+  const { data: availability } = usePublicProfessionalDayAvailability(slug, membershipId, slotsParams);
 
-  const dayHasSlots = (d: Date) => daysWithSlots.has(d.toDateString());
+  // Indexada por fecha local YYYY-MM-DD para casar con el `date` del DTO (zona del comercio).
+  const availByDate = useMemo(() => {
+    const map = new Map<string, DayAvailabilityDto>();
+    for (const a of availability ?? []) map.set(a.date, a);
+    return map;
+  }, [availability]);
+
+  const dayAvail = (d: Date) => availByDate.get(localDateKey(d));
+  // Reservable si el back lo dice; mientras todavía no llegó la disponibilidad, no bloqueamos.
+  const isBookable = (d: Date) => {
+    const a = dayAvail(d);
+    return a ? a.bookable : true;
+  };
+
   const daySlots = (slots ?? []).filter((s) => isSameDay(s.startAt, activeDay));
 
-  // Si el día activo no tiene atención, saltar al primer día disponible.
+  // Si el día activo no es reservable, saltar al primer día disponible.
   useEffect(() => {
-    if (daysWithSlots.size === 0) return;
-    if (daysWithSlots.has(activeDay.toDateString())) return;
-    const firstOpen = days.find((d) => daysWithSlots.has(d.toDateString()));
+    if (availByDate.size === 0) return;
+    if (isBookable(activeDay)) return;
+    const firstOpen = days.find((d) => isBookable(d));
     if (firstOpen) setActiveDay(firstOpen);
-  }, [daysWithSlots, activeDay, days]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availByDate, activeDay, days]);
 
   return (
     <div>
@@ -431,28 +460,34 @@ function SlotStep({
         {days.map((d) => {
           const chip = formatDayChip(d);
           const active = isSameDay(d, activeDay);
-          const closed = !isLoading && !isError && !dayHasSlots(d);
+          const avail = dayAvail(d);
+          const blocked = !!avail && !avail.bookable;
+          // Etiqueta corta según el motivo: time_off → su razón (o "Bloqueado"); resto → "Cerrado".
+          const label = dayBlockLabel(avail);
           return (
             <button
               key={d.toISOString()}
               type="button"
-              onClick={() => !closed && setActiveDay(d)}
-              disabled={closed}
+              onClick={() => !blocked && setActiveDay(d)}
+              disabled={blocked}
               aria-label={
-                closed ? `${chip.weekday} ${chip.day} — sin atención` : `${chip.weekday} ${chip.day}`
+                blocked ? `${chip.weekday} ${chip.day} — ${label}` : `${chip.weekday} ${chip.day}`
               }
+              title={blocked && avail?.reason ? avail.reason : undefined}
               className={cn(
                 "relative flex shrink-0 flex-col items-center rounded-xl border px-3.5 py-2.5 transition-colors",
                 active && "border-accent bg-accent/10 text-accent",
-                !active && closed &&
+                !active && blocked &&
                   "cursor-not-allowed border-destructive/25 bg-destructive/5 text-destructive/60",
-                !active && !closed && "border-border text-muted-foreground hover:border-accent/50",
+                !active && !blocked && "border-border text-muted-foreground hover:border-accent/50",
               )}
             >
               <span className="text-[11px] uppercase">{chip.weekday}</span>
               <span className="font-display text-base font-semibold tabular-nums">{chip.day}</span>
-              {closed && (
-                <span className="mt-0.5 text-[9px] font-medium uppercase tracking-wide">Cerrado</span>
+              {blocked && (
+                <span className="mt-0.5 max-w-[4.5rem] truncate text-[9px] font-medium uppercase tracking-wide">
+                  {label}
+                </span>
               )}
             </button>
           );
@@ -468,13 +503,22 @@ function SlotStep({
           </div>
         )}
         {isError && <ErrorState message="No pudimos cargar los horarios." onRetry={() => refetch()} />}
-        {!isLoading && !isError && daySlots.length === 0 && (
-          <EmptyState
-            icon={<CalendarX2 className="size-5" />}
-            title="Sin horarios este día"
-            message="Probá con otra fecha de la lista."
-          />
-        )}
+        {!isLoading && !isError && daySlots.length === 0 && (() => {
+          // Si el back marca el día como bloqueado/cerrado, mostramos el motivo en vez del genérico.
+          const a = dayAvail(activeDay);
+          const blocked = !!a && !a.bookable;
+          return (
+            <EmptyState
+              icon={<CalendarX2 className="size-5" />}
+              title={blocked ? dayBlockLabel(a) : "Sin horarios este día"}
+              message={
+                a?.status === DayAvailabilityStatus.time_off
+                  ? "Ese día el profesional no atiende. Probá con otra fecha de la lista."
+                  : "Probá con otra fecha de la lista."
+              }
+            />
+          );
+        })()}
         {!isLoading && !isError && daySlots.length > 0 && (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {daySlots.map((slot) => (
