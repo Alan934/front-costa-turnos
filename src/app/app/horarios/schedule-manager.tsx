@@ -28,7 +28,8 @@ import {
   useDeleteComercioTimeOff,
 } from "@/lib/api/availability-comercio";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
-import { formatDateTime, titleCaseName } from "@/lib/format";
+import { formatDateTime, formatDateLong, titleCaseName, TIME_ZONE } from "@/lib/format";
+import { formatInTimeZone } from "date-fns-tz";
 import { cn } from "@/lib/utils";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -444,6 +445,48 @@ function ScopeOption({
   );
 }
 
+/**
+ * Offset fijo de Argentina (UTC-3, sin horario de verano). Lo usamos para construir el ISO
+ * de un bloqueo tomando la fecha/hora como hora LOCAL de AR, sin que `new Date("yyyy-mm-dd")`
+ * lo interprete como UTC (que correría el día). Ver TIME_ZONE en lib/format.
+ */
+const AR_OFFSET = "-03:00";
+
+/** Convierte "2026-06-27" + "HH:mm" (hora de AR) a un ISO absoluto. */
+function arDateTimeToISO(date: string, time: string): string {
+  return new Date(`${date}T${time}:00${AR_OFFSET}`).toISOString();
+}
+
+/** "2026-06-27" → "2026-06-28" (día siguiente, en calendario). Para el fin exclusivo de un bloqueo por días. */
+function nextDay(date: string): string {
+  const d = new Date(`${date}T00:00:00${AR_OFFSET}`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/** ¿El bloqueo abarca días completos? (arranca 00:00 y termina 00:00 de AR). */
+function isAllDay(startAt: string, endAt: string): boolean {
+  return (
+    formatInTimeZone(new Date(startAt), TIME_ZONE, "HH:mm") === "00:00" &&
+    formatInTimeZone(new Date(endAt), TIME_ZONE, "HH:mm") === "00:00"
+  );
+}
+
+/** Etiqueta del rango de un bloqueo, distinta para días completos vs. horas de un día. */
+function timeOffLabel(startAt: string, endAt: string): string {
+  if (isAllDay(startAt, endAt)) {
+    // endAt es el inicio (00:00) del día SIGUIENTE al último bloqueado → restamos un día para mostrarlo.
+    const lastDay = new Date(endAt);
+    lastDay.setUTCDate(lastDay.getUTCDate() - 1);
+    const startLabel = formatDateLong(startAt);
+    const endLabel = formatDateLong(lastDay);
+    return startLabel === endLabel ? startLabel : `${startLabel} → ${endLabel}`;
+  }
+  return `${formatDateTime(startAt)} → ${formatDateTime(endAt)}`;
+}
+
+type TimeOffMode = "days" | "hours";
+
 function TimeOffSection({
   comercioId,
   list,
@@ -456,25 +499,46 @@ function TimeOffSection({
   const create = useCreateComercioTimeOff(comercioId);
   const del = useDeleteComercioTimeOff(comercioId);
   const [adding, setAdding] = useState(false);
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [mode, setMode] = useState<TimeOffMode>("days");
+  // Días completos: solo fechas (rango inclusivo de día a día).
+  const [fromDay, setFromDay] = useState("");
+  const [toDay, setToDay] = useState("");
+  // Horas de un día: una fecha + rango horario.
+  const [day, setDay] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("13:00");
   const [reason, setReason] = useState("");
 
+  function reset() {
+    setAdding(false);
+    setMode("days");
+    setFromDay("");
+    setToDay("");
+    setDay("");
+    setStartTime("09:00");
+    setEndTime("13:00");
+    setReason("");
+  }
+
+  // Validación según el modo.
+  const daysValid = mode === "days" && !!fromDay && !!toDay && fromDay <= toDay;
+  const hoursValid = mode === "hours" && !!day && startTime < endTime;
+  const canSubmit = (daysValid || hoursValid) && !create.isPending;
+
   function add() {
+    let startAt: string;
+    let endAt: string;
+    if (mode === "days") {
+      // Rango de días COMPLETOS: del 00:00 del primer día al 00:00 del día siguiente al último (fin exclusivo).
+      startAt = arDateTimeToISO(fromDay, "00:00");
+      endAt = arDateTimeToISO(nextDay(toDay), "00:00");
+    } else {
+      startAt = arDateTimeToISO(day, startTime);
+      endAt = arDateTimeToISO(day, endTime);
+    }
     create.mutate(
-      {
-        startAt: new Date(start).toISOString(),
-        endAt: new Date(end).toISOString(),
-        reason: reason || undefined,
-      },
-      {
-        onSuccess: () => {
-          setAdding(false);
-          setStart("");
-          setEnd("");
-          setReason("");
-        },
-      },
+      { startAt, endAt, reason: reason || undefined },
+      { onSuccess: reset },
     );
   }
 
@@ -484,7 +548,7 @@ function TimeOffSection({
         <h2 className="font-display text-sm font-semibold text-muted-foreground">
           Bloqueos, feriados y vacaciones
         </h2>
-        <Button variant="outline" size="sm" onClick={() => setAdding((v) => !v)}>
+        <Button variant="outline" size="sm" onClick={() => (adding ? reset() : setAdding(true))}>
           <Plus className="size-4" />
           Bloquear
         </Button>
@@ -492,21 +556,84 @@ function TimeOffSection({
 
       {adding && (
         <div className="mb-3 space-y-3 rounded-xl border border-border bg-card p-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="to-start">Desde</Label>
-              <Input id="to-start" type="datetime-local" className="mt-1.5" value={start} onChange={(e) => setStart(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="to-end">Hasta</Label>
-              <Input id="to-end" type="datetime-local" className="mt-1.5" value={end} onChange={(e) => setEnd(e.target.value)} />
-            </div>
+          {/* Selector de modo: por días (default) u horas de un día. */}
+          <div className="grid grid-cols-2 gap-2">
+            <ModeOption
+              checked={mode === "days"}
+              onSelect={() => setMode("days")}
+              title="Días completos"
+              hint="Vacaciones o feriados (sin elegir horas)."
+            />
+            <ModeOption
+              checked={mode === "hours"}
+              onSelect={() => setMode("hours")}
+              title="Horas de un día"
+              hint="Bloquear solo un rango horario."
+            />
           </div>
+
+          {mode === "days" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="to-from">Desde el día</Label>
+                <Input
+                  id="to-from"
+                  type="date"
+                  className="mt-1.5"
+                  value={fromDay}
+                  onChange={(e) => {
+                    setFromDay(e.target.value);
+                    // Si "hasta" quedó vacío o antes del nuevo "desde", lo igualamos.
+                    if (!toDay || toDay < e.target.value) setToDay(e.target.value);
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="to-to">Hasta el día</Label>
+                <Input
+                  id="to-to"
+                  type="date"
+                  className="mt-1.5"
+                  min={fromDay || undefined}
+                  value={toDay}
+                  onChange={(e) => setToDay(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="to-day">Día</Label>
+                <Input
+                  id="to-day"
+                  type="date"
+                  className="mt-1.5"
+                  value={day}
+                  onChange={(e) => setDay(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="to-start">Desde</Label>
+                  <Input id="to-start" type="time" className="mt-1.5" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="to-end">Hasta</Label>
+                  <Input id="to-end" type="time" className="mt-1.5" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                </div>
+              </div>
+              {!!day && startTime >= endTime && (
+                <p className="text-xs text-destructive">La hora de fin debe ser posterior a la de inicio.</p>
+              )}
+            </div>
+          )}
+
           <div>
             <Label htmlFor="to-reason">Motivo (opcional)</Label>
             <Input id="to-reason" className="mt-1.5" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Vacaciones, feriado…" />
           </div>
-          <Button size="sm" onClick={add} disabled={!start || !end || create.isPending}>
+          <Button size="sm" onClick={add} disabled={!canSubmit}>
+            {create.isPending ? <Spinner /> : null}
             Guardar bloqueo
           </Button>
         </div>
@@ -527,9 +654,7 @@ function TimeOffSection({
               <CalendarOff className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{t.reason || "Bloqueo"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateTime(t.startAt)} → {formatDateTime(t.endAt)}
-                </p>
+                <p className="text-xs text-muted-foreground">{timeOffLabel(t.startAt, t.endAt)}</p>
               </div>
               <Button
                 variant="ghost"
@@ -545,5 +670,32 @@ function TimeOffSection({
         </ul>
       )}
     </section>
+  );
+}
+
+/** Opción de modo de bloqueo (días completos vs. horas), estilo radio compacto. */
+function ModeOption({
+  checked,
+  onSelect,
+  title,
+  hint,
+}: {
+  checked: boolean;
+  onSelect: () => void;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        "flex w-full flex-col items-start gap-0.5 rounded-lg border p-3 text-left transition-colors",
+        checked ? "border-accent bg-accent/5" : "border-border hover:border-accent/50",
+      )}
+    >
+      <span className="text-sm font-medium">{title}</span>
+      <span className="text-xs text-muted-foreground">{hint}</span>
+    </button>
   );
 }
