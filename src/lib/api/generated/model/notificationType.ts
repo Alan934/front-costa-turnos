@@ -16,4 +16,5 @@ export const NotificationType = {
   bumped: 'bumped',
   deposit: 'deposit',
   subscription: 'subscription',
+  rescheduled: 'rescheduled',
 } as const;

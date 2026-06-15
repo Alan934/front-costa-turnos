@@ -59,6 +59,7 @@ export const professional: Professional = {
   timezone: "America/Argentina/Buenos_Aires",
   defaultDepositMode: DepositMode.hybrid,
   cancellationWindowHours: 24,
+  rescheduleWindowHours: 8,
   publicPageSettings: {
     accentColor: "#16707A",
     bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
@@ -275,6 +276,41 @@ export const appointments: Appointment[] = [
     isProvisional: true,
     createdVia: CreatedVia.client_self,
   },
+  // Turno futuro de Sofía DENTRO de la ventana de reprogramación (now + 3 h, ventana 8 h):
+  // en /mis-turnos el botón "Reprogramar" aparece deshabilitado.
+  {
+    id: "apt_sofia_soon",
+    createdAt: iso(at(8, 0)),
+    updatedAt: iso(now),
+    professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
+    staffId: "staff_lucia",
+    personId: "per_sofia",
+    serviceId: "svc_corte",
+    startAt: iso(new Date(now.getTime() + 3 * 3_600_000)),
+    endAt: iso(new Date(now.getTime() + 3 * 3_600_000 + 30 * 60_000)),
+    status: AppointmentStatus.confirmed,
+    isProvisional: false,
+    createdVia: CreatedVia.client_self,
+  },
+  // Turno futuro de Sofía FUERA de la ventana (pasado mañana): "Reprogramar" habilitado.
+  {
+    id: "apt_sofia_far",
+    createdAt: iso(at(8, 0)),
+    updatedAt: iso(now),
+    professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
+    membershipId: MEMBERSHIP_ID,
+    staffId: "staff_lucia",
+    personId: "per_sofia",
+    serviceId: "svc_color",
+    startAt: iso(at(15, 0, 2)),
+    endAt: iso(at(16, 30, 2)),
+    status: AppointmentStatus.confirmed,
+    isProvisional: false,
+    createdVia: CreatedVia.client_self,
+  },
 ];
 
 /**
@@ -412,6 +448,7 @@ function adminRow(args: {
     timezone: "America/Argentina/Buenos_Aires",
     defaultDepositMode: DepositMode.hybrid,
     cancellationWindowHours: 24,
+    rescheduleWindowHours: 24,
     publicPageSettings: {},
   };
   const sub: Subscription = {

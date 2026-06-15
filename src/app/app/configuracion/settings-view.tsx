@@ -50,12 +50,20 @@ export function SettingsView() {
 function BusinessSection({
   professional,
 }: {
-  professional: { businessName: string; cancellationWindowHours: number; address?: string | null };
+  professional: {
+    businessName: string;
+    cancellationWindowHours: number;
+    rescheduleWindowHours: number;
+    address?: string | null;
+  };
 }) {
   const update = useUpdateProfessional();
   const [name, setName] = useState(professional.businessName);
   const [address, setAddress] = useState(professional.address ?? "");
   const [window, setWindow] = useState(String(professional.cancellationWindowHours));
+  const [rescheduleWindow, setRescheduleWindow] = useState(
+    String(professional.rescheduleWindowHours),
+  );
   const [saved, setSaved] = useState(false);
 
   function save() {
@@ -64,6 +72,7 @@ function BusinessSection({
         businessName: name.trim(),
         address: address.trim(),
         cancellationWindowHours: Number(window),
+        rescheduleWindowHours: Number(rescheduleWindow),
       },
       {
         onSuccess: () => {
@@ -92,6 +101,13 @@ function BusinessSection({
           <Input id="biz-window" type="number" min={0} className="mt-1.5" value={window} onChange={(e) => setWindow(e.target.value)} />
           <p className="mt-1 text-xs text-muted-foreground">
             Tus clientes pueden cancelar online hasta {window || 0} h antes del turno.
+          </p>
+        </div>
+        <div>
+          <Label htmlFor="biz-reschedule-window">Reprogramación: hasta cuántas horas antes</Label>
+          <Input id="biz-reschedule-window" type="number" min={0} className="mt-1.5" value={rescheduleWindow} onChange={(e) => setRescheduleWindow(e.target.value)} />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Tus clientes pueden reprogramar online hasta {rescheduleWindow || 0} h antes del turno.
           </p>
         </div>
         <Button size="sm" onClick={save} disabled={update.isPending}>

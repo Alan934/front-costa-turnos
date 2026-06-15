@@ -12,4 +12,5 @@ export interface MyAppointmentBusinessDto {
   /** @nullable */
   address?: string | null;
   cancellationWindowHours: number;
+  rescheduleWindowHours: number;
 }

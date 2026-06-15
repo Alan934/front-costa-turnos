@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateProfessionalDtoDefaultDepositMode } from './updateProfessionalDtoDefaultDepositMode';
+import type { UpdateProfessionalDtoPublicPageSettings } from './updateProfessionalDtoPublicPageSettings';
 
 export interface UpdateProfessionalDto {
   businessName?: string;
@@ -13,4 +14,8 @@ export interface UpdateProfessionalDto {
   address?: string;
   defaultDepositMode?: UpdateProfessionalDtoDefaultDepositMode;
   cancellationWindowHours?: number;
+  /** Horas mínimas antes del turno hasta las que el cliente puede reprogramar. 0 = sin restricción. */
+  rescheduleWindowHours?: number;
+  /** Branding de la página pública (logoFileId, primaryColor, description, bio, phone, etc.). Se reemplaza completo. */
+  publicPageSettings?: UpdateProfessionalDtoPublicPageSettings;
 }

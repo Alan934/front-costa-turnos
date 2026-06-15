@@ -25,11 +25,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
-  MyAppointmentDto
+  MyAppointmentDto,
+  RescheduleMyAppointmentDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
-import type { ErrorType } from '../../../axios-instance';
+import type { ErrorType , BodyType } from '../../../axios-instance';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -187,6 +188,71 @@ export const useMeCancel = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getMeCancelMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Reprogramar un turno propio (dentro de la ventana)
+ */
+export const meReschedule = (
+    id: string,
+    rescheduleMyAppointmentDto: BodyType<RescheduleMyAppointmentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/me/appointments/${id}/reschedule`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: rescheduleMyAppointmentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getMeRescheduleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof meReschedule>>, TError,{id: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof meReschedule>>, TError,{id: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext> => {
+
+const mutationKey = ['meReschedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof meReschedule>>, {id: string;data: BodyType<RescheduleMyAppointmentDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  meReschedule(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MeRescheduleMutationResult = NonNullable<Awaited<ReturnType<typeof meReschedule>>>
+    export type MeRescheduleMutationBody = BodyType<RescheduleMyAppointmentDto>
+    export type MeRescheduleMutationError = ErrorType<void>
+
+    /**
+ * @summary Reprogramar un turno propio (dentro de la ventana)
+ */
+export const useMeReschedule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof meReschedule>>, TError,{id: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof meReschedule>>,
+        TError,
+        {id: string;data: BodyType<RescheduleMyAppointmentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getMeRescheduleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

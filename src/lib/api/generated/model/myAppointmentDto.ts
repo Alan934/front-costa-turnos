@@ -14,6 +14,12 @@ export interface MyAppointmentDto {
   endAt: string;
   status: AppointmentStatus;
   isProvisional: boolean;
+  /** Servicio del turno (para consultar slots al reprogramar) */
+  serviceId: string;
+  /** Membresía profesional-en-comercio donde ocurre el turno */
+  membershipId: string;
+  /** Profesional dueño de la agenda */
+  professionalId: string;
   serviceName: string;
   priceCents: number;
   staffName: string;

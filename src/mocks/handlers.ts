@@ -395,11 +395,15 @@ function buildMyAppointments() {
         serviceName: svc?.name ?? "Servicio",
         priceCents: svc?.priceCents ?? 0,
         staffName: st?.displayName ?? "Profesional",
+        serviceId: a.serviceId,
+        membershipId: a.membershipId,
+        professionalId: a.professionalId,
         business: {
           name: professional.businessName,
           slug: professional.slug,
           address: "Belgrano 245, Costa de Araujo, Mendoza",
           cancellationWindowHours: professional.cancellationWindowHours,
+          rescheduleWindowHours: professional.rescheduleWindowHours,
         },
       };
     })
@@ -781,6 +785,7 @@ export const handlers: RequestHandler[] = [
         address: null,
         defaultDepositMode: DepositMode.hybrid,
         cancellationWindowHours: 24,
+        rescheduleWindowHours: 24,
         publicPageSettings: {},
       },
       subscription: {
@@ -886,6 +891,27 @@ export const handlers: RequestHandler[] = [
   http.post(url("/me/appointments/:id/cancel"), ({ params }) =>
     transition(String(params.id), AppointmentStatus.cancelled),
   ),
+  http.post(url("/me/appointments/:id/reschedule"), async ({ params, request }) => {
+    const apt = appointments.find((a) => a.id === String(params.id));
+    if (!apt) return new HttpResponse(null, { status: 404 });
+    const body = (await request.json().catch(() => ({}))) as { startAt?: string };
+    if (!body.startAt) return new HttpResponse(null, { status: 400 });
+
+    // Ventana de reprogramación: now > startAt - rescheduleWindowHours → 409.
+    const deadline = +new Date(apt.startAt) - professional.rescheduleWindowHours * 3_600_000;
+    if (Date.now() > deadline) {
+      return HttpResponse.json(
+        { statusCode: 409, message: "Fuera de la ventana de reprogramación." },
+        { status: 409 },
+      );
+    }
+
+    const durationMs = +new Date(apt.endAt) - +new Date(apt.startAt);
+    apt.startAt = body.startAt;
+    apt.endAt = new Date(+new Date(body.startAt) + durationMs).toISOString();
+    apt.updatedAt = new Date().toISOString();
+    return HttpResponse.json(apt);
+  }),
 
   // ---- Ficha dinámica (campos) — antes que /clients/:id ----
   http.get(url("/clients/ficha-fields"), () => HttpResponse.json(fichaFields)),

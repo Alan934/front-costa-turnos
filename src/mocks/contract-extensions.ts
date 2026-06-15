@@ -276,25 +276,3 @@ export interface EnrichedClient {
   visitCount?: number;
   lastVisitAt?: string | null;
 }
-
-/**
- * Turno del cliente con datos embebidos del negocio y servicio (vista /mis-turnos).
- * Respuesta de `GET /me/appointments` (API-GAPS §2d).
- */
-export interface MyAppointment {
-  id: string;
-  startAt: string;
-  endAt: string;
-  status: AppointmentStatus;
-  isProvisional: boolean;
-  serviceName: string;
-  priceCents: number;
-  staffName: string;
-  business: {
-    name: string;
-    slug: string;
-    address?: string;
-    /** Horas antes del turno hasta las que se puede cancelar/reprogramar. */
-    cancellationWindowHours: number;
-  };
-}

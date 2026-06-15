@@ -18,7 +18,7 @@ export function useProfessional() {
 export function useUpdateProfessional() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: UpdateProfessionalDto & { publicPageSettings?: Record<string, unknown> }) =>
+    mutationFn: (data: UpdateProfessionalDto) =>
       customInstance<Professional>({ url: "/v1/professionals/me", method: "PATCH", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["professional-me"] }),
   });

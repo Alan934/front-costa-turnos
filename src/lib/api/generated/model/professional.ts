@@ -22,6 +22,7 @@ export interface Professional {
   address?: string | null;
   defaultDepositMode: DepositMode;
   cancellationWindowHours: number;
+  rescheduleWindowHours: number;
   publicPageSettings: ProfessionalPublicPageSettings;
   /** @nullable */
   mpUserId?: string | null;
