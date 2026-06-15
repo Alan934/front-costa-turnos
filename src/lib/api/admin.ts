@@ -6,6 +6,8 @@ import {
   adminListProfessionals,
   adminListClients,
   adminListComercios,
+  adminCreateClient,
+  adminCreateComercial,
   adminDeleteProfessional,
   adminRestoreProfessional,
   adminDeleteComercio,
@@ -13,6 +15,8 @@ import {
   adminDeleteClient,
   adminRestoreClient,
 } from "@/lib/api/generated/endpoints/admin/admin";
+import type { AdminCreateClientDto } from "@/lib/api/generated/model/adminCreateClientDto";
+import type { CreateComercialDto } from "@/lib/api/generated/model/createComercialDto";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
 import type { ListStatusFilter } from "@/lib/api/generated/model/listStatusFilter";
 import type { AdminMetrics } from "@/mocks/contract-extensions";
@@ -82,6 +86,30 @@ export function useCreateProfessionalAccount() {
     mutationFn: (data: { email: string; businessName: string; slug: string }) =>
       customInstance({ url: "/v1/admin/professionals", method: "POST", data }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-professionals"] }),
+  });
+}
+
+/**
+ * POST /admin/clients → crea un cliente y lo asigna a un profesional (`professionalId`).
+ * Devuelve el `EnrichedClientDto` creado.
+ */
+export function useCreateClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: AdminCreateClientDto) => adminCreateClient(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-clients"] }),
+  });
+}
+
+/**
+ * POST /admin/comercios → crea la cuenta comercial (email+password) + su comercio.
+ * Devuelve el `Comercio` creado.
+ */
+export function useCreateComercio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateComercialDto) => adminCreateComercial(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-comercios"] }),
   });
 }
 

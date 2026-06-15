@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Store, Mail, Users, Trash2, RotateCcw } from "lucide-react";
+import { Search, Store, Mail, Users, Trash2, RotateCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,8 +15,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { useAdminComercios, useDeleteComercio, useRestoreComercio } from "@/lib/api/admin";
+import {
+  useAdminComercios,
+  useCreateComercio,
+  useDeleteComercio,
+  useRestoreComercio,
+} from "@/lib/api/admin";
 import { formatDateShort, titleCaseName } from "@/lib/format";
+import { toSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import { Pager } from "../pager";
 import { StatusTabs } from "../status-tabs";
@@ -29,6 +36,7 @@ export function ComerciosAdmin() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ListStatusFilter>("active");
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
   const debouncedQ = useDebouncedValue(q.trim(), 300);
 
   const { data, isLoading, isFetching, isError, refetch } = useAdminComercios({
@@ -47,9 +55,15 @@ export function ComerciosAdmin() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Comercios</h1>
-        <p className="text-sm text-muted-foreground">Comercios de la plataforma y sus integrantes</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Comercios</h1>
+          <p className="text-sm text-muted-foreground">Comercios de la plataforma y sus integrantes</p>
+        </div>
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">Nuevo comercio</span>
+        </Button>
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -110,6 +124,8 @@ export function ComerciosAdmin() {
           </>
         )}
       </div>
+
+      {creating && <NewComercioDialog onClose={() => setCreating(false)} />}
     </div>
   );
 }
@@ -230,6 +246,124 @@ function DeleteComercioDialog({
           </Button>
           <Button variant="destructive" className="flex-1" loading={del.isPending} onClick={submit}>
             Eliminar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewComercioDialog({ onClose }: { onClose: () => void }) {
+  const [comercioName, setComercioName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [address, setAddress] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const create = useCreateComercio();
+
+  const effectiveSlug = slugTouched ? slug : toSlug(comercioName);
+  const canSubmit =
+    comercioName.trim().length > 1 &&
+    effectiveSlug.length > 1 &&
+    email.includes("@") &&
+    password.length >= 8;
+
+  function submit() {
+    setError(null);
+    create.mutate(
+      {
+        email: email.trim(),
+        password,
+        comercioName: comercioName.trim(),
+        slug: effectiveSlug,
+        address: address.trim() || undefined,
+      },
+      {
+        onSuccess: onClose,
+        onError: () => setError("No pudimos crear el comercio. ¿El email o el enlace ya existen?"),
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Nuevo comercio</DialogTitle>
+          <DialogDescription>
+            Se crea la cuenta comercial (con email y contraseña) junto con su comercio. El dueño
+            podrá ingresar con esas credenciales.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3.5 px-6 pb-2">
+          <div>
+            <Label htmlFor="ncom-name">Nombre del comercio</Label>
+            <Input
+              id="ncom-name"
+              className="mt-1.5"
+              value={comercioName}
+              onChange={(e) => setComercioName(e.target.value)}
+              placeholder="Peluquería Centro"
+            />
+          </div>
+          <div>
+            <Label htmlFor="ncom-slug">Enlace público</Label>
+            <div className="mt-1.5 flex items-center rounded-lg border border-input bg-card pl-3 focus-within:ring-2 focus-within:ring-ring">
+              <span className="select-none text-sm text-muted-foreground">/</span>
+              <input
+                id="ncom-slug"
+                value={effectiveSlug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  setSlug(toSlug(e.target.value));
+                }}
+                placeholder="peluqueria-centro"
+                className="h-10 w-full bg-transparent px-2 text-sm outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="ncom-address">Dirección (opcional)</Label>
+            <Input
+              id="ncom-address"
+              className="mt-1.5"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Av. Mitre 123"
+            />
+          </div>
+          <div>
+            <Label htmlFor="ncom-email">Email del dueño</Label>
+            <Input
+              id="ncom-email"
+              type="email"
+              className="mt-1.5"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="dueno@comercio.com"
+            />
+          </div>
+          <div>
+            <Label htmlFor="ncom-pass">Contraseña</Label>
+            <Input
+              id="ncom-pass"
+              type="password"
+              className="mt-1.5"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+            />
+            {password.length > 0 && password.length < 8 && (
+              <p className="mt-1 text-xs text-destructive">La contraseña debe tener al menos 8 caracteres.</p>
+            )}
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+        <div className="p-6 pt-3">
+          <Button className="w-full" disabled={!canSubmit} loading={create.isPending} onClick={submit}>
+            Crear comercio
           </Button>
         </div>
       </DialogContent>

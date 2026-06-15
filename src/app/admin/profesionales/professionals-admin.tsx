@@ -32,6 +32,7 @@ import {
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { subscriptionEndInfo } from "@/lib/subscription";
 import { formatMoney, formatDateShort } from "@/lib/format";
+import { toSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 import type { AdminProfessionalDto } from "@/lib/api/generated/model/adminProfessionalDto";
 
@@ -343,15 +344,6 @@ function DeleteProfessionalDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function toSlug(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 function NewProfessionalDialog({ onClose }: { onClose: () => void }) {

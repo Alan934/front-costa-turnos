@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Users, Mail, Phone, Trash2, RotateCcw } from "lucide-react";
+import { Search, Users, Mail, Phone, Trash2, RotateCcw, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -14,7 +15,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ErrorState, EmptyState } from "@/components/state-views";
-import { useAdminClients, useDeleteClient, useRestoreClient } from "@/lib/api/admin";
+import {
+  useAdminClients,
+  useAdminProfessionals,
+  useCreateClient,
+  useDeleteClient,
+  useRestoreClient,
+} from "@/lib/api/admin";
 import { formatDateShort, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Pager } from "../pager";
@@ -29,6 +36,7 @@ export function ClientsAdmin() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<ListStatusFilter>("active");
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
   const debouncedQ = useDebouncedValue(q.trim(), 300);
 
   const { data, isLoading, isFetching, isError, refetch } = useAdminClients({
@@ -47,11 +55,17 @@ export function ClientsAdmin() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Clientes</h1>
-        <p className="text-sm text-muted-foreground">
-          Todos los clientes de la plataforma y el profesional al que pertenecen
-        </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Clientes</h1>
+          <p className="text-sm text-muted-foreground">
+            Todos los clientes de la plataforma y el profesional al que pertenecen
+          </p>
+        </div>
+        <Button size="sm" onClick={() => setCreating(true)}>
+          <Plus className="size-4" />
+          <span className="hidden sm:inline">Nuevo cliente</span>
+        </Button>
       </div>
 
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -112,6 +126,8 @@ export function ClientsAdmin() {
           </>
         )}
       </div>
+
+      {creating && <NewClientDialog onClose={() => setCreating(false)} />}
     </div>
   );
 }
@@ -245,5 +261,187 @@ function DeleteClientDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function NewClientDialog({ onClose }: { onClose: () => void }) {
+  const [professionalId, setProfessionalId] = useState("");
+  const [professionalLabel, setProfessionalLabel] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const create = useCreateClient();
+
+  // El teléfono es opcional, pero si se carga el back exige 10 dígitos.
+  const phoneDigits = phone.replace(/\D/g, "");
+  const phoneValid = phoneDigits.length === 0 || phoneDigits.length === 10;
+  const canSubmit =
+    professionalId.length > 0 && fullName.trim().length > 1 && phoneValid;
+
+  function submit() {
+    setError(null);
+    create.mutate(
+      {
+        professionalId,
+        fullName: fullName.trim(),
+        email: email.trim() || undefined,
+        phone: phoneDigits || undefined,
+      },
+      {
+        onSuccess: onClose,
+        onError: () => setError("No pudimos crear el cliente. Revisá los datos e intentá de nuevo."),
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Nuevo cliente</DialogTitle>
+          <DialogDescription>
+            Creá un cliente y asignalo a un profesional de la plataforma.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3.5 px-6 pb-2">
+          <div>
+            <Label>Profesional</Label>
+            <ProfessionalPicker
+              selectedId={professionalId}
+              selectedLabel={professionalLabel}
+              onSelect={(id, label) => {
+                setProfessionalId(id);
+                setProfessionalLabel(label);
+              }}
+              onClear={() => {
+                setProfessionalId("");
+                setProfessionalLabel("");
+              }}
+            />
+          </div>
+          <div>
+            <Label htmlFor="nc-name">Nombre completo</Label>
+            <Input
+              id="nc-name"
+              className="mt-1.5"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Juana Pérez"
+            />
+          </div>
+          <div>
+            <Label htmlFor="nc-email">Email (opcional)</Label>
+            <Input
+              id="nc-email"
+              type="email"
+              className="mt-1.5"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="juana@email.com"
+            />
+          </div>
+          <div>
+            <Label htmlFor="nc-phone">Celular (opcional)</Label>
+            <Input
+              id="nc-phone"
+              inputMode="numeric"
+              className="mt-1.5"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="2612465120"
+            />
+            {!phoneValid && (
+              <p className="mt-1 text-xs text-destructive">
+                El celular debe tener 10 dígitos (característica + número, sin 0/15/+54).
+              </p>
+            )}
+          </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+        <div className="p-6 pt-3">
+          <Button className="w-full" disabled={!canSubmit} loading={create.isPending} onClick={submit}>
+            Crear cliente
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Selector de profesional con búsqueda server-side (para no bajar cientos de profesionales).
+ * Una vez elegido, muestra el seleccionado con opción de cambiarlo.
+ */
+function ProfessionalPicker({
+  selectedId,
+  selectedLabel,
+  onSelect,
+  onClear,
+}: {
+  selectedId: string;
+  selectedLabel: string;
+  onSelect: (id: string, label: string) => void;
+  onClear: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q.trim(), 300);
+  const { data, isFetching } = useAdminProfessionals({
+    q: debouncedQ || undefined,
+    status: "active",
+    page: 1,
+    pageSize: 8,
+  });
+
+  if (selectedId) {
+    return (
+      <div className="mt-1.5 flex items-center justify-between gap-2 rounded-lg border border-input bg-muted/40 px-3 py-2">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+          <Check className="size-4 text-success" />
+          {selectedLabel}
+        </span>
+        <Button type="button" variant="ghost" size="sm" onClick={onClear}>
+          Cambiar
+        </Button>
+      </div>
+    );
+  }
+
+  const items = data?.items ?? [];
+
+  return (
+    <div className="mt-1.5">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          className="pl-9"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar profesional por negocio o slug…"
+        />
+      </div>
+      <div className="mt-1.5 max-h-44 overflow-y-auto rounded-lg border border-border">
+        {items.length === 0 ? (
+          <p className="px-3 py-3 text-sm text-muted-foreground">
+            {isFetching ? "Buscando…" : "Sin profesionales para esa búsqueda."}
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {items.map((row) => (
+              <li key={row.professional.id}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(row.professional.id, row.professional.businessName)}
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm hover:bg-muted"
+                >
+                  <span className="font-medium">{row.professional.businessName}</span>
+                  <span className="text-xs text-muted-foreground">/r/{row.professional.slug}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }

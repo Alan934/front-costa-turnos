@@ -838,6 +838,26 @@ export const handlers: RequestHandler[] = [
       { status: 201 },
     );
   }),
+  http.post(url("/admin/comercios"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const id = `com_${Date.now()}`;
+    const nowIso = new Date().toISOString();
+    return HttpResponse.json(
+      {
+        id,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        accountId: `acc_${Date.now()}`,
+        name: String(body.comercioName ?? "Nuevo comercio"),
+        slug: String(body.slug ?? `comercio-${Date.now()}`),
+        address: (body.address as string) ?? null,
+        timezone: "America/Argentina/Buenos_Aires",
+        isPersonal: false,
+        publicPageSettings: {},
+      },
+      { status: 201 },
+    );
+  }),
   http.post(url("/admin/subscriptions/:professionalId/mark-cash-paid"), ({ params }) => {
     const row = adminProfessionals.find((r) => r.professional.id === params.professionalId);
     if (!row) return new HttpResponse(null, { status: 404 });
