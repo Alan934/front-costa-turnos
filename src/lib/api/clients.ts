@@ -45,14 +45,20 @@ export interface PersonInfo {
   email?: string;
 }
 
+/** Datos del turno que el back embebe (`Appointment.person*`), para resolver sin cruzar /clients. */
+export interface EmbeddedPerson {
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}
+
 /**
- * Resuelve el `personId` de un turno a datos humanos (nombre, teléfono, email). El contrato
- * `Appointment` no embebe los datos de la persona (ver API-GAPS §2c), así que el nombre se
- * resuelve en este orden:
- *   1. `embeddedName`: el nombre que el back ya trae en el turno (`Appointment.personName`),
- *      cuando exista. Es lo más fiable y cubre incluso a quienes aún no son clientes.
- *   2. El cruce con la lista de clientes del profesional (por `personId`).
- *   3. Un fallback genérico ("Cliente") — nunca el UUID crudo.
+ * Resuelve el `personId` de un turno a datos humanos (nombre, teléfono, email). Cada campo se
+ * resuelve por separado, priorizando lo que el back embebe en el turno (`Appointment.personName`/
+ * `personPhone`/`personEmail`) y cayendo al cruce con la lista de clientes del profesional:
+ *   - `name`: embebido → cliente → fallback genérico ("Cliente", nunca el UUID crudo).
+ *   - `phone`/`email`: embebido → cliente. Así el profesional ve el contacto incluso de quien
+ *     reservó por la web y aún no es cliente suyo (su `professional_client` puede no existir).
  *
  * Devuelve una función estable para usar en cualquier vista de la agenda.
  */
@@ -61,13 +67,13 @@ export function usePersonLookup() {
   return useMemo(() => {
     const byPerson = new Map<string, EnrichedClient>();
     for (const c of clients ?? []) byPerson.set(c.personId, c);
-    return (personId: string, embeddedName?: string): PersonInfo => {
+    return (personId: string, embedded?: EmbeddedPerson): PersonInfo => {
       const c = byPerson.get(personId);
       return {
-        name: embeddedName?.trim() || c?.fullName?.trim() || personDisplayName(personId),
+        name: embedded?.name?.trim() || c?.fullName?.trim() || personDisplayName(personId),
         clientId: c?.id,
-        phone: c?.phone ?? undefined,
-        email: c?.email ?? undefined,
+        phone: embedded?.phone?.trim() || c?.phone || undefined,
+        email: embedded?.email?.trim() || c?.email || undefined,
       };
     };
   }, [clients]);

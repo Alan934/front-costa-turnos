@@ -146,7 +146,7 @@ export function Dashboard() {
                       <span className="font-display text-sm font-semibold tabular-nums">{formatTime(a.startAt)}</span>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{lookupPerson(a.personId, a.personName).name}</p>
+                      <p className="truncate text-sm font-medium">{lookupPerson(a.personId, { name: a.personName }).name}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {titleCaseName(a.serviceName ?? services.data?.find((s) => s.id === a.serviceId)?.name ?? "") || "Servicio"}
                       </p>

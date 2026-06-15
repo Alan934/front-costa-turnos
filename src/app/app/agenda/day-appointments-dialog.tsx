@@ -15,7 +15,7 @@ import { isSameLocalDay } from "@/lib/agenda";
 import { formatDateLong, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
-import type { PersonInfo } from "@/lib/api/clients";
+import type { PersonInfo, EmbeddedPerson } from "@/lib/api/clients";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /**
@@ -34,7 +34,7 @@ export function DayAppointmentsDialog({
   date: Date;
   appointments: Appointment[];
   services: Service[];
-  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
+  lookupPerson: (personId: string, embedded?: EmbeddedPerson) => PersonInfo;
   onClose: () => void;
   onSelect: (a: Appointment) => void;
   onCreate: () => void;
@@ -66,7 +66,11 @@ export function DayAppointmentsDialog({
             <ul className="space-y-2">
               {items.map((a) => {
                 const service = services.find((s) => s.id === a.serviceId);
-                const person = lookupPerson(a.personId, a.personName);
+                const person = lookupPerson(a.personId, {
+                  name: a.personName,
+                  phone: a.personPhone,
+                  email: a.personEmail,
+                });
                 const cancelled = a.status === "cancelled";
                 return (
                   <li key={a.id}>

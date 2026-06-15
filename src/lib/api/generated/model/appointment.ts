@@ -34,4 +34,14 @@ export interface Appointment {
   personName?: string;
   /** Nombre del servicio del turno */
   serviceName?: string;
+  /**
+   * Teléfono de contacto del cliente del turno
+   * @nullable
+   */
+  personPhone?: string | null;
+  /**
+   * Email de contacto del cliente del turno
+   * @nullable
+   */
+  personEmail?: string | null;
 }

@@ -8,7 +8,7 @@ import {
   closedWeekdays,
   dayOffStatus,
 } from "@/lib/agenda";
-import type { PersonInfo } from "@/lib/api/clients";
+import type { PersonInfo, EmbeddedPerson } from "@/lib/api/clients";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -37,7 +37,7 @@ export function DayList({
   staff: Staff[];
   scheduleRules: ScheduleRule[];
   timeOff: TimeOff[];
-  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
+  lookupPerson: (personId: string, embedded?: EmbeddedPerson) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const items = appointments
@@ -102,7 +102,11 @@ export function DayList({
         {items.map((a) => {
           const service = services.find((s) => s.id === a.serviceId);
           const staffName = staff.find((s) => s.id === a.staffId)?.displayName;
-          const person = lookupPerson(a.personId, a.personName);
+          const person = lookupPerson(a.personId, {
+            name: a.personName,
+            phone: a.personPhone,
+            email: a.personEmail,
+          });
           const cancelled = a.status === "cancelled";
           return (
             <li key={a.id}>

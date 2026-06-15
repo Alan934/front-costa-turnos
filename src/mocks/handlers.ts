@@ -183,6 +183,30 @@ function createBooking(
   const provisional =
     opts.provisional ?? (!!svc && (svc.allowDeposit || svc.allowFullPayment));
 
+  // Datos de contacto que el cliente carga al reservar por la web (BookAppointmentDto).
+  const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const personId = typeof body.personId === "string" && body.personId ? body.personId : "per_nuevo";
+
+  // El back, al reservar por la página pública, crea el vínculo professional_client si la
+  // persona aún no era cliente de este profesional. Lo replicamos para que el turno aparezca
+  // en la lista de Clientes y su contacto quede disponible. (Espeja el comportamiento del back.)
+  if (fullName && !clients.some((c) => c.personId === personId)) {
+    clients.push({
+      id: `cli_${personId}`,
+      personId,
+      fullName,
+      email: email || undefined,
+      phone: phone || undefined,
+      status: "active",
+      fichaValues: {},
+      createdAt: new Date().toISOString(),
+      visitCount: 0,
+      lastVisitAt: null,
+    });
+  }
+
   const appointment = {
     id: `apt_${Date.now()}`,
     createdAt: new Date().toISOString(),
@@ -191,7 +215,7 @@ function createBooking(
     comercioId: COMERCIO_ID,
     membershipId: MEMBERSHIP_ID,
     staffId: String(body.staffId ?? staff[0].id),
-    personId: "per_nuevo",
+    personId,
     serviceId,
     startAt,
     endAt: end.toISOString(),
@@ -875,14 +899,19 @@ export const handlers: RequestHandler[] = [
     if (staffId) list = list.filter((a) => a.staffId === staffId);
     if (from) list = list.filter((a) => a.startAt >= from);
     if (to) list = list.filter((a) => a.startAt <= to);
-    // Embebemos personName/serviceName en el turno (campos opcionales de Appointment): así el
-    // profesional ve el nombre del cliente y el servicio sin depender del cruce con /clients.
+    // Embebemos nombre/contacto del cliente y nombre del servicio en el turno (campos opcionales
+    // de Appointment): así el profesional ve esos datos sin depender del cruce con /clients.
     // Espeja lo que hace el backend en `GET /v1/appointments`.
-    const enriched = list.map((a) => ({
-      ...a,
-      personName: clients.find((c) => c.personId === a.personId)?.fullName,
-      serviceName: services.find((s) => s.id === a.serviceId)?.name,
-    }));
+    const enriched = list.map((a) => {
+      const c = clients.find((cl) => cl.personId === a.personId);
+      return {
+        ...a,
+        personName: c?.fullName,
+        serviceName: services.find((s) => s.id === a.serviceId)?.name,
+        personPhone: c?.phone ?? null,
+        personEmail: c?.email ?? null,
+      };
+    });
     return HttpResponse.json(enriched);
   }),
   http.post(url("/appointments"), async ({ request }) => {

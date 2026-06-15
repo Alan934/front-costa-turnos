@@ -19,7 +19,7 @@ import { AppointmentChip } from "./appointment-chip";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
-import type { PersonInfo } from "@/lib/api/clients";
+import type { PersonInfo, EmbeddedPerson } from "@/lib/api/clients";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /** Vista de semana: 7 columnas (lun-dom) para un staff. */
@@ -39,7 +39,7 @@ export function WeekGrid({
   scheduleRules: ScheduleRule[];
   timeOff: TimeOff[];
   staffName: string;
-  lookupPerson: (personId: string, embeddedName?: string) => PersonInfo;
+  lookupPerson: (personId: string, embedded?: EmbeddedPerson) => PersonInfo;
   onSelect: (a: Appointment) => void;
 }) {
   const hours = gridHours();
@@ -129,7 +129,7 @@ export function WeekGrid({
                         service={services.find((sv) => sv.id === a.serviceId)}
                         top={pos.top}
                         height={pos.height}
-                        personName={lookupPerson(a.personId, a.personName).name}
+                        personName={lookupPerson(a.personId, { name: a.personName }).name}
                         onClick={() => onSelect(a)}
                         compact
                       />

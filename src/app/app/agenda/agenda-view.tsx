@@ -198,7 +198,11 @@ export function AgendaView() {
           appointment={selected}
           services={services}
           staffName={staffList.find((s) => s.id === selected.staffId)?.displayName ?? ""}
-          person={lookupPerson(selected.personId, selected.personName)}
+          person={lookupPerson(selected.personId, {
+            name: selected.personName,
+            phone: selected.personPhone,
+            email: selected.personEmail,
+          })}
           onClose={() => setSelected(null)}
           onChanged={() => {
             apptQuery.refetch();
