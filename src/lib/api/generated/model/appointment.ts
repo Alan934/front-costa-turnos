@@ -13,6 +13,8 @@ export interface Appointment {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   comercioId: string;
   membershipId: string;

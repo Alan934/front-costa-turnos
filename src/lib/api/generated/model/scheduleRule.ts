@@ -11,6 +11,8 @@ export interface ScheduleRule {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   staffId: string;
   membershipId: string;
   dayOfWeek: number;

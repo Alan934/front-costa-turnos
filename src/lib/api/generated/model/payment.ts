@@ -14,6 +14,8 @@ export interface Payment {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   /** @nullable */
   appointmentId?: PaymentAppointmentId;

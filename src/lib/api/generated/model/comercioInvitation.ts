@@ -11,6 +11,8 @@ export interface ComercioInvitation {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   comercioId: string;
   email: string;
   status: InvitationStatus;

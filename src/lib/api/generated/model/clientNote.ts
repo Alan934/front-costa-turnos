@@ -11,6 +11,8 @@ export interface ClientNote {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalClientId: string;
   /** @nullable */
   authorStaffId?: ClientNoteAuthorStaffId;

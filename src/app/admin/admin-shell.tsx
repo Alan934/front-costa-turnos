@@ -3,13 +3,15 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, BarChart3, ShieldCheck, Menu, X, LogOut } from "lucide-react";
+import { Building2, BarChart3, ShieldCheck, Menu, X, LogOut, Users, Store } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
 import { cn } from "@/lib/utils";
 
 const ADMIN_NAV = [
   { href: "/admin/profesionales", label: "Profesionales", icon: Building2 },
+  { href: "/admin/comercios", label: "Comercios", icon: Store },
+  { href: "/admin/clientes", label: "Clientes", icon: Users },
   { href: "/admin/metricas", label: "Métricas", icon: BarChart3 },
 ];
 

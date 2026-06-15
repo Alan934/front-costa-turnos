@@ -13,6 +13,8 @@ export interface WaitlistEntry {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   /** @nullable */
   staffId?: WaitlistEntryStaffId;

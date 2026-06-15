@@ -741,7 +741,26 @@ export const handlers: RequestHandler[] = [
   }),
 
   // ---- Admin de plataforma ----
-  http.get(url("/admin/professionals"), () => HttpResponse.json(adminProfessionals)),
+  http.get(url("/admin/professionals"), ({ request }) => {
+    const { searchParams } = new URL(request.url);
+    const q = (searchParams.get("q") ?? "").toLowerCase();
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const pageSize = Math.min(100, Number(searchParams.get("pageSize")) || 20);
+    const filtered = q
+      ? adminProfessionals.filter(
+          (r) =>
+            r.professional.businessName.toLowerCase().includes(q) ||
+            r.professional.slug.toLowerCase().includes(q),
+        )
+      : adminProfessionals;
+    const start = (page - 1) * pageSize;
+    return HttpResponse.json({
+      total: filtered.length,
+      page,
+      pageSize,
+      items: filtered.slice(start, start + pageSize),
+    });
+  }),
   http.post(url("/admin/professionals"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     const id = `pro_${Date.now()}`;
@@ -798,6 +817,42 @@ export const handlers: RequestHandler[] = [
     row.subscription.trialEndsAt = null;
     return HttpResponse.json(row.subscription, { status: 201 });
   }),
+  // Borrado lógico restaurable de profesionales (mutan el deletedAt del seed).
+  http.delete(url("/admin/professionals/:id"), ({ params }) => {
+    const row = adminProfessionals.find((r) => r.professional.id === params.id);
+    if (!row) return new HttpResponse(null, { status: 404 });
+    row.professional.deletedAt = new Date().toISOString();
+    return new HttpResponse(null, { status: 204 });
+  }),
+  http.post(url("/admin/professionals/:id/restore"), ({ params }) => {
+    const row = adminProfessionals.find((r) => r.professional.id === params.id);
+    if (!row) return new HttpResponse(null, { status: 404 });
+    row.professional.deletedAt = null;
+    return new HttpResponse(null, { status: 204 });
+  }),
+  // Listados de clientes/comercios globales: sin seed propio todavía → sobre vacío.
+  http.get(url("/admin/clients"), ({ request }) => {
+    const { searchParams } = new URL(request.url);
+    return HttpResponse.json({
+      total: 0,
+      page: Math.max(1, Number(searchParams.get("page")) || 1),
+      pageSize: Math.min(100, Number(searchParams.get("pageSize")) || 20),
+      items: [],
+    });
+  }),
+  http.delete(url("/admin/clients/:id"), () => new HttpResponse(null, { status: 204 })),
+  http.post(url("/admin/clients/:id/restore"), () => new HttpResponse(null, { status: 204 })),
+  http.get(url("/admin/comercios"), ({ request }) => {
+    const { searchParams } = new URL(request.url);
+    return HttpResponse.json({
+      total: 0,
+      page: Math.max(1, Number(searchParams.get("page")) || 1),
+      pageSize: Math.min(100, Number(searchParams.get("pageSize")) || 20),
+      items: [],
+    });
+  }),
+  http.delete(url("/admin/comercios/:id"), () => new HttpResponse(null, { status: 204 })),
+  http.post(url("/admin/comercios/:id/restore"), () => new HttpResponse(null, { status: 204 })),
   // Métricas de plataforma: el contrato no las expone (API-GAPS §2e), mock.
   http.get(url("/admin/metrics"), () => HttpResponse.json(adminMetrics)),
 

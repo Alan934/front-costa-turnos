@@ -11,6 +11,8 @@ export interface Subscription {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   status: SubscriptionStatus;
   /** @nullable */

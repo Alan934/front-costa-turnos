@@ -12,6 +12,8 @@ export interface Professional {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   accountId: string;
   businessName: string;
   slug: string;

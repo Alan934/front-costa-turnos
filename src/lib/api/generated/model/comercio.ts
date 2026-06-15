@@ -13,6 +13,8 @@ export interface Comercio {
   createdAt: string;
   updatedAt: string;
   /** @nullable */
+  deletedAt?: string | null;
+  /** @nullable */
   accountId?: ComercioAccountId;
   name: string;
   slug: string;

@@ -113,7 +113,8 @@ export interface SignedUrlResponse {
 
 /**
  * Fila de `GET /admin/professionals` (sin schema): el contrato la describe como
- * "Array de { professional, subscription }".
+ * "Array de { professional, subscription }". Incluye los soft-borrados: cada
+ * `professional` trae `deletedAt` (null = activo, fecha ISO = eliminado).
  */
 export interface AdminProfessionalRow {
   professional: Professional;

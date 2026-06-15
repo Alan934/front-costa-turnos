@@ -11,6 +11,8 @@ export interface Account {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   email: string;
   /** @nullable */
   passwordHash?: string | null;

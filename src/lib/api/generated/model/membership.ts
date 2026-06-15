@@ -11,6 +11,8 @@ export interface Membership {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   comercioId: string;
   status: MembershipStatus;

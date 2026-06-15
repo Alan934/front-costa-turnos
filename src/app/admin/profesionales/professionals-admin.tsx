@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Banknote, ExternalLink, Building2, MoreVertical, Check, Plus, Ban, CircleCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Banknote, ExternalLink, Building2, MoreVertical, Check, Plus, Ban, CircleCheck, Trash2, RotateCcw } from "lucide-react";
+import { Pager } from "../pager";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,12 +24,14 @@ import {
   useCreateProfessionalAccount,
   useBlockAccount,
   useActivateAccount,
+  useDeleteProfessional,
+  useRestoreProfessional,
 } from "@/lib/api/admin";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { subscriptionEndInfo } from "@/lib/subscription";
 import { formatMoney, formatDateShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { AdminProfessionalRow } from "@/mocks/contract-extensions";
+import type { AdminProfessionalDto } from "@/lib/api/generated/model/adminProfessionalDto";
 
 const SUB_LABELS: Record<SubscriptionStatus, { label: string; variant: "success" | "warning" | "muted" | "default" }> = {
   [SubscriptionStatus.trial]: { label: "Prueba", variant: "default" },
@@ -38,18 +42,27 @@ const SUB_LABELS: Record<SubscriptionStatus, { label: string; variant: "success"
   [SubscriptionStatus.cancelled]: { label: "Baja", variant: "muted" },
 };
 
-export function ProfessionalsAdmin() {
-  const { data, isLoading, isError, refetch } = useAdminProfessionals();
-  const [q, setQ] = useState("");
-  const [creating, setCreating] = useState(false);
+const PAGE_SIZE = 20;
 
-  const list = (data ?? []).filter((row) => {
-    const t = q.toLowerCase();
-    return (
-      row.professional.businessName.toLowerCase().includes(t) ||
-      row.professional.slug.toLowerCase().includes(t)
-    );
+export function ProfessionalsAdmin() {
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
+  const debouncedQ = useDebouncedValue(q.trim(), 300);
+
+  const { data, isLoading, isFetching, isError, refetch } = useAdminProfessionals({
+    q: debouncedQ || undefined,
+    page,
+    pageSize: PAGE_SIZE,
   });
+
+  // Al cambiar la búsqueda, volvemos a la primera página.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQ]);
+
+  const items = data?.items ?? [];
+  const total = data?.total ?? 0;
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
@@ -78,19 +91,28 @@ export function ProfessionalsAdmin() {
           </div>
         )}
         {isError && <ErrorState message="No pudimos cargar los profesionales." onRetry={() => refetch()} />}
-        {data && list.length === 0 && (
+        {data && items.length === 0 && (
           <EmptyState
             icon={<Building2 className="size-5" />}
-            title={q ? "Sin resultados" : "Todavía no hay profesionales"}
-            message={q ? "Probá otra búsqueda." : "Los profesionales se registran solos desde la web."}
+            title={debouncedQ ? "Sin resultados" : "Todavía no hay profesionales"}
+            message={debouncedQ ? "Probá otra búsqueda." : "Los profesionales se registran solos desde la web."}
           />
         )}
-        {list.length > 0 && (
-          <ul className="space-y-2.5">
-            {list.map((row) => (
-              <ProfessionalRow key={row.professional.id} row={row} />
-            ))}
-          </ul>
+        {items.length > 0 && (
+          <>
+            <ul className={cn("space-y-2.5", isFetching && "opacity-60")}>
+              {items.map((row) => (
+                <ProfessionalRow key={row.professional.id} row={row} />
+              ))}
+            </ul>
+            <Pager
+              page={page}
+              pageSize={PAGE_SIZE}
+              total={total}
+              busy={isFetching}
+              onPageChange={setPage}
+            />
+          </>
         )}
       </div>
 
@@ -99,15 +121,19 @@ export function ProfessionalsAdmin() {
   );
 }
 
-function ProfessionalRow({ row }: { row: AdminProfessionalRow }) {
+function ProfessionalRow({ row }: { row: AdminProfessionalDto }) {
   const { professional: pro, subscription: sub } = row;
   const markCash = useMarkCashPaid();
   const block = useBlockAccount();
   const activate = useActivateAccount();
+  const restore = useRestoreProfessional();
   const [menu, setMenu] = useState(false);
   const [paid, setPaid] = useState(false);
-  const meta = SUB_LABELS[sub.status];
-  const busy = markCash.isPending || block.isPending || activate.isPending;
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const meta = sub ? SUB_LABELS[sub.status] : null;
+  const isDeleted = Boolean(pro.deletedAt);
+  const busy =
+    markCash.isPending || block.isPending || activate.isPending || restore.isPending;
 
   function registerCash() {
     markCash.mutate(pro.id, {
@@ -120,15 +146,31 @@ function ProfessionalRow({ row }: { row: AdminProfessionalRow }) {
   }
 
   return (
-    <li className="rounded-xl border border-border bg-card p-4">
+    <li
+      className={cn(
+        "rounded-xl border border-border bg-card p-4",
+        isDeleted && "border-dashed bg-muted/30",
+      )}
+    >
       <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted font-display text-sm font-semibold">
+        <span
+          className={cn(
+            "grid size-10 shrink-0 place-items-center rounded-xl bg-muted font-display text-sm font-semibold",
+            isDeleted && "opacity-50",
+          )}
+        >
           {pro.businessName.charAt(0)}
         </span>
-        <div className="min-w-0 flex-1">
+        <div className={cn("min-w-0 flex-1", isDeleted && "opacity-60")}>
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium">{pro.businessName}</p>
-            <Badge variant={meta.variant}>{meta.label}</Badge>
+            {isDeleted ? (
+              <Badge variant="muted">Eliminado</Badge>
+            ) : meta ? (
+              <Badge variant={meta.variant}>{meta.label}</Badge>
+            ) : (
+              <Badge variant="muted">Sin suscripción</Badge>
+            )}
             {paid && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                 <Check className="size-3.5" /> Pago registrado
@@ -137,64 +179,150 @@ function ProfessionalRow({ row }: { row: AdminProfessionalRow }) {
           </div>
           <p className="truncate text-xs text-muted-foreground">/r/{pro.slug}</p>
           <p className="mt-1 flex flex-wrap gap-x-4 text-xs text-muted-foreground">
-            <span>{formatMoney(sub.amountCents)}/mes</span>
-            {(() => {
-              const end = subscriptionEndInfo(sub);
-              return end.date ? <span>{end.label} {formatDateShort(end.date)}</span> : null;
-            })()}
+            {isDeleted ? (
+              pro.deletedAt && <span>Eliminado el {formatDateShort(pro.deletedAt)}</span>
+            ) : sub ? (
+              <>
+                <span>{formatMoney(sub.amountCents)}/mes</span>
+                {(() => {
+                  const end = subscriptionEndInfo(sub);
+                  return end.date ? <span>{end.label} {formatDateShort(end.date)}</span> : null;
+                })()}
+              </>
+            ) : null}
           </p>
         </div>
 
-        <div className="relative">
-          <Button variant="ghost" size="icon" aria-label="Acciones" onClick={() => setMenu((v) => !v)}>
-            <MoreVertical className="size-4" />
+        {isDeleted ? (
+          <Button
+            variant="outline"
+            size="sm"
+            loading={restore.isPending}
+            onClick={() => restore.mutate(pro.id)}
+          >
+            <RotateCcw className="size-4" />
+            <span className="hidden sm:inline">Restaurar</span>
           </Button>
-          {menu && (
-            <>
-              <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-10 cursor-default" onClick={() => setMenu(false)} />
-              <div className="absolute right-0 top-10 z-20 w-56 overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg">
-                <a
-                  href={`/r/${pro.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
-                >
-                  <ExternalLink className="size-4" />
-                  Ver página pública
-                </a>
-                <button
-                  type="button"
-                  onClick={registerCash}
-                  disabled={busy}
-                  className={cn("flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted")}
-                >
-                  {markCash.isPending ? <Spinner /> : <Banknote className="size-4" />}
-                  Registré pago en efectivo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => activate.mutate(pro.accountId, { onSuccess: () => setMenu(false) })}
-                  disabled={busy}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success hover:bg-muted"
-                >
-                  {activate.isPending ? <Spinner /> : <CircleCheck className="size-4" />}
-                  Activar cuenta
-                </button>
-                <button
-                  type="button"
-                  onClick={() => block.mutate(pro.accountId, { onSuccess: () => setMenu(false) })}
-                  disabled={busy}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
-                >
-                  {block.isPending ? <Spinner /> : <Ban className="size-4" />}
-                  Bloquear cuenta
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+        ) : (
+          <div className="relative">
+            <Button variant="ghost" size="icon" aria-label="Acciones" onClick={() => setMenu((v) => !v)}>
+              <MoreVertical className="size-4" />
+            </Button>
+            {menu && (
+              <>
+                <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-10 cursor-default" onClick={() => setMenu(false)} />
+                <div className="absolute right-0 top-10 z-20 w-56 overflow-hidden rounded-xl border border-border bg-popover py-1 shadow-lg">
+                  <a
+                    href={`/r/${pro.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                  >
+                    <ExternalLink className="size-4" />
+                    Ver página pública
+                  </a>
+                  <button
+                    type="button"
+                    onClick={registerCash}
+                    disabled={busy}
+                    className={cn("flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted")}
+                  >
+                    {markCash.isPending ? <Spinner /> : <Banknote className="size-4" />}
+                    Registré pago en efectivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => activate.mutate(pro.accountId, { onSuccess: () => setMenu(false) })}
+                    disabled={busy}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-success hover:bg-muted"
+                  >
+                    {activate.isPending ? <Spinner /> : <CircleCheck className="size-4" />}
+                    Activar cuenta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => block.mutate(pro.accountId, { onSuccess: () => setMenu(false) })}
+                    disabled={busy}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
+                  >
+                    {block.isPending ? <Spinner /> : <Ban className="size-4" />}
+                    Bloquear cuenta
+                  </button>
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenu(false);
+                      setConfirmDelete(true);
+                    }}
+                    disabled={busy}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
+                  >
+                    <Trash2 className="size-4" />
+                    Eliminar profesional
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {confirmDelete && (
+        <DeleteProfessionalDialog
+          businessName={pro.businessName}
+          professionalId={pro.id}
+          onClose={() => setConfirmDelete(false)}
+        />
+      )}
     </li>
+  );
+}
+
+function DeleteProfessionalDialog({
+  businessName,
+  professionalId,
+  onClose,
+}: {
+  businessName: string;
+  professionalId: string;
+  onClose: () => void;
+}) {
+  const del = useDeleteProfessional();
+  const [error, setError] = useState(false);
+
+  function submit() {
+    setError(false);
+    del.mutate(professionalId, {
+      onSuccess: onClose,
+      onError: () => setError(true),
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Eliminar {businessName}</DialogTitle>
+          <DialogDescription>
+            Esto eliminará al profesional, su agenda, y bloqueará su acceso a la plataforma.
+            Sus turnos y pagos pasados se conservan. Va a quedar en la lista como «Eliminado»
+            y vas a poder restaurarlo cuando quieras.
+          </DialogDescription>
+        </DialogHeader>
+        {error && (
+          <p className="px-6 text-sm text-destructive">No pudimos eliminar el profesional. Probá de nuevo.</p>
+        )}
+        <div className="flex gap-2 p-6 pt-3">
+          <Button variant="outline" className="flex-1" onClick={onClose} disabled={del.isPending}>
+            Cancelar
+          </Button>
+          <Button variant="destructive" className="flex-1" loading={del.isPending} onClick={submit}>
+            Eliminar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

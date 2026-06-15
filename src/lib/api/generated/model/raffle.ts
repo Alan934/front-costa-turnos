@@ -12,6 +12,8 @@ export interface Raffle {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   name: string;
   status: RaffleStatus;

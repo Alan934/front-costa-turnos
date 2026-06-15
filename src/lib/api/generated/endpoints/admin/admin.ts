@@ -26,9 +26,15 @@ import type {
 
 import type {
   Account,
+  AdminClientPageDto,
+  AdminComercioPageDto,
   AdminCreateClientDto,
   AdminCreateProfessionalDto,
+  AdminListClientsParams,
+  AdminListComerciosParams,
+  AdminListProfessionalsParams,
   AdminMetricsDto,
+  AdminProfessionalPageDto,
   Comercio,
   CreateComercialDto,
   EnrichedClientDto,
@@ -110,6 +116,100 @@ export const useAdminCreateComercial = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Listado global. Cada item es { comercio, ownerEmail, activeMembers }. `comercio.deletedAt` no-null = eliminado. `q` busca por nombre/slug.
+ * @summary Listar TODOS los comercios de la plataforma (paginado, con busqueda, incluye eliminados)
+ */
+export const adminListComercios = (
+    params?: AdminListComerciosParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AdminComercioPageDto>(
+      {url: `/v1/admin/comercios`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getAdminListComerciosQueryKey = (params?: AdminListComerciosParams,) => {
+    return [
+    `/v1/admin/comercios`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getAdminListComerciosQueryOptions = <TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(params?: AdminListComerciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListComerciosQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListComercios>>> = ({ signal }) => adminListComercios(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminListComerciosQueryResult = NonNullable<Awaited<ReturnType<typeof adminListComercios>>>
+export type AdminListComerciosQueryError = ErrorType<void>
+
+
+export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(
+ params: undefined |  AdminListComerciosParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListComercios>>,
+          TError,
+          Awaited<ReturnType<typeof adminListComercios>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(
+ params?: AdminListComerciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListComercios>>,
+          TError,
+          Awaited<ReturnType<typeof adminListComercios>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(
+ params?: AdminListComerciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar TODOS los comercios de la plataforma (paginado, con busqueda, incluye eliminados)
+ */
+
+export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(
+ params?: AdminListComerciosParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListComercios>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminListComerciosQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Metricas de la plataforma (agregado de todos los tenants)
  */
 export const adminMetrics = (
@@ -202,16 +302,18 @@ export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>
 
 
 /**
- * @summary Listar profesionales con su suscripcion
+ * Devuelve { items, total, page, pageSize }. Cada item es { professional, subscription }. `professional.deletedAt` (null = activo) marca los eliminados. `q` busca por nombre/slug.
+ * @summary Listar profesionales (paginado, con busqueda, incluye eliminados)
  */
 export const adminListProfessionals = (
-    
+    params?: AdminListProfessionalsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<void>(
-      {url: `/v1/admin/professionals`, method: 'GET', signal
+      return customInstance<AdminProfessionalPageDto>(
+      {url: `/v1/admin/professionals`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -219,23 +321,23 @@ export const adminListProfessionals = (
 
 
 
-export const getAdminListProfessionalsQueryKey = () => {
+export const getAdminListProfessionalsQueryKey = (params?: AdminListProfessionalsParams,) => {
     return [
-    `/v1/admin/professionals`
+    `/v1/admin/professionals`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getAdminListProfessionalsQueryOptions = <TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAdminListProfessionalsQueryOptions = <TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(params?: AdminListProfessionalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAdminListProfessionalsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getAdminListProfessionalsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListProfessionals>>> = ({ signal }) => adminListProfessionals(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListProfessionals>>> = ({ signal }) => adminListProfessionals(params, requestOptions, signal);
 
       
 
@@ -249,7 +351,7 @@ export type AdminListProfessionalsQueryError = ErrorType<void>
 
 
 export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
+ params: undefined |  AdminListProfessionalsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminListProfessionals>>,
           TError,
@@ -259,7 +361,7 @@ export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof admi
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
+ params?: AdminListProfessionalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminListProfessionals>>,
           TError,
@@ -269,19 +371,19 @@ export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof admi
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: AdminListProfessionalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar profesionales con su suscripcion
+ * @summary Listar profesionales (paginado, con busqueda, incluye eliminados)
  */
 
 export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: AdminListProfessionalsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListProfessionals>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getAdminListProfessionalsQueryOptions(options)
+  const queryOptions = getAdminListProfessionalsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -359,68 +461,100 @@ export const useAdminCreateProfessional = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
+ * Listado global (todos los tenants). `id` es el del vinculo professional_client (usalo en DELETE /admin/clients/:id). `deletedAt` no-null = eliminado. `q` busca por nombre/email/telefono.
+ * @summary Listar TODOS los clientes de la plataforma (paginado, con busqueda, incluye eliminados)
  */
-export const adminMarkCashPaid = (
-    professionalId: string,
+export const adminListClients = (
+    params?: AdminListClientsParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<Subscription>(
-      {url: `/v1/admin/subscriptions/${professionalId}/mark-cash-paid`, method: 'POST', signal
+      return customInstance<AdminClientPageDto>(
+      {url: `/v1/admin/clients`, method: 'GET',
+        params, signal
     },
       options);
     }
   
 
 
-export const getAdminMarkCashPaidMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext> => {
 
-const mutationKey = ['adminMarkCashPaid'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
+export const getAdminListClientsQueryKey = (params?: AdminListClientsParams,) => {
+    return [
+    `/v1/admin/clients`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getAdminListClientsQueryOptions = <TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(params?: AdminListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminListClientsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminListClients>>> = ({ signal }) => adminListClients(params, requestOptions, signal);
 
       
 
+      
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminMarkCashPaid>>, {professionalId: string}> = (props) => {
-          const {professionalId} = props ?? {};
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
-          return  adminMarkCashPaid(professionalId,requestOptions)
-        }
-
-        
+export type AdminListClientsQueryResult = NonNullable<Awaited<ReturnType<typeof adminListClients>>>
+export type AdminListClientsQueryError = ErrorType<void>
 
 
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AdminMarkCashPaidMutationResult = NonNullable<Awaited<ReturnType<typeof adminMarkCashPaid>>>
-    
-    export type AdminMarkCashPaidMutationError = ErrorType<void>
-
-    /**
- * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
+export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(
+ params: undefined |  AdminListClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListClients>>,
+          TError,
+          Awaited<ReturnType<typeof adminListClients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(
+ params?: AdminListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminListClients>>,
+          TError,
+          Awaited<ReturnType<typeof adminListClients>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(
+ params?: AdminListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar TODOS los clientes de la plataforma (paginado, con busqueda, incluye eliminados)
  */
-export const useAdminMarkCashPaid = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof adminMarkCashPaid>>,
-        TError,
-        {professionalId: string},
-        TContext
-      > => {
 
-      const mutationOptions = getAdminMarkCashPaidMutationOptions(options);
+export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(
+ params?: AdminListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminListClients>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-      return useMutation(mutationOptions, queryClient);
-    }
-    /**
+  const queryOptions = getAdminListClientsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Crear un cliente y asignarlo a un profesional
  */
 export const adminCreateClient = (
@@ -481,6 +615,68 @@ export const useAdminCreateClient = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAdminCreateClientMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
+ */
+export const adminMarkCashPaid = (
+    professionalId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Subscription>(
+      {url: `/v1/admin/subscriptions/${professionalId}/mark-cash-paid`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAdminMarkCashPaidMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext> => {
+
+const mutationKey = ['adminMarkCashPaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminMarkCashPaid>>, {professionalId: string}> = (props) => {
+          const {professionalId} = props ?? {};
+
+          return  adminMarkCashPaid(professionalId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminMarkCashPaidMutationResult = NonNullable<Awaited<ReturnType<typeof adminMarkCashPaid>>>
+    
+    export type AdminMarkCashPaidMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar el pago en efectivo de la suscripcion de un profesional (renueva 30 dias)
+ */
+export const useAdminMarkCashPaid = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminMarkCashPaid>>, TError,{professionalId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminMarkCashPaid>>,
+        TError,
+        {professionalId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminMarkCashPaidMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -605,6 +801,377 @@ export const useAdminActivateAccount = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAdminActivateAccountMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Soft-borra el professional y sus membresias/servicios/horarios/clientes/staff. NO borra turnos ni pagos (historial). Bloquea la cuenta y revoca su sesion.
+ * @summary Eliminar (logico) un profesional y su agenda; bloquea su cuenta
+ */
+export const adminDeleteProfessional = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/professionals/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getAdminDeleteProfessionalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProfessional>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProfessional>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminDeleteProfessional'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteProfessional>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteProfessional(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteProfessionalMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteProfessional>>>
+    
+    export type AdminDeleteProfessionalMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar (logico) un profesional y su agenda; bloquea su cuenta
+ */
+export const useAdminDeleteProfessional = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProfessional>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteProfessional>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminDeleteProfessionalMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Restaurar un profesional eliminado (y reactivar su cuenta)
+ */
+export const adminRestoreProfessional = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/professionals/${id}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAdminRestoreProfessionalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreProfessional>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRestoreProfessional>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminRestoreProfessional'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRestoreProfessional>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRestoreProfessional(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRestoreProfessionalMutationResult = NonNullable<Awaited<ReturnType<typeof adminRestoreProfessional>>>
+    
+    export type AdminRestoreProfessionalMutationError = ErrorType<void>
+
+    /**
+ * @summary Restaurar un profesional eliminado (y reactivar su cuenta)
+ */
+export const useAdminRestoreProfessional = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreProfessional>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRestoreProfessional>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminRestoreProfessionalMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Eliminar (logico) un comercio y sus membresias; bloquea su cuenta comercial
+ */
+export const adminDeleteComercio = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/comercios/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getAdminDeleteComercioMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComercio>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComercio>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminDeleteComercio'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteComercio>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteComercio(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteComercioMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteComercio>>>
+    
+    export type AdminDeleteComercioMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar (logico) un comercio y sus membresias; bloquea su cuenta comercial
+ */
+export const useAdminDeleteComercio = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteComercio>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteComercio>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminDeleteComercioMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Restaurar un comercio eliminado (y reactivar su cuenta)
+ */
+export const adminRestoreComercio = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/comercios/${id}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAdminRestoreComercioMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreComercio>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRestoreComercio>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminRestoreComercio'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRestoreComercio>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRestoreComercio(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRestoreComercioMutationResult = NonNullable<Awaited<ReturnType<typeof adminRestoreComercio>>>
+    
+    export type AdminRestoreComercioMutationError = ErrorType<void>
+
+    /**
+ * @summary Restaurar un comercio eliminado (y reactivar su cuenta)
+ */
+export const useAdminRestoreComercio = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreComercio>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRestoreComercio>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminRestoreComercioMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Soft-borra el vinculo cliente-profesional. Si a la persona no le queda ningun otro vinculo activo, tambien se borra la persona global y se bloquea su cuenta.
+ * @summary Eliminar (logico) un cliente (vinculo professional_client)
+ */
+export const adminDeleteClient = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/clients/${id}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getAdminDeleteClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteClient>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminDeleteClient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteClient>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminDeleteClient(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteClientMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteClient>>>
+    
+    export type AdminDeleteClientMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar (logico) un cliente (vinculo professional_client)
+ */
+export const useAdminDeleteClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteClient>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminDeleteClientMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Restaurar un cliente eliminado (y la persona si aplica)
+ */
+export const adminRestoreClient = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/admin/clients/${id}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAdminRestoreClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminRestoreClient>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['adminRestoreClient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminRestoreClient>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  adminRestoreClient(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminRestoreClientMutationResult = NonNullable<Awaited<ReturnType<typeof adminRestoreClient>>>
+    
+    export type AdminRestoreClientMutationError = ErrorType<void>
+
+    /**
+ * @summary Restaurar un cliente eliminado (y la persona si aplica)
+ */
+export const useAdminRestoreClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminRestoreClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminRestoreClient>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAdminRestoreClientMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

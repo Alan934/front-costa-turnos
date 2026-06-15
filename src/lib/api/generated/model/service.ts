@@ -10,6 +10,8 @@ export interface Service {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   membershipId: string;
   name: string;

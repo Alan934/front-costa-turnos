@@ -12,6 +12,8 @@ export interface FichaField {
   id: string;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  deletedAt?: string | null;
   professionalId: string;
   label: string;
   type: FichaFieldType;
