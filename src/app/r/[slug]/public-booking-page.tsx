@@ -43,7 +43,11 @@ import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProf
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
 import type { Slot } from "@/mocks/contract-extensions";
-import type { AxiosError } from "axios";
+import {
+  getApiErrorMessage,
+  getApiValidationMessages,
+  matchFieldErrors,
+} from "@/lib/api/error-message";
 
 /** Clave local YYYY-MM-DD para casar una fecha con el `date` del DayAvailabilityDto. */
 function localDateKey(d: Date): string {
@@ -562,11 +566,26 @@ function ConfirmStep({
   const book = useBookProfessional(slug, professional.membershipId);
   const bookWithDeposit = useBookProfessionalWithDeposit(slug, professional.membershipId);
   const submitting = book.isPending || bookWithDeposit.isPending;
-  // El back rechaza con 400 los turnos demasiado próximos (anticipación mínima del profesional) o
-  // ya tomados: el horario dejó de estar disponible. Otros fallos son errores técnicos genéricos.
-  const bookError = (book.error ?? bookWithDeposit.error) as AxiosError | null;
+
+  const bookError = book.error ?? bookWithDeposit.error;
   const failed = book.isError || bookWithDeposit.isError;
-  const slotUnavailable = bookError?.response?.status === 400;
+  // Distinguimos tres casos según lo que respondió el back, en vez de tratar todo 400 como
+  // "horario no disponible" (un teléfono inválido también es 400):
+  //  1. Errores de validación por campo (phone/email/fullName) → los mostramos junto al campo.
+  //  2. 409 (turno ya tomado) → el horario dejó de estar disponible.
+  //  3. Resto → el mensaje legible que mandó el back (o un genérico).
+  const validationMessages = failed ? getApiValidationMessages(bookError) : [];
+  const fieldErrors = matchFieldErrors(validationMessages, ["fullName", "phone", "email"]);
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  const slotTaken = !hasFieldErrors && (bookError as { response?: { status?: number } } | null)
+    ?.response?.status === 409;
+  // Mensaje general cuando el fallo no se pudo atribuir a un campo concreto.
+  const generalError =
+    failed && !hasFieldErrors
+      ? slotTaken
+        ? "Ese horario ya fue reservado por otra persona. Volvé atrás y elegí otro."
+        : getApiErrorMessage(bookError, "No pudimos confirmar el turno. Probá de nuevo.")
+      : null;
 
   const canSubmit = fullName.trim().length > 1 && phone.trim().length > 5;
 
@@ -636,7 +655,11 @@ function ConfirmStep({
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Ej: Sofía Pérez"
             autoComplete="name"
+            aria-invalid={!!fieldErrors.fullName}
           />
+          {fieldErrors.fullName && (
+            <p className="mt-1.5 text-sm text-destructive">{fieldErrors.fullName}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="phone">Teléfono / WhatsApp</Label>
@@ -648,7 +671,11 @@ function ConfirmStep({
             placeholder="Ej: 261 555 1234"
             inputMode="tel"
             autoComplete="tel"
+            aria-invalid={!!fieldErrors.phone}
           />
+          {fieldErrors.phone && (
+            <p className="mt-1.5 text-sm text-destructive">{fieldErrors.phone}</p>
+          )}
         </div>
         <div>
           <Label htmlFor="email">
@@ -662,17 +689,20 @@ function ConfirmStep({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="vos@email.com"
             autoComplete="email"
+            aria-invalid={!!fieldErrors.email}
           />
+          {fieldErrors.email && (
+            <p className="mt-1.5 text-sm text-destructive">{fieldErrors.email}</p>
+          )}
         </div>
       </div>
 
-      {failed && (
+      {hasFieldErrors && (
         <p className="mt-3 text-sm text-destructive">
-          {slotUnavailable
-            ? "Ese horario ya no está disponible para reservar. Volvé atrás y elegí otro."
-            : "No pudimos confirmar el turno. Probá de nuevo."}
+          Revisá los datos marcados y volvé a intentar.
         </p>
       )}
+      {generalError && <p className="mt-3 text-sm text-destructive">{generalError}</p>}
 
       <div className="mt-6 space-y-2.5">
         {options.map((opt, i) => {
