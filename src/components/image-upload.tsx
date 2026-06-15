@@ -49,7 +49,9 @@ export function ImageUpload({
     if (!fileId) return;
     getSignedUrl(fileId)
       .then((r) => active && setPreview(r.url))
-      .catch(() => {});
+      .catch(() => {
+        if (active) setError("No pudimos cargar la imagen. Probá recargar la página.");
+      });
     return () => {
       active = false;
     };
@@ -144,6 +146,7 @@ export function ImageUpload({
         accept={ACCEPTED_IMAGE_TYPES.join(",")}
         className="hidden"
         onChange={onPick}
+        aria-label={label}
       />
     </div>
   );

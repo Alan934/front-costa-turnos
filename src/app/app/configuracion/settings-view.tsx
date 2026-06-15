@@ -113,6 +113,8 @@ function BrandingSection({
   const [bio, setBio] = useState(initial.bio ?? "");
   const [phone, setPhone] = useState(initial.phone ?? "");
   const [saved, setSaved] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     setBio(initial.bio ?? "");
@@ -120,6 +122,7 @@ function BrandingSection({
   }, [initial.bio, initial.phone]);
 
   function save() {
+    setSaveError(null);
     update.mutate(
       { publicPageSettings: { ...initial, bio, phone } },
       {
@@ -127,6 +130,7 @@ function BrandingSection({
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         },
+        onError: () => setSaveError("No pudimos guardar los cambios. Probá de nuevo."),
       },
     );
   }
@@ -156,15 +160,30 @@ function BrandingSection({
             ownerId={professional.id}
             fileId={initial.logoFileId}
             label="Subir logo"
-            onUploaded={(file) =>
-              update.mutate({ publicPageSettings: { ...initial, logoFileId: file.id } })
-            }
+            onUploaded={(file) => {
+              setLogoError(null);
+              update.mutate(
+                { publicPageSettings: { ...initial, logoFileId: file.id } },
+                {
+                  onError: () =>
+                    setLogoError("No pudimos guardar el logo. Probá de nuevo."),
+                },
+              );
+            }}
             onRemoved={() => {
+              setLogoError(null);
               const rest = { ...initial };
               delete rest.logoFileId;
-              update.mutate({ publicPageSettings: rest });
+              update.mutate(
+                { publicPageSettings: rest },
+                {
+                  onError: () =>
+                    setLogoError("No pudimos quitar el logo. Probá de nuevo."),
+                },
+              );
             }}
           />
+          {logoError && <p className="mt-1.5 text-xs text-destructive">{logoError}</p>}
         </div>
         <div>
           <Label htmlFor="br-bio">Descripción</Label>
@@ -181,10 +200,13 @@ function BrandingSection({
           <Label htmlFor="br-phone">Teléfono / WhatsApp</Label>
           <Input id="br-phone" className="mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
         </div>
-        <Button size="sm" onClick={save} disabled={update.isPending}>
-          {update.isPending ? <Spinner /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
-          {saved ? "Guardado" : "Guardar"}
-        </Button>
+        <div>
+          <Button size="sm" onClick={save} disabled={update.isPending}>
+            {update.isPending ? <Spinner /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
+            {saved ? "Guardado" : "Guardar"}
+          </Button>
+          {saveError && <p className="mt-1.5 text-xs text-destructive">{saveError}</p>}
+        </div>
       </div>
     </section>
   );
