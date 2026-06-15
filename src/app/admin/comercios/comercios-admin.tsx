@@ -18,25 +18,29 @@ import { useAdminComercios, useDeleteComercio, useRestoreComercio } from "@/lib/
 import { formatDateShort, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Pager } from "../pager";
+import { StatusTabs } from "../status-tabs";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { AdminComercioDto } from "@/lib/api/generated/model/adminComercioDto";
+import type { ListStatusFilter } from "@/lib/api/generated/model/listStatusFilter";
 
 const PAGE_SIZE = 20;
 
 export function ComerciosAdmin() {
   const [q, setQ] = useState("");
+  const [status, setStatus] = useState<ListStatusFilter>("active");
   const [page, setPage] = useState(1);
   const debouncedQ = useDebouncedValue(q.trim(), 300);
 
   const { data, isLoading, isFetching, isError, refetch } = useAdminComercios({
     q: debouncedQ || undefined,
+    status,
     page,
     pageSize: PAGE_SIZE,
   });
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQ]);
+  }, [debouncedQ, status]);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -48,14 +52,17 @@ export function ComerciosAdmin() {
         <p className="text-sm text-muted-foreground">Comercios de la plataforma y sus integrantes</p>
       </div>
 
-      <div className="relative mt-5">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre o slug…"
-        />
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <StatusTabs value={status} onChange={setStatus} />
+        <div className="relative sm:w-72">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nombre o slug…"
+          />
+        </div>
       </div>
 
       <div className="mt-5">
@@ -70,8 +77,20 @@ export function ComerciosAdmin() {
         {data && items.length === 0 && (
           <EmptyState
             icon={<Store className="size-5" />}
-            title={debouncedQ ? "Sin resultados" : "Todavía no hay comercios"}
-            message={debouncedQ ? "Probá otra búsqueda." : "Los comercios se crean desde el panel comercial."}
+            title={
+              debouncedQ
+                ? "Sin resultados"
+                : status === "deleted"
+                  ? "No hay comercios eliminados"
+                  : "Todavía no hay comercios"
+            }
+            message={
+              debouncedQ
+                ? "Probá otra búsqueda."
+                : status === "deleted"
+                  ? "Cuando elimines un comercio, va a aparecer acá para que puedas restaurarlo."
+                  : "Los comercios se crean desde el panel comercial."
+            }
           />
         )}
         {items.length > 0 && (

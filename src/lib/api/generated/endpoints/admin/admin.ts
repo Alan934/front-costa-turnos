@@ -116,8 +116,8 @@ export const useAdminCreateComercial = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Listado global. Cada item es { comercio, ownerEmail, activeMembers }. `comercio.deletedAt` no-null = eliminado. `q` busca por nombre/slug.
- * @summary Listar TODOS los comercios de la plataforma (paginado, con busqueda, incluye eliminados)
+ * Listado global. Cada item es { comercio, ownerEmail, activeMembers }. `comercio.deletedAt` no-null = eliminado. `q` busca por nombre/slug. `status` = active | deleted | all (default all). El total respeta el filtro (conteos por pestaña).
+ * @summary Listar TODOS los comercios de la plataforma (paginado, busqueda y filtro de estado)
  */
 export const adminListComercios = (
     params?: AdminListComerciosParams,
@@ -189,7 +189,7 @@ export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminLis
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar TODOS los comercios de la plataforma (paginado, con busqueda, incluye eliminados)
+ * @summary Listar TODOS los comercios de la plataforma (paginado, busqueda y filtro de estado)
  */
 
 export function useAdminListComercios<TData = Awaited<ReturnType<typeof adminListComercios>>, TError = ErrorType<void>>(
@@ -302,8 +302,8 @@ export function useAdminMetrics<TData = Awaited<ReturnType<typeof adminMetrics>>
 
 
 /**
- * Devuelve { items, total, page, pageSize }. Cada item es { professional, subscription }. `professional.deletedAt` (null = activo) marca los eliminados. `q` busca por nombre/slug.
- * @summary Listar profesionales (paginado, con busqueda, incluye eliminados)
+ * Devuelve { items, total, page, pageSize }. Cada item es { professional, subscription }. `professional.deletedAt` (null = activo) marca los eliminados. `q` busca por nombre/slug. `status` = active | deleted | all (default all). El total respeta el filtro (conteos por pestaña).
+ * @summary Listar profesionales (paginado, con busqueda y filtro de estado)
  */
 export const adminListProfessionals = (
     params?: AdminListProfessionalsParams,
@@ -375,7 +375,7 @@ export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof admi
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar profesionales (paginado, con busqueda, incluye eliminados)
+ * @summary Listar profesionales (paginado, con busqueda y filtro de estado)
  */
 
 export function useAdminListProfessionals<TData = Awaited<ReturnType<typeof adminListProfessionals>>, TError = ErrorType<void>>(
@@ -461,8 +461,8 @@ export const useAdminCreateProfessional = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Listado global (todos los tenants). `id` es el del vinculo professional_client (usalo en DELETE /admin/clients/:id). `deletedAt` no-null = eliminado. `q` busca por nombre/email/telefono.
- * @summary Listar TODOS los clientes de la plataforma (paginado, con busqueda, incluye eliminados)
+ * Listado global (todos los tenants). `id` es el del vinculo professional_client (usalo en DELETE /admin/clients/:id). `deletedAt` no-null = eliminado. `q` busca por nombre/email/telefono. `status` = active | deleted | all (default all). El total respeta el filtro (conteos por pestaña).
+ * @summary Listar TODOS los clientes de la plataforma (paginado, busqueda y filtro de estado)
  */
 export const adminListClients = (
     params?: AdminListClientsParams,
@@ -534,7 +534,7 @@ export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListC
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar TODOS los clientes de la plataforma (paginado, con busqueda, incluye eliminados)
+ * @summary Listar TODOS los clientes de la plataforma (paginado, busqueda y filtro de estado)
  */
 
 export function useAdminListClients<TData = Awaited<ReturnType<typeof adminListClients>>, TError = ErrorType<void>>(

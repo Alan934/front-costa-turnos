@@ -744,15 +744,18 @@ export const handlers: RequestHandler[] = [
   http.get(url("/admin/professionals"), ({ request }) => {
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get("q") ?? "").toLowerCase();
+    const status = searchParams.get("status") ?? "all";
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(100, Number(searchParams.get("pageSize")) || 20);
-    const filtered = q
-      ? adminProfessionals.filter(
-          (r) =>
-            r.professional.businessName.toLowerCase().includes(q) ||
-            r.professional.slug.toLowerCase().includes(q),
-        )
-      : adminProfessionals;
+    const filtered = adminProfessionals.filter((r) => {
+      if (status === "active" && r.professional.deletedAt) return false;
+      if (status === "deleted" && !r.professional.deletedAt) return false;
+      if (!q) return true;
+      return (
+        r.professional.businessName.toLowerCase().includes(q) ||
+        r.professional.slug.toLowerCase().includes(q)
+      );
+    });
     const start = (page - 1) * pageSize;
     return HttpResponse.json({
       total: filtered.length,

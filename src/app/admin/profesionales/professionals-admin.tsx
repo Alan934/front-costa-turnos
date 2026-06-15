@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Search, Banknote, ExternalLink, Building2, MoreVertical, Check, Plus, Ban, CircleCheck, Trash2, RotateCcw } from "lucide-react";
 import { Pager } from "../pager";
+import { StatusTabs } from "../status-tabs";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import type { ListStatusFilter } from "@/lib/api/generated/model/listStatusFilter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,20 +48,22 @@ const PAGE_SIZE = 20;
 
 export function ProfessionalsAdmin() {
   const [q, setQ] = useState("");
+  const [status, setStatus] = useState<ListStatusFilter>("active");
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const debouncedQ = useDebouncedValue(q.trim(), 300);
 
   const { data, isLoading, isFetching, isError, refetch } = useAdminProfessionals({
     q: debouncedQ || undefined,
+    status,
     page,
     pageSize: PAGE_SIZE,
   });
 
-  // Al cambiar la búsqueda, volvemos a la primera página.
+  // Al cambiar la búsqueda o la pestaña, volvemos a la primera página.
   useEffect(() => {
     setPage(1);
-  }, [debouncedQ]);
+  }, [debouncedQ, status]);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -77,9 +81,12 @@ export function ProfessionalsAdmin() {
         </Button>
       </div>
 
-      <div className="relative mt-5">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar negocio o slug…" />
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <StatusTabs value={status} onChange={setStatus} />
+        <div className="relative sm:w-72">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar negocio o slug…" />
+        </div>
       </div>
 
       <div className="mt-5">
@@ -94,8 +101,20 @@ export function ProfessionalsAdmin() {
         {data && items.length === 0 && (
           <EmptyState
             icon={<Building2 className="size-5" />}
-            title={debouncedQ ? "Sin resultados" : "Todavía no hay profesionales"}
-            message={debouncedQ ? "Probá otra búsqueda." : "Los profesionales se registran solos desde la web."}
+            title={
+              debouncedQ
+                ? "Sin resultados"
+                : status === "deleted"
+                  ? "No hay profesionales eliminados"
+                  : "Todavía no hay profesionales"
+            }
+            message={
+              debouncedQ
+                ? "Probá otra búsqueda."
+                : status === "deleted"
+                  ? "Cuando elimines un profesional, va a aparecer acá para que puedas restaurarlo."
+                  : "Los profesionales se registran solos desde la web."
+            }
           />
         )}
         {items.length > 0 && (

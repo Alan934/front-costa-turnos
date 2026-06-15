@@ -14,6 +14,7 @@ import {
   adminRestoreClient,
 } from "@/lib/api/generated/endpoints/admin/admin";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
+import type { ListStatusFilter } from "@/lib/api/generated/model/listStatusFilter";
 import type { AdminMetrics } from "@/mocks/contract-extensions";
 
 /** Endpoints de admin de plataforma (tag `admin` del contrato). */
@@ -22,6 +23,8 @@ import type { AdminMetrics } from "@/mocks/contract-extensions";
 export interface AdminListParams {
   /** Búsqueda libre (los tres endpoints buscan por nombre + campos propios). */
   q?: string;
+  /** Filtra por estado de borrado lógico. `all` (o omitir) = activos + eliminados. */
+  status?: ListStatusFilter;
   /** Página 1-based (default 1). */
   page?: number;
   /** Tamaño de página (default 20, máx 100). */

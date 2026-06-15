@@ -5,12 +5,17 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { ListStatusFilter } from './listStatusFilter';
 
 export type AdminListClientsParams = {
 /**
  * Texto de busqueda libre
  */
 q?: string;
+/**
+ * active = solo activos; deleted = solo eliminados; all = ambos (default)
+ */
+status?: ListStatusFilter;
 /**
  * Pagina (1-based)
  * @minimum 1

@@ -18,25 +18,29 @@ import { useAdminClients, useDeleteClient, useRestoreClient } from "@/lib/api/ad
 import { formatDateShort, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Pager } from "../pager";
+import { StatusTabs } from "../status-tabs";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { AdminClientDto } from "@/lib/api/generated/model/adminClientDto";
+import type { ListStatusFilter } from "@/lib/api/generated/model/listStatusFilter";
 
 const PAGE_SIZE = 20;
 
 export function ClientsAdmin() {
   const [q, setQ] = useState("");
+  const [status, setStatus] = useState<ListStatusFilter>("active");
   const [page, setPage] = useState(1);
   const debouncedQ = useDebouncedValue(q.trim(), 300);
 
   const { data, isLoading, isFetching, isError, refetch } = useAdminClients({
     q: debouncedQ || undefined,
+    status,
     page,
     pageSize: PAGE_SIZE,
   });
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQ]);
+  }, [debouncedQ, status]);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -50,14 +54,17 @@ export function ClientsAdmin() {
         </p>
       </div>
 
-      <div className="relative mt-5">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nombre, email o teléfono…"
-        />
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <StatusTabs value={status} onChange={setStatus} />
+        <div className="relative sm:w-80">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar por nombre, email o teléfono…"
+          />
+        </div>
       </div>
 
       <div className="mt-5">
@@ -72,11 +79,19 @@ export function ClientsAdmin() {
         {data && items.length === 0 && (
           <EmptyState
             icon={<Users className="size-5" />}
-            title={debouncedQ ? "Sin resultados" : "Todavía no hay clientes"}
+            title={
+              debouncedQ
+                ? "Sin resultados"
+                : status === "deleted"
+                  ? "No hay clientes eliminados"
+                  : "Todavía no hay clientes"
+            }
             message={
               debouncedQ
                 ? "Probá otra búsqueda."
-                : "Los clientes aparecen acá cuando los profesionales los cargan."
+                : status === "deleted"
+                  ? "Cuando elimines un cliente, va a aparecer acá para que puedas restaurarlo."
+                  : "Los clientes aparecen acá cuando los profesionales los cargan."
             }
           />
         )}

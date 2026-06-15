@@ -98,6 +98,7 @@ export * from './healthCheck503Info';
 export * from './incomeByDayDto';
 export * from './invitationStatus';
 export * from './inviteProfessionalDto';
+export * from './listStatusFilter';
 export * from './loginDto';
 export * from './membership';
 export * from './membershipStatus';
