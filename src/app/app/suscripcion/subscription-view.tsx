@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/billing";
 import { describeSubscription, type SubSeverity } from "@/lib/subscription";
 import { formatMoney, formatDateLong } from "@/lib/format";
+import { readPaymentResultFromParams, type PayResult } from "@/lib/payment-result";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
 
 const BADGE: Record<SubSeverity, "success" | "warning" | "default" | "muted"> = {
@@ -24,31 +25,15 @@ const BADGE: Record<SubSeverity, "success" | "warning" | "default" | "muted"> = 
   danger: "warning",
 };
 
-/** Normaliza el estado que devuelve MercadoPago al volver del checkout. */
-type PayResult = "approved" | "pending" | "rejected";
-function readPaymentResult(value: string | null): PayResult | null {
-  if (!value) return null;
-  const v = value.toLowerCase();
-  if (["approved", "success", "paid", "ok"].includes(v)) return "approved";
-  if (["pending", "in_process", "in_progress"].includes(v)) return "pending";
-  if (["rejected", "failure", "failed", "error", "cancelled", "null"].includes(v)) return "rejected";
-  return null;
-}
-
 export function SubscriptionView() {
   const sub = useSubscription();
   const params = useSearchParams();
   const [payResult, setPayResult] = useState<PayResult | null>(null);
 
   // MercadoPago vuelve con ?status= / ?collection_status= / ?payment= según cómo el back
-  // arme las back_urls. Tomamos el primero que aparezca.
+  // arme las back_urls (ver readPaymentResultFromParams).
   useEffect(() => {
-    const result = readPaymentResult(
-      params.get("status") ??
-        params.get("collection_status") ??
-        params.get("payment") ??
-        params.get("mp"),
-    );
+    const result = readPaymentResultFromParams(params);
     if (result) {
       setPayResult(result);
       sub.refetch(); // el estado pudo cambiar server-side tras el pago
