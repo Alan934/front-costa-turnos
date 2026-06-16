@@ -183,15 +183,23 @@ function createBooking(
   const provisional =
     opts.provisional ?? (!!svc && (svc.allowDeposit || svc.allowFullPayment));
 
-  // Datos de contacto que el cliente carga al reservar por la web (BookAppointmentDto).
+  // Datos de contacto que el cliente carga al reservar por la web (PublicBookDto).
   const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
   const email = typeof body.email === "string" ? body.email.trim() : "";
-  const personId = typeof body.personId === "string" && body.personId ? body.personId : "per_nuevo";
 
-  // El back, al reservar por la página pública, crea el vínculo professional_client si la
-  // persona aún no era cliente de este profesional. Lo replicamos para que el turno aparezca
-  // en la lista de Clientes y su contacto quede disponible. (Espeja el comportamiento del back.)
+  // El back resuelve la Person por teléfono (y opcionalmente email): si ya existe alguien con
+  // ese teléfono, reutiliza su ID y crea el vínculo professional_client si falta. Si no existe,
+  // crea una Person nueva. Replicamos la misma lógica en el mock.
+  const normalizedPhone = phone.replace(/\D/g, "");
+  // Comparar por los últimos 10 dígitos para tolerar distintos formatos de prefijo/país.
+  const phoneSuffix = normalizedPhone.slice(-10);
+  const existing = phoneSuffix.length >= 8
+    ? clients.find((c) => (c.phone?.replace(/\D/g, "") ?? "").endsWith(phoneSuffix))
+    : null;
+  const personId = existing ? existing.personId : `per_${Date.now()}`;
+
+  // Crear el vínculo si la persona todavía no está en la lista de clientes del profesional.
   if (fullName && !clients.some((c) => c.personId === personId)) {
     clients.push({
       id: `cli_${personId}`,
@@ -403,9 +411,16 @@ function buildMetrics(range: "week" | "month") {
 
 /** Turnos del cliente de demo (Sofía + los que reserve), enriquecidos para /mis-turnos. */
 function buildMyAppointments() {
-  const mine = appointments.filter(
-    (a) => a.personId === "per_sofia" || a.personId === "per_nuevo",
+  // El back hace match por teléfono para reutilizar el personId de Sofía si reserva con su
+  // número. Si por cualquier motivo quedó con un personId distinto, lo incluimos también.
+  const sofiaPhone = "+54 9 261 555-1001".replace(/\D/g, "").slice(-10);
+  const sofiaIds = new Set(
+    clients
+      .filter((c) => (c.phone?.replace(/\D/g, "") ?? "").endsWith(sofiaPhone) || c.personId === "per_sofia")
+      .map((c) => c.personId),
   );
+  sofiaIds.add("per_sofia");
+  const mine = appointments.filter((a) => sofiaIds.has(a.personId));
   return mine
     .map((a) => {
       const svc = services.find((s) => s.id === a.serviceId);

@@ -9,12 +9,10 @@ import type { PublicBookWithDepositDtoMethod } from './publicBookWithDepositDtoM
 import type { PaymentOption } from './paymentOption';
 
 export interface PublicBookWithDepositDto {
-  /** person.id existente */
-  personId?: string;
-  fullName?: string;
-  email?: string;
+  fullName: string;
   /** Celular de 10 dígitos: característica + número, sin 0/15/+54. Ej: 2612465120 */
-  phone?: string;
+  phone: string;
+  email?: string;
   serviceId: string;
   startAt: string;
   method: PublicBookWithDepositDtoMethod;
