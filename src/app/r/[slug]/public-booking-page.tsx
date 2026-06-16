@@ -559,6 +559,9 @@ function ConfirmStep({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  // El back debería responder con el link de pago (mpInitPoint) cuando el pago es
+  // obligatorio. Si no llega, NO confirmamos el turno: mostramos este error.
+  const [payRedirectError, setPayRedirectError] = useState(false);
   const options = getPaymentOptions(service);
   const hasNoPay = options.some((o) => o.choice === "none");
   const hasPaid = options.some((o) => o.requiresPayment);
@@ -580,8 +583,9 @@ function ConfirmStep({
   const slotTaken = !hasFieldErrors && (bookError as { response?: { status?: number } } | null)
     ?.response?.status === 409;
   // Mensaje general cuando el fallo no se pudo atribuir a un campo concreto.
-  const generalError =
-    failed && !hasFieldErrors
+  const generalError = payRedirectError
+    ? "No pudimos generar el link de pago. Tu turno no quedó confirmado. Probá de nuevo en unos minutos."
+    : failed && !hasFieldErrors
       ? slotTaken
         ? "Ese horario ya fue reservado por otra persona. Volvé atrás y elegí otro."
         : getApiErrorMessage(bookError, "No pudimos confirmar el turno. Probá de nuevo.")
@@ -598,16 +602,23 @@ function ConfirmStep({
       startAt: slot.startAt,
     };
     if (option.paymentOption) {
+      setPayRedirectError(false);
       bookWithDeposit.mutate(
         { ...base, method: "mercadopago", paymentOption: option.paymentOption },
         {
           onSuccess: (res) => {
-            // Redirigimos a MercadoPago para abonar (salvo en mock, que confirma directo).
-            if (!env.mockingEnabled && res?.mpInitPoint) {
+            // En mock confirmamos directo (no hay checkout real). Contra el back real, el pago
+            // es obligatorio: solo damos por hecho el turno tras redirigir a MercadoPago.
+            if (env.mockingEnabled) {
+              onConfirmed(false);
+              return;
+            }
+            if (res?.mpInitPoint) {
               window.location.href = res.mpInitPoint;
               return;
             }
-            onConfirmed(false);
+            // El back no devolvió el link de pago: NO confirmamos un turno impago.
+            setPayRedirectError(true);
           },
         },
       );

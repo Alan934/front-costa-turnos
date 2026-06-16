@@ -123,10 +123,11 @@ export interface AdminProfessionalRow {
 
 /**
  * Respuesta de la reserva con seña (`POST /r/{slug}/book-with-deposit` y
- * `POST /appointments/with-deposit`): el contrato la describe como `{ appointment, payment }`.
- * `mpInitPoint` es una extensión del front para la página pública (ver API-GAPS): permite
- * redirigir a MercadoPago sin que el cliente anónimo llame al endpoint autenticado
- * `/payments/{id}/mp-preference`.
+ * `POST /appointments/with-deposit`). El back devuelve `{ appointment, payment, mpInitPoint }`:
+ * cuando `method: "mercadopago"` y el pago queda pendiente, `mpInitPoint` trae la `init_point`
+ * de la preferencia (creada con el token del profesional) para redirigir al checkout. Así el
+ * cliente anónimo no necesita llamar al endpoint autenticado `/payments/{id}/mp-preference`.
+ * (Se mantiene en contract-extensions porque el OpenAPI tipa la respuesta como `void`.)
  */
 export interface BookWithDepositResult {
   appointment: Appointment;
