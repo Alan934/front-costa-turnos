@@ -16,4 +16,6 @@ export interface BookAppointmentDto {
   staffId: string;
   serviceId: string;
   startAt: string;
+  /** IDs de servicios adicionales habilitados por reglas de combinación */
+  addonServiceIds?: string[];
 }

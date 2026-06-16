@@ -18,6 +18,8 @@ export interface BookWithDepositDto {
   staffId: string;
   serviceId: string;
   startAt: string;
+  /** IDs de servicios adicionales habilitados por reglas de combinación */
+  addonServiceIds?: string[];
   method: BookWithDepositDtoMethod;
   /** deposit = seña, full = pago completo */
   paymentOption?: PaymentOption;

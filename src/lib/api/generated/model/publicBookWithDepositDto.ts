@@ -15,6 +15,8 @@ export interface PublicBookWithDepositDto {
   email?: string;
   serviceId: string;
   startAt: string;
+  /** IDs de servicios adicionales habilitados por reglas de combinación */
+  addonServiceIds?: string[];
   method: PublicBookWithDepositDtoMethod;
   /** deposit = seña, full = pago completo */
   paymentOption?: PaymentOption;

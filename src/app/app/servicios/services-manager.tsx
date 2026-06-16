@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Clock3, Pencil, Trash2, Scissors } from "lucide-react";
+import { Plus, Clock3, Pencil, Trash2, Scissors, Link2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration, titleCaseName } from "@/lib/format";
 import type { Service } from "@/lib/api/generated/model/service";
 import { ServiceFormDialog } from "./service-form-dialog";
+import { CombinationRulesDialog } from "./combination-rules-dialog";
 
 export function ServicesManager() {
   const { active, activeId, loading: comercioLoading } = useActiveComercio();
@@ -19,6 +20,7 @@ export function ServicesManager() {
   const deactivate = useDeactivateComercioService(activeId ?? "");
   const [editing, setEditing] = useState<Service | null>(null);
   const [creating, setCreating] = useState(false);
+  const [managingRules, setManagingRules] = useState<Service | null>(null);
 
   const services = (data ?? []).filter((s) => s.isActive);
   // Mientras no haya comercio activo resuelto, mostramos skeletons (no listas vacías).
@@ -79,6 +81,12 @@ export function ServicesManager() {
                         <Clock3 className="size-3.5" />
                         {formatDuration(s.durationMinutes)}
                       </span>
+                      {(s.capacity ?? 1) > 1 && (
+                        <span className="inline-flex items-center gap-1 text-accent">
+                          <Users className="size-3.5" />
+                          {s.capacity} cupos
+                        </span>
+                      )}
                       {pay && <Badge variant="muted">{pay}</Badge>}
                     </p>
                   </div>
@@ -86,6 +94,15 @@ export function ServicesManager() {
                     {formatMoney(s.priceCents)}
                   </span>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Reglas de combinación"
+                      title="Reglas de combinación"
+                      onClick={() => setManagingRules(s)}
+                    >
+                      <Link2 className="size-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(s)}>
                       <Pencil className="size-4" />
                     </Button>
@@ -115,6 +132,14 @@ export function ServicesManager() {
       )}
       {editing && activeId && (
         <ServiceFormDialog comercioId={activeId} service={editing} onClose={() => setEditing(null)} />
+      )}
+      {managingRules && activeId && (
+        <CombinationRulesDialog
+          comercioId={activeId}
+          service={managingRules}
+          allServices={data ?? []}
+          onClose={() => setManagingRules(null)}
+        />
       )}
     </div>
   );

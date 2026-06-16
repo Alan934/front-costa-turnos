@@ -5,6 +5,8 @@ import { customInstance } from "@/lib/api/axios-instance";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { CreateServiceDto } from "@/lib/api/generated/model/createServiceDto";
 import type { UpdateServiceDto } from "@/lib/api/generated/model/updateServiceDto";
+import type { ServiceCombinationRule } from "@/lib/api/generated/model/serviceCombinationRule";
+import type { CreateCombinationRuleDto } from "@/lib/api/generated/model/createCombinationRuleDto";
 
 /**
  * Wrappers tipados para el catálogo de servicios. orval no generó los hooks GET/POST de
@@ -103,5 +105,45 @@ export function useDeactivateComercioService(comercioId: string) {
         method: "DELETE",
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+  });
+}
+
+/* ---------- Reglas de combinación de servicios (F7) ---------- */
+
+export function useCombinationRules(comercioId: string | undefined) {
+  return useQuery({
+    queryKey: ["combination-rules", comercioId],
+    queryFn: ({ signal }) =>
+      customInstance<ServiceCombinationRule[]>({
+        url: `/v1/comercios/${comercioId}/services/combination-rules`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!comercioId,
+  });
+}
+
+export function useCreateCombinationRule(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateCombinationRuleDto) =>
+      customInstance<ServiceCombinationRule>({
+        url: `/v1/comercios/${comercioId}/services/combination-rules`,
+        method: "POST",
+        data,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["combination-rules", comercioId] }),
+  });
+}
+
+export function useDeleteCombinationRule(comercioId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ruleId: string) =>
+      customInstance({
+        url: `/v1/comercios/${comercioId}/services/combination-rules/${ruleId}`,
+        method: "DELETE",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["combination-rules", comercioId] }),
   });
 }

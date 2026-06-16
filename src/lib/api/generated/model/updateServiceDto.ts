@@ -20,5 +20,10 @@ export interface UpdateServiceDto {
   allowNoPayment?: boolean;
   /** monto de la seña en centavos */
   depositAmountCents?: number;
+  /**
+   * Cuántos clientes pueden reservar el mismo horario (default 1)
+   * @minimum 1
+   */
+  capacity?: number;
   isActive?: boolean;
 }

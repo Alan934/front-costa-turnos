@@ -39,6 +39,7 @@ export function ServiceFormDialog({
   const [depositAmount, setDepositAmount] = useState(
     service?.depositAmountCents ? String(service.depositAmountCents / 100) : "",
   );
+  const [capacity, setCapacity] = useState(String(service?.capacity ?? 1));
 
   const create = useCreateComercioService(comercioId);
   const update = useUpdateComercioService(comercioId, service?.id ?? "");
@@ -54,13 +55,15 @@ export function ServiceFormDialog({
   const depositOk = !allowDeposit || Number(depositAmount) > 0;
   // No permitir guardar opciones pagas si no hay MP (defensa: pudieron venir marcadas de antes).
   const paidOk = mpConnected || (!allowDeposit && !allowFullPayment);
+  const capacityNum = Number(capacity);
   const canSubmit =
     name.trim().length > 1 &&
     Number(duration) > 0 &&
     Number(price) >= 0 &&
     anyOption &&
     depositOk &&
-    paidOk;
+    paidOk &&
+    capacityNum >= 1;
 
   // Motivo por el que el botón está deshabilitado, para no dejar al usuario sin pistas.
   const blockReason = (() => {
@@ -85,6 +88,7 @@ export function ServiceFormDialog({
       allowDeposit: deposit,
       allowFullPayment: fullPayment,
       depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
+      capacity: capacityNum,
     };
     if (editing) update.mutate(payload, { onSuccess: onClose });
     else create.mutate(payload, { onSuccess: onClose });
@@ -112,6 +116,26 @@ export function ServiceFormDialog({
               <Label htmlFor="sf-price">Precio ($)</Label>
               <Input id="sf-price" type="number" min={0} step={100} className="mt-1.5" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="8000" />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="sf-capacity">Cupos por turno</Label>
+            <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">
+              Cuántos clientes pueden reservar el mismo horario. Por defecto 1.
+            </p>
+            <Input
+              id="sf-capacity"
+              type="number"
+              min={1}
+              step={1}
+              className="w-32"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="1"
+            />
+            {capacityNum < 1 && capacity !== "" && (
+              <p className="mt-1.5 text-xs text-destructive">Mínimo 1 cupo.</p>
+            )}
           </div>
 
           {/* Formas de pago para reservar (varias a la vez) */}

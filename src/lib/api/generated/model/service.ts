@@ -22,5 +22,7 @@ export interface Service {
   allowNoPayment: boolean;
   /** @nullable */
   depositAmountCents?: number | null;
+  /** @minimum 1 */
+  capacity: number;
   isActive: boolean;
 }

@@ -104,6 +104,7 @@ export const services: Service[] = [
     allowDeposit: false,
     allowFullPayment: false,
     depositAmountCents: null,
+    capacity: 1,
     isActive: true,
   },
   {
@@ -119,6 +120,7 @@ export const services: Service[] = [
     allowDeposit: true,
     allowFullPayment: true,
     depositAmountCents: 400000,
+    capacity: 1,
     isActive: true,
   },
   {
@@ -134,6 +136,7 @@ export const services: Service[] = [
     allowDeposit: true,
     allowFullPayment: true,
     depositAmountCents: 1000000,
+    capacity: 1,
     isActive: true,
   },
 ];

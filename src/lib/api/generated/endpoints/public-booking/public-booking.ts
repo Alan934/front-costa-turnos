@@ -237,6 +237,113 @@ export function usePublicBookingProfessional<TData = Awaited<ReturnType<typeof p
 
 
 /**
+ * Devuelve las reglas donde sourceServiceId = serviceId. El frontend las usa para mostrar qué add-ons puede agregar el cliente, qué descuentos aplican y qué servicios no pueden combinarse.
+ * @summary Reglas de combinación para un servicio (add-ons habilitados, exclusiones, descuentos)
+ */
+export const publicBookingCombinationRulesForService = (
+    slug: string,
+    membershipId: string,
+    serviceId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/r/${slug}/professionals/${membershipId}/services/${serviceId}/combination-rules`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingCombinationRulesForServiceQueryKey = (slug?: string,
+    membershipId?: string,
+    serviceId?: string,) => {
+    return [
+    `/r/${slug}/professionals/${membershipId}/services/${serviceId}/combination-rules`
+    ] as const;
+    }
+
+    
+export const getPublicBookingCombinationRulesForServiceQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError = ErrorType<void>>(slug: string,
+    membershipId: string,
+    serviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingCombinationRulesForServiceQueryKey(slug,membershipId,serviceId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>> = ({ signal }) => publicBookingCombinationRulesForService(slug,membershipId,serviceId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug && membershipId && serviceId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingCombinationRulesForServiceQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>>
+export type PublicBookingCombinationRulesForServiceQueryError = ErrorType<void>
+
+
+export function usePublicBookingCombinationRulesForService<TData = Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    serviceId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingCombinationRulesForService<TData = Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    serviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingCombinationRulesForService<TData = Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    serviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Reglas de combinación para un servicio (add-ons habilitados, exclusiones, descuentos)
+ */
+
+export function usePublicBookingCombinationRulesForService<TData = Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string,
+    serviceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingCombinationRulesForService>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingCombinationRulesForServiceQueryOptions(slug,membershipId,serviceId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Slots disponibles de un profesional en el comercio
  */
 export const publicBookingSlots = (

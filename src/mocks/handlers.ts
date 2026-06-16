@@ -607,6 +607,7 @@ export const handlers: RequestHandler[] = [
       allowDeposit: !!body.allowDeposit,
       allowFullPayment: !!body.allowFullPayment,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
+      capacity: Number(body.capacity ?? 1),
       isActive: true,
     };
     services.push(svc);

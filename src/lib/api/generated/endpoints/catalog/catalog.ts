@@ -25,8 +25,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CreateCombinationRuleDto,
   CreateServiceDto,
   Service,
+  ServiceCombinationRule,
   UpdateServiceDto
 } from '../../model';
 
@@ -791,6 +793,225 @@ export const useComercioCatalogDeactivate = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getComercioCatalogDeactivateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Listar reglas de combinación de la membresía
+ */
+export const comercioCatalogListRules = (
+    comercioId: unknown,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ServiceCombinationRule[]>(
+      {url: `/v1/comercios/${comercioId}/services/combination-rules`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioCatalogListRulesQueryKey = (comercioId?: unknown,) => {
+    return [
+    `/v1/comercios/${comercioId}/services/combination-rules`
+    ] as const;
+    }
+
+    
+export const getComercioCatalogListRulesQueryOptions = <TData = Awaited<ReturnType<typeof comercioCatalogListRules>>, TError = ErrorType<unknown>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioCatalogListRulesQueryKey(comercioId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioCatalogListRules>>> = ({ signal }) => comercioCatalogListRules(comercioId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioCatalogListRulesQueryResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogListRules>>>
+export type ComercioCatalogListRulesQueryError = ErrorType<unknown>
+
+
+export function useComercioCatalogListRules<TData = Awaited<ReturnType<typeof comercioCatalogListRules>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogListRules>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogListRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogListRules<TData = Awaited<ReturnType<typeof comercioCatalogListRules>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioCatalogListRules>>,
+          TError,
+          Awaited<ReturnType<typeof comercioCatalogListRules>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioCatalogListRules<TData = Awaited<ReturnType<typeof comercioCatalogListRules>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Listar reglas de combinación de la membresía
+ */
+
+export function useComercioCatalogListRules<TData = Awaited<ReturnType<typeof comercioCatalogListRules>>, TError = ErrorType<unknown>>(
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioCatalogListRules>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioCatalogListRulesQueryOptions(comercioId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Crear una regla de combinación entre dos servicios
+ */
+export const comercioCatalogCreateRule = (
+    comercioId: unknown,
+    createCombinationRuleDto: BodyType<CreateCombinationRuleDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ServiceCombinationRule>(
+      {url: `/v1/comercios/${comercioId}/services/combination-rules`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createCombinationRuleDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getComercioCatalogCreateRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreateRule>>, TError,{comercioId: unknown;data: BodyType<CreateCombinationRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreateRule>>, TError,{comercioId: unknown;data: BodyType<CreateCombinationRuleDto>}, TContext> => {
+
+const mutationKey = ['comercioCatalogCreateRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioCatalogCreateRule>>, {comercioId: unknown;data: BodyType<CreateCombinationRuleDto>}> = (props) => {
+          const {comercioId,data} = props ?? {};
+
+          return  comercioCatalogCreateRule(comercioId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioCatalogCreateRuleMutationResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogCreateRule>>>
+    export type ComercioCatalogCreateRuleMutationBody = BodyType<CreateCombinationRuleDto>
+    export type ComercioCatalogCreateRuleMutationError = ErrorType<void>
+
+    /**
+ * @summary Crear una regla de combinación entre dos servicios
+ */
+export const useComercioCatalogCreateRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogCreateRule>>, TError,{comercioId: unknown;data: BodyType<CreateCombinationRuleDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioCatalogCreateRule>>,
+        TError,
+        {comercioId: unknown;data: BodyType<CreateCombinationRuleDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioCatalogCreateRuleMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Eliminar una regla de combinación
+ */
+export const comercioCatalogDeleteRule = (
+    comercioId: unknown,
+    ruleId: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<void>(
+      {url: `/v1/comercios/${comercioId}/services/combination-rules/${ruleId}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getComercioCatalogDeleteRuleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeleteRule>>, TError,{comercioId: unknown;ruleId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeleteRule>>, TError,{comercioId: unknown;ruleId: string}, TContext> => {
+
+const mutationKey = ['comercioCatalogDeleteRule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comercioCatalogDeleteRule>>, {comercioId: unknown;ruleId: string}> = (props) => {
+          const {comercioId,ruleId} = props ?? {};
+
+          return  comercioCatalogDeleteRule(comercioId,ruleId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComercioCatalogDeleteRuleMutationResult = NonNullable<Awaited<ReturnType<typeof comercioCatalogDeleteRule>>>
+    
+    export type ComercioCatalogDeleteRuleMutationError = ErrorType<void>
+
+    /**
+ * @summary Eliminar una regla de combinación
+ */
+export const useComercioCatalogDeleteRule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comercioCatalogDeleteRule>>, TError,{comercioId: unknown;ruleId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comercioCatalogDeleteRule>>,
+        TError,
+        {comercioId: unknown;ruleId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getComercioCatalogDeleteRuleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

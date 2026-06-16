@@ -11,6 +11,7 @@ import {
   Info,
   ArrowRight,
   Phone,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import {
   usePublicProfessional,
   usePublicProfessionalSlots,
   usePublicProfessionalDayAvailability,
+  usePublicCombinationRules,
   useBookProfessional,
   useBookProfessionalWithDeposit,
 } from "@/lib/api/public-booking";
@@ -44,7 +46,7 @@ import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProf
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
-import type { Slot } from "@/mocks/contract-extensions";
+import type { Slot, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
 import {
   getApiErrorMessage,
   getApiValidationMessages,
@@ -64,11 +66,32 @@ function dayBlockLabel(avail: DayAvailabilityDto | undefined): string {
   return "Cerrado";
 }
 
+/** Precio final en centavos de un add-on según el tipo de regla y descuento. */
+function addonFinalPrice(rule: ServiceCombinationRuleWithService): number {
+  const base = rule.targetService?.priceCents ?? 0;
+  if (rule.ruleType === "free_with") return 0;
+  if (rule.ruleType === "discount") {
+    if (rule.discountType === "percentage" && rule.discountAmountCents != null) {
+      return Math.max(0, Math.round(base * (10000 - rule.discountAmountCents) / 10000));
+    }
+    if (rule.discountType === "fixed" && rule.discountAmountCents != null) {
+      return Math.max(0, base - rule.discountAmountCents);
+    }
+  }
+  return base;
+}
+
+/** Precio total de la reserva: servicio primario + add-ons seleccionados. */
+function totalBookingPrice(service: Service, addonRules: ServiceCombinationRuleWithService[]): number {
+  return service.priceCents + addonRules.reduce((sum, r) => sum + addonFinalPrice(r), 0);
+}
+
 type Step = 1 | 2 | 3 | 4;
 
 interface Selection {
   professional: PublicProfessionalDto | null;
   service: Service | null;
+  addonRules: ServiceCombinationRuleWithService[];
   slot: Slot | null;
 }
 
@@ -106,7 +129,6 @@ function TopBar() {
 
 function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDto }) {
   const professionals = page.professionals ?? [];
-  // Comercio-de-uno o con un solo profesional: autoseleccionamos y arrancamos en "Servicio".
   const single = page.isPersonal || professionals.length === 1;
   const soleProfessional = single ? (professionals[0] ?? null) : null;
 
@@ -114,17 +136,28 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
   const [sel, setSel] = useState<Selection>({
     professional: soleProfessional,
     service: null,
+    addonRules: [],
     slot: null,
   });
   const [confirmed, setConfirmed] = useState<{ provisional: boolean } | null>(null);
 
   function pickProfessional(professional: PublicProfessionalDto) {
-    setSel({ professional, service: null, slot: null });
+    setSel({ professional, service: null, addonRules: [], slot: null });
     setStep(2);
   }
   function pickService(service: Service) {
-    setSel((s) => ({ ...s, service, slot: null }));
+    setSel((s) => ({ ...s, service, addonRules: [], slot: null }));
     setStep(3);
+  }
+  function toggleAddon(rule: ServiceCombinationRuleWithService) {
+    setSel((s) => {
+      const exists = s.addonRules.some((r) => r.id === rule.id);
+      return {
+        ...s,
+        addonRules: exists ? s.addonRules.filter((r) => r.id !== rule.id) : [...s.addonRules, rule],
+        slot: null, // reiniciar slot porque cambia la duración total
+      };
+    });
   }
   function pickSlot(slot: Slot) {
     setSel((s) => ({ ...s, slot }));
@@ -139,7 +172,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
 
   function reset() {
     setConfirmed(null);
-    setSel({ professional: soleProfessional, service: null, slot: null });
+    setSel({ professional: soleProfessional, service: null, addonRules: [], slot: null });
     setStep(single ? 2 : 1);
   }
 
@@ -147,7 +180,6 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
     return <Confirmation page={page} sel={sel} provisional={confirmed.provisional} onReset={reset} />;
   }
 
-  // Comercio sin profesionales: no se puede reservar todavía.
   if (professionals.length === 0) {
     return (
       <div>
@@ -190,6 +222,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             membershipId={sel.professional.membershipId}
             service={sel.service}
             professional={sel.professional}
+            addonRules={sel.addonRules}
+            onToggleAddon={toggleAddon}
             onPick={pickSlot}
           />
         )}
@@ -198,6 +232,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             slug={slug}
             professional={sel.professional}
             service={sel.service}
+            addonRules={sel.addonRules}
             slot={sel.slot}
             onConfirmed={(provisional) => setConfirmed({ provisional })}
           />
@@ -231,7 +266,6 @@ function Stepper({ step, single }: { step: Step; single: boolean }) {
   const labels = single
     ? ["Servicio", "Horario", "Confirmar"]
     : ["Profesional", "Servicio", "Horario", "Confirmar"];
-  // Índice del paso actual dentro del set visible (en single, el paso 1 no existe).
   const current = single ? step - 2 : step - 1;
 
   return (
@@ -305,7 +339,7 @@ function ProfessionalStep({
   );
 }
 
-/* ---------- Ficha pública del profesional (descripción, dirección, contacto) ---------- */
+/* ---------- Ficha pública del profesional ---------- */
 function ProfessionalCard({ professional }: { professional: PublicProfessionalDetailDto }) {
   const phone = professional.phone?.trim();
   const waNumber = phone?.replace(/[^\d]/g, "");
@@ -347,7 +381,7 @@ function ProfessionalCard({ professional }: { professional: PublicProfessionalDe
   );
 }
 
-/* ---------- Paso 2: Servicio (del profesional elegido) ---------- */
+/* ---------- Paso 2: Servicio ---------- */
 function ServiceStep({
   slug,
   membershipId,
@@ -420,21 +454,115 @@ function ServiceStep({
   );
 }
 
+/* ---------- Panel de add-ons (combinación de servicios) ---------- */
+function AddonsPanel({
+  slug,
+  membershipId,
+  serviceId,
+  addonRules,
+  onToggleAddon,
+}: {
+  slug: string;
+  membershipId: string;
+  serviceId: string;
+  addonRules: ServiceCombinationRuleWithService[];
+  onToggleAddon: (rule: ServiceCombinationRuleWithService) => void;
+}) {
+  const { data: rules, isLoading } = usePublicCombinationRules(slug, membershipId, serviceId);
+
+  // Solo mostrar reglas que habilitan o descuentan un servicio adicional (no `excludes`)
+  const offerableRules = (rules ?? []).filter((r) => r.ruleType !== "excludes");
+
+  if (isLoading || offerableRules.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-card p-4">
+      <h3 className="mb-0.5 text-sm font-semibold">Servicios adicionales</h3>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Podés sumar algo más a tu turno. El precio y la duración se ajustan.
+      </p>
+      <div className="space-y-2">
+        {offerableRules.map((rule) => {
+          const ts = rule.targetService;
+          const isSelected = addonRules.some((r) => r.id === rule.id);
+          const finalPrice = addonFinalPrice(rule);
+          const originalPrice = ts?.priceCents ?? 0;
+          const isFree = rule.ruleType === "free_with";
+          const isDiscount = rule.ruleType === "discount" && finalPrice < originalPrice;
+
+          return (
+            <button
+              key={rule.id}
+              type="button"
+              onClick={() => onToggleAddon(rule)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                isSelected
+                  ? "border-accent bg-accent/5"
+                  : "border-border hover:border-accent/50",
+              )}
+            >
+              <span
+                className={cn(
+                  "grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors",
+                  isSelected ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground/40",
+                )}
+              >
+                {isSelected && <Check className="size-3" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium leading-snug">{ts?.name}</p>
+                {ts && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock3 className="size-3" />
+                    {formatDuration(ts.durationMinutes)}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0 text-right">
+                {isFree ? (
+                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    GRATIS
+                  </span>
+                ) : isDiscount ? (
+                  <div>
+                    <span className="block text-[11px] text-muted-foreground line-through">
+                      {formatMoney(originalPrice)}
+                    </span>
+                    <span className="text-sm font-semibold text-accent">{formatMoney(finalPrice)}</span>
+                  </div>
+                ) : (
+                  <span className="text-sm font-semibold">
+                    +{formatMoney(finalPrice)}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Paso 3: Fecha y hora ---------- */
 function SlotStep({
   slug,
   membershipId,
   service,
   professional,
+  addonRules,
+  onToggleAddon,
   onPick,
 }: {
   slug: string;
   membershipId: string;
   service: Service;
   professional: PublicProfessionalDto;
+  addonRules: ServiceCombinationRuleWithService[];
+  onToggleAddon: (rule: ServiceCombinationRuleWithService) => void;
   onPick: (s: Slot) => void;
 }) {
-  // Próximos 14 días como opciones de fecha.
   const days = useMemo(() => {
     const out: Date[] = [];
     const d = new Date();
@@ -456,18 +584,25 @@ function SlotStep({
     return { from: from.toISOString(), to: to.toISOString() };
   }, [days]);
 
-  const slotsParams = { serviceId: service.id, from: range.from, to: range.to };
+  // Incluye addon IDs para que el back calcule la duración total del bloque
+  const addonServiceIds = addonRules.length > 0
+    ? addonRules.map((r) => r.targetServiceId).join(",")
+    : undefined;
+
+  const slotsParams = {
+    serviceId: service.id,
+    addonServiceIds,
+    from: range.from,
+    to: range.to,
+  };
+
   const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(
     slug,
     membershipId,
     slotsParams,
   );
-
-  // Disponibilidad por día: señal confiable del back para deshabilitar/rotular cada día
-  // (cerrado vs. bloqueo con motivo), en vez de inferirlo de la presencia de slots.
   const { data: availability } = usePublicProfessionalDayAvailability(slug, membershipId, slotsParams);
 
-  // Indexada por fecha local YYYY-MM-DD para casar con el `date` del DTO (zona del comercio).
   const availByDate = useMemo(() => {
     const map = new Map<string, DayAvailabilityDto>();
     for (const a of availability ?? []) map.set(a.date, a);
@@ -475,7 +610,6 @@ function SlotStep({
   }, [availability]);
 
   const dayAvail = (d: Date) => availByDate.get(localDateKey(d));
-  // Reservable si el back lo dice; mientras todavía no llegó la disponibilidad, no bloqueamos.
   const isBookable = (d: Date) => {
     const a = dayAvail(d);
     return a ? a.bookable : true;
@@ -483,7 +617,6 @@ function SlotStep({
 
   const daySlots = (slots ?? []).filter((s) => isSameDay(s.startAt, activeDay));
 
-  // Si el día activo no es reservable, saltar al primer día disponible.
   useEffect(() => {
     if (availByDate.size === 0) return;
     if (isBookable(activeDay)) return;
@@ -492,11 +625,26 @@ function SlotStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availByDate, activeDay, days]);
 
+  const totalDuration =
+    service.durationMinutes + addonRules.reduce((sum, r) => sum + (r.targetService?.durationMinutes ?? 0), 0);
+
   return (
     <div>
+      {/* Panel de add-ons: se carga automáticamente, solo aparece si hay reglas */}
+      <AddonsPanel
+        slug={slug}
+        membershipId={membershipId}
+        serviceId={service.id}
+        addonRules={addonRules}
+        onToggleAddon={onToggleAddon}
+      />
+
       <h2 className="font-display text-lg font-semibold">Elegí día y hora</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {service.name} · {formatDuration(service.durationMinutes)} · con {professional.displayName}
+        {service.name} · {formatDuration(totalDuration)} · con {professional.displayName}
+        {addonRules.length > 0 && (
+          <> + {addonRules.length} extra{addonRules.length > 1 ? "s" : ""}</>
+        )}
       </p>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
@@ -505,7 +653,6 @@ function SlotStep({
           const active = isSameDay(d, activeDay);
           const avail = dayAvail(d);
           const blocked = !!avail && !avail.bookable;
-          // Etiqueta corta según el motivo: time_off → su razón (o "Bloqueado"); resto → "Cerrado".
           const label = dayBlockLabel(avail);
           return (
             <button
@@ -547,7 +694,6 @@ function SlotStep({
         )}
         {isError && <ErrorState message="No pudimos cargar los horarios." onRetry={() => refetch()} />}
         {!isLoading && !isError && daySlots.length === 0 && (() => {
-          // Si el back marca el día como bloqueado/cerrado, mostramos el motivo en vez del genérico.
           const a = dayAvail(activeDay);
           const blocked = !!a && !a.bookable;
           return (
@@ -586,20 +732,20 @@ function ConfirmStep({
   slug,
   professional,
   service,
+  addonRules,
   slot,
   onConfirmed,
 }: {
   slug: string;
   professional: PublicProfessionalDto;
   service: Service;
+  addonRules: ServiceCombinationRuleWithService[];
   slot: Slot;
   onConfirmed: (provisional: boolean) => void;
 }) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  // El back debería responder con el link de pago (mpInitPoint) cuando el pago es
-  // obligatorio. Si no llega, NO confirmamos el turno: mostramos este error.
   const [payRedirectError, setPayRedirectError] = useState(false);
   const options = getPaymentOptions(service);
   const hasNoPay = options.some((o) => o.choice === "none");
@@ -611,17 +757,11 @@ function ConfirmStep({
 
   const bookError = book.error ?? bookWithDeposit.error;
   const failed = book.isError || bookWithDeposit.isError;
-  // Distinguimos tres casos según lo que respondió el back, en vez de tratar todo 400 como
-  // "horario no disponible" (un teléfono inválido también es 400):
-  //  1. Errores de validación por campo (phone/email/fullName) → los mostramos junto al campo.
-  //  2. 409 (turno ya tomado) → el horario dejó de estar disponible.
-  //  3. Resto → el mensaje legible que mandó el back (o un genérico).
   const validationMessages = failed ? getApiValidationMessages(bookError) : [];
   const fieldErrors = matchFieldErrors(validationMessages, ["fullName", "phone", "email"]);
   const hasFieldErrors = Object.keys(fieldErrors).length > 0;
   const slotTaken = !hasFieldErrors && (bookError as { response?: { status?: number } } | null)
     ?.response?.status === 409;
-  // Mensaje general cuando el fallo no se pudo atribuir a un campo concreto.
   const generalError = payRedirectError
     ? "No pudimos generar el link de pago. Tu turno no quedó confirmado. Probá de nuevo en unos minutos."
     : failed && !hasFieldErrors
@@ -632,6 +772,9 @@ function ConfirmStep({
 
   const canSubmit = fullName.trim().length > 1 && phone.trim().length > 5;
 
+  const addonIds = addonRules.map((r) => r.targetServiceId);
+  const total = totalBookingPrice(service, addonRules);
+
   function submit(option: PayOption) {
     const base = {
       fullName: fullName.trim(),
@@ -639,6 +782,7 @@ function ConfirmStep({
       email: email.trim() || undefined,
       serviceId: service.id,
       startAt: slot.startAt,
+      addonServiceIds: addonIds.length > 0 ? addonIds : undefined,
     };
     if (option.paymentOption) {
       setPayRedirectError(false);
@@ -646,8 +790,6 @@ function ConfirmStep({
         { ...base, method: "mercadopago", paymentOption: option.paymentOption },
         {
           onSuccess: (res) => {
-            // En mock confirmamos directo (no hay checkout real). Contra el back real, el pago
-            // es obligatorio: solo damos por hecho el turno tras redirigir a MercadoPago.
             if (env.mockingEnabled) {
               onConfirmed(false);
               return;
@@ -656,13 +798,11 @@ function ConfirmStep({
               window.location.href = res.mpInitPoint;
               return;
             }
-            // El back no devolvió el link de pago: NO confirmamos un turno impago.
             setPayRedirectError(true);
           },
         },
       );
     } else {
-      // Sin pago: el turno puede quedar provisional (lo decide el back).
       book.mutate(base, { onSuccess: (appt) => onConfirmed(!!appt?.isProvisional) });
     }
   }
@@ -676,7 +816,34 @@ function ConfirmStep({
         <Row label="Profesional" value={professional.displayName} />
         {professional.address && <Row label="Dónde" value={professional.address} />}
         <Row label="Cuándo" value={`${formatDateLong(slot.startAt)} · ${formatTime(slot.startAt)}`} />
-        <Row label="Precio" value={formatMoney(service.priceCents)} strong />
+
+        {/* Desglose de precios con add-ons */}
+        {addonRules.length > 0 ? (
+          <>
+            <div className="my-1 h-px bg-border" />
+            <Row label={service.name} value={formatMoney(service.priceCents)} />
+            {addonRules.map((rule) => {
+              const name = rule.targetService?.name ?? "Extra";
+              const price = addonFinalPrice(rule);
+              const isFree = rule.ruleType === "free_with";
+              return (
+                <div key={rule.id} className="flex items-center justify-between gap-4 py-1.5 text-sm">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <CheckCircle2 className="size-3.5 text-accent" />
+                    {name}
+                  </span>
+                  <span className={cn("text-right", isFree && "text-green-600 dark:text-green-400")}>
+                    {isFree ? "GRATIS" : `+${formatMoney(price)}`}
+                  </span>
+                </div>
+              );
+            })}
+            <div className="my-1 h-px bg-border" />
+            <Row label="Total" value={formatMoney(total)} strong />
+          </>
+        ) : (
+          <Row label="Precio" value={formatMoney(service.priceCents)} strong />
+        )}
       </div>
 
       {hasPaid && hasNoPay && (
@@ -756,11 +923,14 @@ function ConfirmStep({
 
       <div className="mt-6 space-y-2.5">
         {options.map((opt, i) => {
+          // Para opciones con pago, ajustar el monto si hay add-ons (el back lo valida; el front muestra).
+          const extraCents = addonRules.reduce((sum, r) => sum + addonFinalPrice(r), 0);
+          const adjustedAmount = (opt.amountCents ?? 0) + (opt.choice === "full" ? extraCents : 0);
           const label =
             opt.choice === "deposit"
               ? `Pagar seña y reservar · ${formatMoney(opt.amountCents)}`
               : opt.choice === "full"
-                ? `Pagar el total · ${formatMoney(opt.amountCents)}`
+                ? `Pagar el total · ${formatMoney(adjustedAmount)}`
                 : hasPaid
                   ? "Reservar sin pagar"
                   : "Confirmar turno";
@@ -819,7 +989,9 @@ function Confirmation({
       </h2>
       {sel.service && sel.professional && sel.slot && (
         <p className="mt-2 text-muted-foreground">
-          {sel.service.name} con {sel.professional.displayName}
+          {sel.service.name}
+          {sel.addonRules.length > 0 && ` + ${sel.addonRules.length} extra${sel.addonRules.length > 1 ? "s" : ""}`}
+          {" "}con {sel.professional.displayName}
           <br />
           {formatDateLong(sel.slot.startAt)} · {formatTime(sel.slot.startAt)}
         </p>

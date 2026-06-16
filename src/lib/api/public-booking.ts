@@ -16,7 +16,7 @@ import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publ
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
 import type { PublicBookWithDepositDto } from "@/lib/api/generated/model/publicBookWithDepositDto";
-import type { Slot, BookWithDepositResult } from "@/mocks/contract-extensions";
+import type { Slot, BookWithDepositResult, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 
 /** Página del comercio: datos + lista de profesionales (`/r/:slug`). */
@@ -62,6 +62,8 @@ export interface ProfessionalSlotsQuery {
   serviceId: string;
   from: string;
   to: string;
+  /** IDs de servicios adicionales, comma-separated. El back los suma a la duración del bloque. */
+  addonServiceIds?: string;
 }
 
 /**
@@ -107,10 +109,13 @@ export function usePublicProfessionalSlots(
   });
 }
 
+type PublicBookWithAddons = PublicBookDto & { addonServiceIds?: string[] };
+type PublicBookWithDepositAndAddons = PublicBookWithDepositDto & { addonServiceIds?: string[] };
+
 /** Reserva sin pago (eligiendo profesional). Puede quedar provisional (lo decide el back). */
 export function useBookProfessional(slug: string, membershipId: string) {
   return useMutation({
-    mutationFn: (data: PublicBookDto) =>
+    mutationFn: (data: PublicBookWithAddons) =>
       customInstance<Appointment>({
         url: `/r/${slug}/professionals/${membershipId}/book`,
         method: "POST",
@@ -125,11 +130,29 @@ export function useBookProfessional(slug: string, membershipId: string) {
  */
 export function useBookProfessionalWithDeposit(slug: string, membershipId: string) {
   return useMutation({
-    mutationFn: (data: PublicBookWithDepositDto) =>
+    mutationFn: (data: PublicBookWithDepositAndAddons) =>
       customInstance<BookWithDepositResult>({
         url: `/r/${slug}/professionals/${membershipId}/book-with-deposit`,
         method: "POST",
         data,
       }),
+  });
+}
+
+/** Reglas de combinación del servicio primario (para el panel de add-ons del cliente). */
+export function usePublicCombinationRules(
+  slug: string,
+  membershipId: string | null,
+  serviceId: string | null,
+) {
+  return useQuery({
+    queryKey: ["public-combination-rules", slug, membershipId, serviceId],
+    queryFn: ({ signal }) =>
+      customInstance<ServiceCombinationRuleWithService[]>({
+        url: `/r/${slug}/professionals/${membershipId}/services/${serviceId}/combination-rules`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!slug && !!membershipId && !!serviceId,
   });
 }

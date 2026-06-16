@@ -7,6 +7,17 @@
  * tipados (Service, Staff, ProfessionalPublicPageSettings, AppointmentStatus, etc.).
  */
 import type { Service } from "@/lib/api/generated/model/service";
+import type { ServiceCombinationRule } from "@/lib/api/generated/model/serviceCombinationRule";
+
+/**
+ * `ServiceCombinationRule` con los servicios embebidos. El endpoint público
+ * (`/r/:slug/.../services/:id/combination-rules`) devuelve `targetService` cargado;
+ * el endpoint del profesional (GET all) no. Se usa el tipo extendido solo donde corresponde.
+ */
+export interface ServiceCombinationRuleWithService extends ServiceCombinationRule {
+  sourceService?: Service;
+  targetService?: Service;
+}
 import type { DepositMode } from "@/lib/api/generated/model/depositMode";
 import type { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
