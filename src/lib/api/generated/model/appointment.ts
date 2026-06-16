@@ -32,16 +32,16 @@ export interface Appointment {
   createdVia: CreatedVia;
   /** Nombre del cliente del turno */
   personName?: string;
-  /** Nombre del servicio del turno */
-  serviceName?: string;
   /**
-   * Teléfono de contacto del cliente del turno
+   * Teléfono del cliente del turno
    * @nullable
    */
   personPhone?: string | null;
   /**
-   * Email de contacto del cliente del turno
+   * Email del cliente del turno
    * @nullable
    */
   personEmail?: string | null;
+  /** Nombre del servicio del turno */
+  serviceName?: string;
 }

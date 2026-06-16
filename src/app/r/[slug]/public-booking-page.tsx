@@ -10,6 +10,7 @@ import {
   CalendarCheck2,
   Info,
   ArrowRight,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
+import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
 import type { Slot } from "@/mocks/contract-extensions";
@@ -303,6 +305,48 @@ function ProfessionalStep({
   );
 }
 
+/* ---------- Ficha pública del profesional (descripción, dirección, contacto) ---------- */
+function ProfessionalCard({ professional }: { professional: PublicProfessionalDetailDto }) {
+  const phone = professional.phone?.trim();
+  const waNumber = phone?.replace(/[^\d]/g, "");
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-center gap-4">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted font-display text-xl font-semibold text-foreground">
+          {professional.displayName.charAt(0).toUpperCase()}
+        </span>
+        <h1 className="font-display text-xl font-semibold tracking-tight">
+          {professional.displayName}
+        </h1>
+      </div>
+      {professional.bio?.trim() && (
+        <p className="mt-3 text-sm text-muted-foreground">{professional.bio}</p>
+      )}
+      {(professional.address || phone) && (
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
+          {professional.address && (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="size-3.5 text-accent" />
+              {professional.address}
+            </span>
+          )}
+          {phone && (
+            <a
+              href={waNumber ? `https://wa.me/${waNumber}` : `tel:${phone}`}
+              target={waNumber ? "_blank" : undefined}
+              rel={waNumber ? "noreferrer" : undefined}
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-accent"
+            >
+              <Phone className="size-3.5 text-accent" />
+              {phone}
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------- Paso 2: Servicio (del profesional elegido) ---------- */
 function ServiceStep({
   slug,
@@ -331,13 +375,8 @@ function ServiceStep({
 
   return (
     <div>
-      <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
-      {data?.address && (
-        <p className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground">
-          <MapPin className="size-3.5 text-accent" />
-          {data.displayName} · {data.address}
-        </p>
-      )}
+      {data && <ProfessionalCard professional={data} />}
+      <h2 className="mt-6 font-display text-lg font-semibold">Elegí el servicio</h2>
       {services.length === 0 ? (
         <EmptyState
           className="mt-4"

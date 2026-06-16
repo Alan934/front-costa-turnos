@@ -17,6 +17,16 @@ export interface PublicProfessionalDetailDto {
    * @nullable
    */
   address?: string | null;
+  /**
+   * Descripción/bio del profesional (publicPageSettings.bio).
+   * @nullable
+   */
+  bio?: string | null;
+  /**
+   * Teléfono/WhatsApp del profesional (publicPageSettings.phone).
+   * @nullable
+   */
+  phone?: string | null;
   timezone: string;
   /** Servicios activos del profesional en este comercio. */
   services: Service[];

@@ -16,4 +16,14 @@ export interface PublicProfessionalDto {
    * @nullable
    */
   address?: string | null;
+  /**
+   * Descripción/bio del profesional (publicPageSettings.bio).
+   * @nullable
+   */
+  bio?: string | null;
+  /**
+   * Teléfono/WhatsApp del profesional (publicPageSettings.phone).
+   * @nullable
+   */
+  phone?: string | null;
 }
