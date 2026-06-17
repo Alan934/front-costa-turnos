@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Store, User } from "lucide-react";
+import { Store, User, Building2, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -17,7 +17,7 @@ import type { AxiosError } from "axios";
 import type { ReactNode } from "react";
 
 type Tab = "login" | "registro";
-type RegType = "cliente" | "profesional";
+type RegType = "cliente" | "profesional" | "comercio";
 
 const DEFAULT_TZ = "America/Argentina/Buenos_Aires";
 
@@ -35,10 +35,8 @@ export function LoginRegister() {
   const [regType, setRegType] = useState<RegType>("cliente");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, register, registerProfessional } = useAuth();
+  const { login, register, registerProfessional, registerComercial } = useAuth();
 
-  // `next` permite volver al destino original (p. ej. aceptar una invitación) tras autenticarse.
-  // Solo aceptamos rutas internas para evitar redirecciones abiertas.
   const rawNext = searchParams.get("next");
   const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
 
@@ -52,11 +50,23 @@ export function LoginRegister() {
   const [error, setError] = useState<ReactNode>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const isPro = tab === "registro" && regType === "profesional";
-
+  // El nombre del negocio (pro o comercio) genera el slug automáticamente.
+  const nameForSlug = regType === "comercio" ? businessName : businessName;
   useEffect(() => {
-    if (!slugTouched) setSlug(toSlug(businessName));
-  }, [businessName, slugTouched]);
+    if (!slugTouched) setSlug(toSlug(nameForSlug));
+  }, [nameForSlug, slugTouched]);
+
+  function switchTab(t: Tab) {
+    setTab(t);
+    setError(null);
+  }
+
+  function switchType(t: RegType) {
+    setRegType(t);
+    setError(null);
+    setSlugTouched(false);
+    setSlug(toSlug(businessName));
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,7 +74,6 @@ export function LoginRegister() {
     setSubmitting(true);
     try {
       if (tab === "registro" && regType === "profesional") {
-        // Profesional: crea cuenta + profesional + comercio-de-uno + trial, en una.
         await registerProfessional({
           email,
           password,
@@ -74,12 +83,22 @@ export function LoginRegister() {
           timezone: DEFAULT_TZ,
           address: address.trim() || undefined,
         });
-        // Si vino de una invitación (next), volvemos ahí; si no, sigue el onboarding.
         router.replace(next ?? "/onboarding");
         return;
       }
+      if (tab === "registro" && regType === "comercio") {
+        await registerComercial({
+          email,
+          password,
+          comercioName: businessName.trim(),
+          slug,
+          timezone: DEFAULT_TZ,
+          address: address.trim() || undefined,
+        });
+        router.replace(next ?? "/comercio");
+        return;
+      }
       if (tab === "registro") {
-        // Cliente.
         const user = await register({ email, password, fullName });
         router.replace(next ?? homeForUser(user));
         return;
@@ -92,16 +111,19 @@ export function LoginRegister() {
       const message = ax.response?.data?.message ?? "";
       if (tab === "login") {
         setError("Email o contraseña incorrectos.");
-      } else if (status === 400 && /existe|registrad|ya.*email|email.*ya/i.test(message)) {
-        // El email ya tiene cuenta: orientamos según el caso.
+      } else if (status === 409 || (status === 400 && /existe|registrad|ya.*email|email.*ya/i.test(message))) {
         setError(<EmailExistsHelp />);
       } else {
-        setError("No pudimos crear la cuenta. Revisá los datos.");
+        setError("No pudimos crear la cuenta. Revisá los datos e intentá de nuevo.");
       }
     } finally {
       setSubmitting(false);
     }
   }
+
+  const isPro = tab === "registro" && regType === "profesional";
+  const isCom = tab === "registro" && regType === "comercio";
+  const showBusinessFields = isPro || isCom;
 
   return (
     <AuthShell
@@ -122,10 +144,7 @@ export function LoginRegister() {
           <button
             key={t}
             type="button"
-            onClick={() => {
-              setTab(t);
-              setError(null);
-            }}
+            onClick={() => switchTab(t)}
             className={cn(
               "rounded-md py-1.5 capitalize transition-colors",
               tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
@@ -142,28 +161,40 @@ export function LoginRegister() {
         <span className="h-px flex-1 bg-border" />o con tu email<span className="h-px flex-1 bg-border" />
       </div>
 
-      {/* ¿Cliente o profesional? (solo al registrarse) */}
+      {/* Selector de tipo de cuenta (solo al registrarse) */}
       {tab === "registro" && (
-        <div className="mb-4 grid grid-cols-2 gap-2">
+        <div className="mb-5 space-y-2">
+          <p className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            ¿Qué tipo de cuenta necesitás?
+          </p>
           <RegTypeCard
             active={regType === "cliente"}
-            onClick={() => { setRegType("cliente"); setError(null); }}
+            onClick={() => switchType("cliente")}
             icon={<User className="size-4" />}
             title="Soy cliente"
-            hint="Para reservar turnos"
+            description="Reservá turnos con profesionales y llevá el seguimiento de tu historial."
           />
           <RegTypeCard
             active={regType === "profesional"}
-            onClick={() => { setRegType("profesional"); setError(null); }}
-            icon={<Store className="size-4" />}
-            title="Tengo un negocio"
-            hint="Gestiono mis turnos"
+            onClick={() => switchType("profesional")}
+            icon={<Scissors className="size-4" />}
+            title="Soy profesional"
+            description="Manejá tu agenda, recibí reservas online y obtené tu propia página pública. Podés trabajar de forma independiente o sumarte al comercio de otro."
+          />
+          <RegTypeCard
+            active={regType === "comercio"}
+            onClick={() => switchType("comercio")}
+            icon={<Building2 className="size-4" />}
+            title="Administro un comercio"
+            description="Creá un negocio que agrupa varios profesionales bajo una sola página pública. Cada profesional se registra con su propio email y después lo invitás a unirse."
+            note="Usá un email diferente al de los profesionales que van a trabajar en tu negocio."
           />
         </div>
       )}
 
       <form onSubmit={onSubmit} className="space-y-3.5">
-        {tab === "registro" && (
+        {/* Nombre personal (no aplica al comercio, que no tiene persona física) */}
+        {tab === "registro" && regType !== "comercio" && (
           <div>
             <Label htmlFor="fullName">Nombre y apellido</Label>
             <Input
@@ -177,8 +208,16 @@ export function LoginRegister() {
             />
           </div>
         )}
+
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            {isCom ? "Email del comercio" : "Email"}
+          </Label>
+          {isCom && (
+            <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">
+              Este email será el acceso al panel del comercio, no el de los profesionales.
+            </p>
+          )}
           <Input
             id="email"
             type="email"
@@ -190,6 +229,7 @@ export function LoginRegister() {
             required
           />
         </div>
+
         <div>
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Contraseña</Label>
@@ -214,36 +254,53 @@ export function LoginRegister() {
           />
         </div>
 
-        {/* Datos del negocio (registro profesional) */}
-        {isPro && (
+        {/* Datos del negocio (profesional o comercio) */}
+        {showBusinessFields && (
           <>
             <div>
-              <Label htmlFor="businessName">Nombre del negocio</Label>
+              <Label htmlFor="businessName">
+                {isCom ? "Nombre del comercio" : "Nombre de tu negocio o perfil"}
+              </Label>
+              <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">
+                {isCom
+                  ? "Así va a aparecer en la página pública y en la app."
+                  : "Así te van a ver los clientes. Puede ser tu nombre, tu marca o tu salón."}
+              </p>
               <Input
                 id="businessName"
                 className="mt-1.5"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Peluquería del Pueblo"
+                placeholder={isCom ? "Studio 34" : "Peluquería del Pueblo"}
                 required
               />
             </div>
+
             <div>
-              <Label htmlFor="slug">Tu enlace público</Label>
-              <div className="mt-1.5 flex items-center rounded-lg border border-input bg-card pl-3 focus-within:ring-2 focus-within:ring-ring">
+              <Label htmlFor="slug">Dirección de la página pública</Label>
+              <p className="mb-1.5 mt-0.5 text-xs text-muted-foreground">
+                Tus clientes van a reservar desde esta URL. No se puede cambiar después.
+              </p>
+              <div className="flex items-center rounded-lg border border-input bg-card pl-3 focus-within:ring-2 focus-within:ring-ring">
                 <span className="select-none text-sm text-muted-foreground">/r/</span>
                 <input
                   id="slug"
                   value={slug}
-                  onChange={(e) => { setSlugTouched(true); setSlug(toSlug(e.target.value)); }}
+                  onChange={(e) => {
+                    setSlugTouched(true);
+                    setSlug(toSlug(e.target.value));
+                  }}
                   placeholder="mi-negocio"
                   className="h-10 w-full bg-transparent px-2 text-sm outline-none"
                   required
                 />
               </div>
             </div>
+
             <div>
-              <Label htmlFor="address">Dirección <span className="text-muted-foreground">(opcional)</span></Label>
+              <Label htmlFor="address">
+                Dirección <span className="text-muted-foreground">(opcional)</span>
+              </Label>
               <Input
                 id="address"
                 className="mt-1.5"
@@ -252,6 +309,18 @@ export function LoginRegister() {
                 placeholder="Belgrano 245, Costa de Araujo"
               />
             </div>
+
+            {/* Recordatorio de emails separados para el comercio */}
+            {isCom && (
+              <div className="flex gap-2.5 rounded-xl border border-warning/40 bg-warning/10 p-3.5 text-xs text-warning-foreground">
+                <Store className="mt-0.5 size-4 shrink-0" />
+                <p>
+                  <strong>Recordá:</strong> los profesionales que invites deben registrarse
+                  con sus propios emails antes de sumarse al comercio. El email que usás acá
+                  es solo para administrar el negocio.
+                </p>
+              </div>
+            )}
           </>
         )}
 
@@ -262,13 +331,13 @@ export function LoginRegister() {
         )}
 
         <Button type="submit" className="w-full" size="lg" loading={submitting}>
-          {submitting
-            ? tab === "login"
-              ? "Ingresando…"
-              : "Creando cuenta…"
-            : tab === "login"
-              ? "Ingresar"
-              : "Crear cuenta"}
+          {tab === "login"
+            ? "Ingresar"
+            : regType === "cliente"
+              ? "Crear cuenta de cliente"
+              : regType === "profesional"
+                ? "Crear mi cuenta profesional"
+                : "Crear cuenta del comercio"}
         </Button>
       </form>
     </AuthShell>
@@ -280,33 +349,42 @@ function RegTypeCard({
   onClick,
   icon,
   title,
-  hint,
+  description,
+  note,
 }: {
   active: boolean;
   onClick: () => void;
   icon: ReactNode;
   title: string;
-  hint: string;
+  description: string;
+  note?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex flex-col items-start gap-0.5 rounded-xl border p-3 text-left transition-colors",
+        "w-full rounded-xl border p-3.5 text-left transition-colors",
         active ? "border-accent bg-accent/10" : "border-border hover:border-accent/50",
       )}
     >
-      <span className={cn("flex items-center gap-1.5 text-sm font-medium", active ? "text-accent" : "text-foreground")}>
+      <span
+        className={cn(
+          "mb-1 flex items-center gap-1.5 text-sm font-semibold",
+          active ? "text-accent" : "text-foreground",
+        )}
+      >
         {icon}
         {title}
       </span>
-      <span className="text-xs text-muted-foreground">{hint}</span>
+      <p className="text-xs leading-relaxed text-muted-foreground">{description}</p>
+      {note && active && (
+        <p className="mt-2 text-xs font-medium text-warning-foreground">{note}</p>
+      )}
     </button>
   );
 }
 
-/** Mensaje cuando el email ya tiene cuenta: orienta a recuperar o activar. */
 function EmailExistsHelp() {
   return (
     <div className="space-y-1.5">

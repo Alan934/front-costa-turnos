@@ -488,6 +488,16 @@ export const handlers: RequestHandler[] = [
     registeredClient = { ...clientUser, email: body.email ?? clientUser.email, fullName: body.fullName ?? clientUser.fullName };
     return tokensFor("client");
   }),
+  http.post(url("/auth/register-professional"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { email?: string; fullName?: string };
+    registeredClient = { ...me, email: body.email ?? me.email, fullName: body.fullName ?? me.fullName };
+    return tokensFor("professional");
+  }),
+  http.post(url("/auth/register-comercial"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { email?: string };
+    registeredClient = { ...me, email: body.email ?? me.email };
+    return tokensFor("professional");
+  }),
   http.post(url("/auth/logout"), () => new HttpResponse(null, { status: 204 })),
   http.post(url("/auth/refresh"), () =>
     HttpResponse.json({ accessToken: "mock.client.token", refreshToken: "mock.refresh" }),

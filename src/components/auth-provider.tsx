@@ -22,6 +22,7 @@ import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 import type { LoginDto } from "@/lib/api/generated/model/loginDto";
 import type { RegisterDto } from "@/lib/api/generated/model/registerDto";
 import type { RegisterProfessionalDto } from "@/lib/api/generated/model/registerProfessionalDto";
+import type { RegisterComercialDto } from "@/lib/api/generated/model/registerComercialDto";
 import type { MeResponse, AccountRole } from "@/mocks/contract-extensions";
 
 interface AuthContextValue {
@@ -35,6 +36,8 @@ interface AuthContextValue {
   register: (dto: RegisterDto) => Promise<MeResponse>;
   /** Registro de profesional self-service (crea cuenta + profesional + comercio-de-uno + trial). */
   registerProfessional: (dto: RegisterProfessionalDto) => Promise<MeResponse>;
+  /** Registro de cuenta comercial (agrupa profesionales ya registrados bajo una misma página). */
+  registerComercial: (dto: RegisterComercialDto) => Promise<MeResponse>;
   logout: () => Promise<void>;
   /** Re-lee /auth/me (tras reclamar cuenta, etc.). */
   refresh: () => Promise<void>;
@@ -192,6 +195,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [afterAuth],
   );
 
+  const registerComercial = useCallback(
+    async (dto: RegisterComercialDto) => {
+      const tokens = await customInstance<AuthTokensDto>({
+        url: "/auth/register-comercial",
+        method: "POST",
+        data: dto,
+      });
+      setAuthTokens(tokens);
+      const u = await afterAuth();
+      if (!u) throw new Error("No se pudo cargar la sesión");
+      return u;
+    },
+    [afterAuth],
+  );
+
   const logout = useCallback(async () => {
     try {
       await customInstance({ url: "/auth/logout", method: "POST" });
@@ -221,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         registerProfessional,
+        registerComercial,
         logout,
         refresh,
       }}
