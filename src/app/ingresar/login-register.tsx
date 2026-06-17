@@ -83,7 +83,7 @@ export function LoginRegister() {
           timezone: DEFAULT_TZ,
           address: address.trim() || undefined,
         });
-        router.replace(next ?? "/onboarding");
+        router.replace(next ?? "/app");
         return;
       }
       if (tab === "registro" && regType === "comercio") {

@@ -10,6 +10,7 @@ import {
   Users,
   Clock,
   ExternalLink,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServices } from "@/lib/api/catalog";
@@ -86,42 +87,47 @@ export function WelcomeSetup() {
 
   return (
     <div className="mb-8 overflow-hidden rounded-2xl border border-accent/25 bg-card">
-      {/* Encabezado */}
-      <div className="flex items-start gap-4 border-b border-border p-5">
-        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+      {/* Encabezado — bienvenida post-registro */}
+      <div className="flex items-start gap-4 bg-accent/5 px-5 py-5">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent">
           <PartyPopper className="size-6" />
         </span>
-        <div className="min-w-0">
-          <h2 className="font-display text-lg font-semibold tracking-tight">
-            ¡Tu cuenta está lista!
-          </h2>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg font-semibold tracking-tight">
+              ¡Bienvenido/a a tu panel!
+            </h2>
+            <Sparkles className="size-4 shrink-0 text-accent" />
+          </div>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Completá estos {steps.length} pasos para que tus clientes puedan
-            reservar desde tu página pública.
+            Tu cuenta fue creada con éxito. Para que tus clientes puedan reservar
+            turnos online, completá estos pasos:
           </p>
         </div>
         {doneCount > 0 && (
-          <span className="ml-auto shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">
+          <span className="shrink-0 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">
             {doneCount}/{steps.length}
           </span>
         )}
       </div>
 
       {/* Lista de pasos */}
-      <div className="divide-y divide-border">
-        {steps.map((step) => (
+      <div className="divide-y divide-border border-t border-border">
+        {steps.map((step, i) => (
           <div
             key={step.label}
             className={cn(
-              "flex items-start gap-4 px-5 py-4 transition-colors",
-              step.done && "opacity-60",
+              "flex items-start gap-4 px-5 py-4",
+              step.done && "opacity-55",
             )}
           >
-            {/* Ícono de estado */}
+            {/* Número / check */}
             {step.done ? (
               <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
             ) : (
-              <Circle className="mt-0.5 size-5 shrink-0 text-muted-foreground/50" />
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2 border-muted-foreground/30 text-[11px] font-bold text-muted-foreground">
+                {i + 1}
+              </span>
             )}
 
             {/* Contenido */}
@@ -154,28 +160,20 @@ export function WelcomeSetup() {
         ))}
       </div>
 
-      {/* Pie: links de acceso rápido */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-5 py-3">
-        <p className="text-xs text-muted-foreground">
-          También podés usar el asistente de configuración guiado.
-        </p>
-        <div className="flex items-center gap-2">
-          {slug && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/r/${slug}`} target="_blank">
-                <ExternalLink className="size-3.5" />
-                Ver mi página
-              </Link>
-            </Button>
-          )}
-          <Button size="sm" asChild>
-            <Link href="/onboarding">
-              Asistente de configuración
-              <ArrowRight className="size-3.5" />
+      {/* Pie: ver la página pública */}
+      {slug && (
+        <div className="flex items-center justify-between border-t border-border bg-muted/30 px-5 py-3">
+          <p className="text-xs text-muted-foreground">
+            Tu página ya está en línea — podés verla en cualquier momento.
+          </p>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/r/${slug}`} target="_blank">
+              <ExternalLink className="size-3.5" />
+              Ver mi página
             </Link>
           </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
