@@ -5,6 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { ServiceAssignedMembership } from './serviceAssignedMembership';
 
 export interface Service {
   id: string;
@@ -13,6 +14,7 @@ export interface Service {
   /** @nullable */
   deletedAt?: string | null;
   professionalId: string;
+  comercioId: string;
   membershipId: string;
   name: string;
   durationMinutes: number;
@@ -25,4 +27,5 @@ export interface Service {
   /** @minimum 1 */
   capacity: number;
   isActive: boolean;
+  assignedMemberships?: ServiceAssignedMembership[];
 }

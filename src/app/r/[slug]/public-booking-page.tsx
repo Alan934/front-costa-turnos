@@ -10,8 +10,7 @@ import {
   CalendarCheck2,
   Info,
   ArrowRight,
-  Phone,
-  CheckCircle2,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +21,15 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import {
   useComercioPublicPage,
-  usePublicProfessional,
+  usePublicServices,
   usePublicProfessionalSlots,
   usePublicProfessionalDayAvailability,
-  usePublicCombinationRules,
+  usePublicServiceSlots,
+  usePublicServiceDayAvailability,
   useBookProfessional,
   useBookProfessionalWithDeposit,
+  useBookService,
+  useBookServiceWithDeposit,
 } from "@/lib/api/public-booking";
 import { getPaymentOptions, paymentSummary, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
@@ -40,59 +42,44 @@ import {
   isSameDay,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Service } from "@/lib/api/generated/model/service";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
-import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
-import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
+import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
+import type { PublicServiceProfessionalDto } from "@/lib/api/generated/model/publicServiceProfessionalDto";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
-import type { Slot, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
+import type { Slot } from "@/mocks/contract-extensions";
 import {
   getApiErrorMessage,
   getApiValidationMessages,
   matchFieldErrors,
 } from "@/lib/api/error-message";
 
-/** Clave local YYYY-MM-DD para casar una fecha con el `date` del DayAvailabilityDto. */
+/** Opción de profesional: uno concreto o "cualquiera" (el back asigna al de menor carga). */
+type ProfessionalChoice = PublicServiceProfessionalDto | "any";
+
+type Step = 1 | 2 | 3 | 4;
+
+interface Selection {
+  service: PublicServiceDto | null;
+  professional: ProfessionalChoice | null;
+  slot: Slot | null;
+}
+
+interface ConfirmedState {
+  provisional: boolean;
+  /** Nombre del profesional asignado por el back cuando se eligió "cualquiera". */
+  professionalDisplayName?: string;
+}
+
 function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** Etiqueta corta para el chip de un día no reservable (motivo de time_off o "Cerrado"). */
 function dayBlockLabel(avail: DayAvailabilityDto | undefined): string {
   if (!avail) return "Cerrado";
   if (avail.status === DayAvailabilityStatus.time_off) return avail.reason?.trim() || "Bloqueado";
   if (avail.status === DayAvailabilityStatus.full) return "Completo";
   return "Cerrado";
-}
-
-/** Precio final en centavos de un add-on según el tipo de regla y descuento. */
-function addonFinalPrice(rule: ServiceCombinationRuleWithService): number {
-  const base = rule.targetService?.priceCents ?? 0;
-  if (rule.ruleType === "free_with") return 0;
-  if (rule.ruleType === "discount") {
-    if (rule.discountType === "percentage" && rule.discountAmountCents != null) {
-      return Math.max(0, Math.round(base * (10000 - rule.discountAmountCents) / 10000));
-    }
-    if (rule.discountType === "fixed" && rule.discountAmountCents != null) {
-      return Math.max(0, base - rule.discountAmountCents);
-    }
-  }
-  return base;
-}
-
-/** Precio total de la reserva: servicio primario + add-ons seleccionados. */
-function totalBookingPrice(service: Service, addonRules: ServiceCombinationRuleWithService[]): number {
-  return service.priceCents + addonRules.reduce((sum, r) => sum + addonFinalPrice(r), 0);
-}
-
-type Step = 1 | 2 | 3 | 4;
-
-interface Selection {
-  professional: PublicProfessionalDto | null;
-  service: Service | null;
-  addonRules: ServiceCombinationRuleWithService[];
-  slot: Slot | null;
 }
 
 export function PublicBookingPage({ slug }: { slug: string }) {
@@ -128,37 +115,26 @@ function TopBar() {
 }
 
 function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDto }) {
-  const professionals = page.professionals ?? [];
-  const single = page.isPersonal || professionals.length === 1;
-  const soleProfessional = single ? (professionals[0] ?? null) : null;
+  const [step, setStep] = useState<Step>(1);
+  const [sel, setSel] = useState<Selection>({ service: null, professional: null, slot: null });
+  const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);
 
-  const [step, setStep] = useState<Step>(single ? 2 : 1);
-  const [sel, setSel] = useState<Selection>({
-    professional: soleProfessional,
-    service: null,
-    addonRules: [],
-    slot: null,
-  });
-  const [confirmed, setConfirmed] = useState<{ provisional: boolean } | null>(null);
+  // Si el servicio tiene un único profesional asignado, se omite el paso de selección.
+  const singlePro = !sel.service || sel.service.professionals.length <= 1;
 
-  function pickProfessional(professional: PublicProfessionalDto) {
-    setSel({ professional, service: null, addonRules: [], slot: null });
-    setStep(2);
+  function pickService(service: PublicServiceDto) {
+    const profs = service.professionals;
+    // Un solo profesional: lo preseleccionamos y pasamos directo al selector de horario.
+    const autoProf = profs.length === 1 ? profs[0] : null;
+    setSel({ service, professional: autoProf, slot: null });
+    setStep(autoProf ? 3 : 2);
   }
-  function pickService(service: Service) {
-    setSel((s) => ({ ...s, service, addonRules: [], slot: null }));
+
+  function pickProfessional(professional: ProfessionalChoice) {
+    setSel((s) => ({ ...s, professional, slot: null }));
     setStep(3);
   }
-  function toggleAddon(rule: ServiceCombinationRuleWithService) {
-    setSel((s) => {
-      const exists = s.addonRules.some((r) => r.id === rule.id);
-      return {
-        ...s,
-        addonRules: exists ? s.addonRules.filter((r) => r.id !== rule.id) : [...s.addonRules, rule],
-        slot: null, // reiniciar slot porque cambia la duración total
-      };
-    });
-  }
+
   function pickSlot(slot: Slot) {
     setSel((s) => ({ ...s, slot }));
     setStep(4);
@@ -166,42 +142,35 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
 
   function back() {
     if (step === 4) setStep(3);
-    else if (step === 3) setStep(2);
-    else if (step === 2) setStep(single ? 2 : 1);
+    else if (step === 3) setStep(singlePro ? 1 : 2);
+    else if (step === 2) setStep(1);
   }
 
   function reset() {
     setConfirmed(null);
-    setSel({ professional: soleProfessional, service: null, addonRules: [], slot: null });
-    setStep(single ? 2 : 1);
+    setSel({ service: null, professional: null, slot: null });
+    setStep(1);
   }
 
   if (confirmed) {
-    return <Confirmation page={page} sel={sel} provisional={confirmed.provisional} onReset={reset} />;
-  }
-
-  if (professionals.length === 0) {
     return (
-      <div>
-        <ComercioHeader page={page} />
-        <div className="mt-6">
-          <EmptyState
-            icon={<CalendarX2 className="size-5" />}
-            title="Todavía no se puede reservar"
-            message="Este negocio aún está configurando su agenda. Volvé a intentar más tarde."
-          />
-        </div>
-      </div>
+      <Confirmation
+        page={page}
+        sel={sel}
+        provisional={confirmed.provisional}
+        assignedProName={confirmed.professionalDisplayName}
+        onReset={reset}
+      />
     );
   }
 
   return (
     <div>
       <ComercioHeader page={page} />
-      <Stepper step={step} single={single} />
+      <Stepper step={step} singlePro={singlePro} />
 
       <div className="mt-6">
-        {(step > 1 && !single) || (step > 2 && single) ? (
+        {step > 1 ? (
           <button
             type="button"
             onClick={back}
@@ -212,29 +181,30 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           </button>
         ) : null}
 
-        {step === 1 && <ProfessionalStep professionals={professionals} onPick={pickProfessional} />}
-        {step === 2 && sel.professional && (
-          <ServiceStep slug={slug} membershipId={sel.professional.membershipId} onPick={pickService} />
+        {step === 1 && <ServiceStep slug={slug} onPick={pickService} />}
+
+        {step === 2 && sel.service && (
+          <ProfessionalStep service={sel.service} onPick={pickProfessional} />
         )}
-        {step === 3 && sel.professional && sel.service && (
+
+        {step === 3 && sel.service && sel.professional && (
           <SlotStep
             slug={slug}
-            membershipId={sel.professional.membershipId}
             service={sel.service}
             professional={sel.professional}
-            addonRules={sel.addonRules}
-            onToggleAddon={toggleAddon}
             onPick={pickSlot}
           />
         )}
-        {step === 4 && sel.professional && sel.service && sel.slot && (
+
+        {step === 4 && sel.service && sel.professional && sel.slot && (
           <ConfirmStep
             slug={slug}
-            professional={sel.professional}
             service={sel.service}
-            addonRules={sel.addonRules}
+            professional={sel.professional}
             slot={sel.slot}
-            onConfirmed={(provisional) => setConfirmed({ provisional })}
+            onConfirmed={(provisional, professionalDisplayName) =>
+              setConfirmed({ provisional, professionalDisplayName })
+            }
           />
         )}
       </div>
@@ -262,11 +232,15 @@ function ComercioHeader({ page }: { page: ComercioPublicPageDto }) {
 }
 
 /* ---------- Stepper ---------- */
-function Stepper({ step, single }: { step: Step; single: boolean }) {
-  const labels = single
+function Stepper({ step, singlePro }: { step: Step; singlePro: boolean }) {
+  const labels = singlePro
     ? ["Servicio", "Horario", "Confirmar"]
-    : ["Profesional", "Servicio", "Horario", "Confirmar"];
-  const current = single ? step - 2 : step - 1;
+    : ["Servicio", "Profesional", "Horario", "Confirmar"];
+
+  // Índice visible del paso actual (omitimos el paso 2 en modo singlePro).
+  const current = singlePro
+    ? step === 1 ? 0 : step === 3 ? 1 : 2
+    : step - 1;
 
   return (
     <ol className="mt-6 flex items-center gap-2" aria-label="Pasos de la reserva">
@@ -300,19 +274,116 @@ function Stepper({ step, single }: { step: Step; single: boolean }) {
   );
 }
 
-/* ---------- Paso 1: Profesional ---------- */
-function ProfessionalStep({
-  professionals,
+/* ---------- Paso 1: Servicio ---------- */
+function ServiceStep({
+  slug,
   onPick,
 }: {
-  professionals: PublicProfessionalDto[];
-  onPick: (p: PublicProfessionalDto) => void;
+  slug: string;
+  onPick: (s: PublicServiceDto) => void;
+}) {
+  const { data, isLoading, isError, refetch } = usePublicServices(slug);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+  if (isError) {
+    return <ErrorState message="No pudimos cargar los servicios." onRetry={() => refetch()} />;
+  }
+  if (!data || data.length === 0) {
+    return (
+      <EmptyState
+        icon={<CalendarX2 className="size-5" />}
+        title="Sin servicios disponibles"
+        message="Este negocio todavía no publicó servicios para reservar."
+      />
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
+      <div className="mt-4 space-y-3">
+        {data.map((s) => {
+          const summary = paymentSummary(s);
+          const proCount = s.professionals.length;
+          return (
+            <button
+              key={s.serviceId}
+              type="button"
+              onClick={() => onPick(s)}
+              className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">{s.name}</p>
+                <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock3 className="size-3.5" />
+                  {formatDuration(s.durationMinutes)}
+                  {proCount > 1 && (
+                    <>
+                      <span className="mx-0.5">·</span>
+                      <Users className="size-3.5" />
+                      {proCount} profesionales
+                    </>
+                  )}
+                </p>
+                {summary && (
+                  <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
+                    <Info className="size-3" />
+                    {summary}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="font-display font-semibold tabular-nums">{formatMoney(s.priceCents)}</p>
+                <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Paso 2: Profesional (o "Cualquiera") ---------- */
+function ProfessionalStep({
+  service,
+  onPick,
+}: {
+  service: PublicServiceDto;
+  onPick: (p: ProfessionalChoice) => void;
 }) {
   return (
     <div>
       <h2 className="font-display text-lg font-semibold">¿Con quién te atendés?</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{service.name}</p>
       <div className="mt-4 space-y-3">
-        {professionals.map((p) => (
+        {/* Opción "Cualquiera": el back asigna el profesional de menor carga */}
+        <button
+          type="button"
+          onClick={() => onPick("any")}
+          className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted">
+            <Users className="size-5 text-muted-foreground" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Cualquiera disponible</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Te asignamos el profesional más libre ese día.
+            </p>
+          </div>
+          <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+        </button>
+
+        {service.professionals.map((p) => (
           <button
             key={p.membershipId}
             type="button"
@@ -339,230 +410,21 @@ function ProfessionalStep({
   );
 }
 
-/* ---------- Ficha pública del profesional ---------- */
-function ProfessionalCard({ professional }: { professional: PublicProfessionalDetailDto }) {
-  const phone = professional.phone?.trim();
-  const waNumber = phone?.replace(/[^\d]/g, "");
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <div className="flex items-center gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-muted font-display text-xl font-semibold text-foreground">
-          {professional.displayName.charAt(0).toUpperCase()}
-        </span>
-        <h1 className="font-display text-xl font-semibold tracking-tight">
-          {professional.displayName}
-        </h1>
-      </div>
-      {professional.bio?.trim() && (
-        <p className="mt-3 text-sm text-muted-foreground">{professional.bio}</p>
-      )}
-      {(professional.address || phone) && (
-        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
-          {professional.address && (
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="size-3.5 text-accent" />
-              {professional.address}
-            </span>
-          )}
-          {phone && (
-            <a
-              href={waNumber ? `https://wa.me/${waNumber}` : `tel:${phone}`}
-              target={waNumber ? "_blank" : undefined}
-              rel={waNumber ? "noreferrer" : undefined}
-              className="inline-flex items-center gap-1.5 transition-colors hover:text-accent"
-            >
-              <Phone className="size-3.5 text-accent" />
-              {phone}
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- Paso 2: Servicio ---------- */
-function ServiceStep({
-  slug,
-  membershipId,
-  onPick,
-}: {
-  slug: string;
-  membershipId: string;
-  onPick: (s: Service) => void;
-}) {
-  const { data, isLoading, isError, refetch } = usePublicProfessional(slug, membershipId);
-  const services = (data?.services ?? []).filter((s) => s.isActive);
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
-  if (isError) {
-    return <ErrorState message="No pudimos cargar los servicios." onRetry={() => refetch()} />;
-  }
-
-  return (
-    <div>
-      {data && <ProfessionalCard professional={data} />}
-      <h2 className="mt-6 font-display text-lg font-semibold">Elegí el servicio</h2>
-      {services.length === 0 ? (
-        <EmptyState
-          className="mt-4"
-          title="Sin servicios disponibles"
-          message="Este profesional todavía no publicó servicios para reservar."
-        />
-      ) : (
-        <div className="mt-4 space-y-3">
-          {services.map((s) => {
-            const summary = paymentSummary(s);
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => onPick(s)}
-                className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{s.name}</p>
-                  <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock3 className="size-3.5" />
-                    {formatDuration(s.durationMinutes)}
-                  </p>
-                  {summary && (
-                    <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
-                      <Info className="size-3" />
-                      {summary}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="font-display font-semibold tabular-nums">{formatMoney(s.priceCents)}</p>
-                  <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- Panel de add-ons (combinación de servicios) ---------- */
-function AddonsPanel({
-  slug,
-  membershipId,
-  serviceId,
-  addonRules,
-  onToggleAddon,
-}: {
-  slug: string;
-  membershipId: string;
-  serviceId: string;
-  addonRules: ServiceCombinationRuleWithService[];
-  onToggleAddon: (rule: ServiceCombinationRuleWithService) => void;
-}) {
-  const { data: rules, isLoading } = usePublicCombinationRules(slug, membershipId, serviceId);
-
-  // Solo mostrar reglas que habilitan o descuentan un servicio adicional (no `excludes`)
-  const offerableRules = (rules ?? []).filter((r) => r.ruleType !== "excludes");
-
-  if (isLoading || offerableRules.length === 0) return null;
-
-  return (
-    <div className="mb-6 rounded-xl border border-border bg-card p-4">
-      <h3 className="mb-0.5 text-sm font-semibold">Servicios adicionales</h3>
-      <p className="mb-3 text-xs text-muted-foreground">
-        Podés sumar algo más a tu turno. El precio y la duración se ajustan.
-      </p>
-      <div className="space-y-2">
-        {offerableRules.map((rule) => {
-          const ts = rule.targetService;
-          const isSelected = addonRules.some((r) => r.id === rule.id);
-          const finalPrice = addonFinalPrice(rule);
-          const originalPrice = ts?.priceCents ?? 0;
-          const isFree = rule.ruleType === "free_with";
-          const isDiscount = rule.ruleType === "discount" && finalPrice < originalPrice;
-
-          return (
-            <button
-              key={rule.id}
-              type="button"
-              onClick={() => onToggleAddon(rule)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                isSelected
-                  ? "border-accent bg-accent/5"
-                  : "border-border hover:border-accent/50",
-              )}
-            >
-              <span
-                className={cn(
-                  "grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors",
-                  isSelected ? "border-accent bg-accent text-accent-foreground" : "border-muted-foreground/40",
-                )}
-              >
-                {isSelected && <Check className="size-3" />}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium leading-snug">{ts?.name}</p>
-                {ts && (
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock3 className="size-3" />
-                    {formatDuration(ts.durationMinutes)}
-                  </p>
-                )}
-              </div>
-              <div className="shrink-0 text-right">
-                {isFree ? (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    GRATIS
-                  </span>
-                ) : isDiscount ? (
-                  <div>
-                    <span className="block text-[11px] text-muted-foreground line-through">
-                      {formatMoney(originalPrice)}
-                    </span>
-                    <span className="text-sm font-semibold text-accent">{formatMoney(finalPrice)}</span>
-                  </div>
-                ) : (
-                  <span className="text-sm font-semibold">
-                    +{formatMoney(finalPrice)}
-                  </span>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /* ---------- Paso 3: Fecha y hora ---------- */
 function SlotStep({
   slug,
-  membershipId,
   service,
   professional,
-  addonRules,
-  onToggleAddon,
   onPick,
 }: {
   slug: string;
-  membershipId: string;
-  service: Service;
-  professional: PublicProfessionalDto;
-  addonRules: ServiceCombinationRuleWithService[];
-  onToggleAddon: (rule: ServiceCombinationRuleWithService) => void;
+  service: PublicServiceDto;
+  professional: ProfessionalChoice;
   onPick: (s: Slot) => void;
 }) {
+  const isAny = professional === "any";
+  const membershipId = isAny ? null : professional.membershipId;
+
   const days = useMemo(() => {
     const out: Date[] = [];
     const d = new Date();
@@ -584,24 +446,16 @@ function SlotStep({
     return { from: from.toISOString(), to: to.toISOString() };
   }, [days]);
 
-  // Incluye addon IDs para que el back calcule la duración total del bloque
-  const addonServiceIds = addonRules.length > 0
-    ? addonRules.map((r) => r.targetServiceId).join(",")
-    : undefined;
+  const slotsParams = { serviceId: service.serviceId, from: range.from, to: range.to };
 
-  const slotsParams = {
-    serviceId: service.id,
-    addonServiceIds,
-    from: range.from,
-    to: range.to,
-  };
+  // Cada par de hooks se monta siempre; solo uno de los dos está habilitado según `isAny`.
+  const slotsService = usePublicServiceSlots(slug, isAny ? service.serviceId : null, isAny ? slotsParams : null);
+  const slotsPro = usePublicProfessionalSlots(slug, membershipId, isAny ? null : slotsParams);
+  const { data: slots, isLoading, isError, refetch } = isAny ? slotsService : slotsPro;
 
-  const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(
-    slug,
-    membershipId,
-    slotsParams,
-  );
-  const { data: availability } = usePublicProfessionalDayAvailability(slug, membershipId, slotsParams);
+  const availService = usePublicServiceDayAvailability(slug, isAny ? service.serviceId : null, isAny ? slotsParams : null);
+  const availPro = usePublicProfessionalDayAvailability(slug, membershipId, isAny ? null : slotsParams);
+  const { data: availability } = isAny ? availService : availPro;
 
   const availByDate = useMemo(() => {
     const map = new Map<string, DayAvailabilityDto>();
@@ -625,26 +479,13 @@ function SlotStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availByDate, activeDay, days]);
 
-  const totalDuration =
-    service.durationMinutes + addonRules.reduce((sum, r) => sum + (r.targetService?.durationMinutes ?? 0), 0);
+  const proLabel = isAny ? "cualquier profesional" : `con ${professional.displayName}`;
 
   return (
     <div>
-      {/* Panel de add-ons: se carga automáticamente, solo aparece si hay reglas */}
-      <AddonsPanel
-        slug={slug}
-        membershipId={membershipId}
-        serviceId={service.id}
-        addonRules={addonRules}
-        onToggleAddon={onToggleAddon}
-      />
-
       <h2 className="font-display text-lg font-semibold">Elegí día y hora</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {service.name} · {formatDuration(totalDuration)} · con {professional.displayName}
-        {addonRules.length > 0 && (
-          <> + {addonRules.length} extra{addonRules.length > 1 ? "s" : ""}</>
-        )}
+        {service.name} · {formatDuration(service.durationMinutes)} · {proLabel}
       </p>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
@@ -730,29 +571,37 @@ function SlotStep({
 /* ---------- Paso 4: Confirmar ---------- */
 function ConfirmStep({
   slug,
-  professional,
   service,
-  addonRules,
+  professional,
   slot,
   onConfirmed,
 }: {
   slug: string;
-  professional: PublicProfessionalDto;
-  service: Service;
-  addonRules: ServiceCombinationRuleWithService[];
+  service: PublicServiceDto;
+  professional: ProfessionalChoice;
   slot: Slot;
-  onConfirmed: (provisional: boolean) => void;
+  onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
 }) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [payRedirectError, setPayRedirectError] = useState(false);
+
+  const isAny = professional === "any";
+  const membershipId = isAny ? "" : professional.membershipId;
+
   const options = getPaymentOptions(service);
   const hasNoPay = options.some((o) => o.choice === "none");
   const hasPaid = options.some((o) => o.requiresPayment);
 
-  const book = useBookProfessional(slug, professional.membershipId);
-  const bookWithDeposit = useBookProfessionalWithDeposit(slug, professional.membershipId);
+  // Siempre se montan los cuatro hooks; solo se llama al que corresponde al camino elegido.
+  const bookPro = useBookProfessional(slug, membershipId);
+  const bookProDeposit = useBookProfessionalWithDeposit(slug, membershipId);
+  const bookSvc = useBookService(slug, service.serviceId);
+  const bookSvcDeposit = useBookServiceWithDeposit(slug, service.serviceId);
+
+  const book = isAny ? bookSvc : bookPro;
+  const bookWithDeposit = isAny ? bookSvcDeposit : bookProDeposit;
   const submitting = book.isPending || bookWithDeposit.isPending;
 
   const bookError = book.error ?? bookWithDeposit.error;
@@ -772,17 +621,17 @@ function ConfirmStep({
 
   const canSubmit = fullName.trim().length > 1 && phone.trim().length > 5;
 
-  const addonIds = addonRules.map((r) => r.targetServiceId);
-  const total = totalBookingPrice(service, addonRules);
+  const proSummary = isAny
+    ? "Cualquier profesional disponible"
+    : professional.displayName + (professional.address ? ` · ${professional.address}` : "");
 
   function submit(option: PayOption) {
     const base = {
       fullName: fullName.trim(),
       phone: phone.trim(),
       email: email.trim() || undefined,
-      serviceId: service.id,
+      serviceId: service.serviceId,
       startAt: slot.startAt,
-      addonServiceIds: addonIds.length > 0 ? addonIds : undefined,
     };
     if (option.paymentOption) {
       setPayRedirectError(false);
@@ -791,7 +640,10 @@ function ConfirmStep({
         {
           onSuccess: (res) => {
             if (env.mockingEnabled) {
-              onConfirmed(false);
+              const proName = isAny
+                ? (res as { professionalDisplayName?: string } & typeof res).professionalDisplayName
+                : undefined;
+              onConfirmed(false, proName);
               return;
             }
             if (res?.mpInitPoint) {
@@ -803,7 +655,14 @@ function ConfirmStep({
         },
       );
     } else {
-      book.mutate(base, { onSuccess: (appt) => onConfirmed(!!appt?.isProvisional) });
+      book.mutate(base, {
+        onSuccess: (appt) => {
+          const proName = isAny
+            ? (appt as { professionalDisplayName?: string } & typeof appt).professionalDisplayName
+            : undefined;
+          onConfirmed(!!appt?.isProvisional, proName);
+        },
+      });
     }
   }
 
@@ -813,37 +672,9 @@ function ConfirmStep({
 
       <div className="mt-4 rounded-xl border border-border bg-card p-4">
         <Row label="Servicio" value={service.name} />
-        <Row label="Profesional" value={professional.displayName} />
-        {professional.address && <Row label="Dónde" value={professional.address} />}
+        <Row label="Profesional" value={proSummary} />
         <Row label="Cuándo" value={`${formatDateLong(slot.startAt)} · ${formatTime(slot.startAt)}`} />
-
-        {/* Desglose de precios con add-ons */}
-        {addonRules.length > 0 ? (
-          <>
-            <div className="my-1 h-px bg-border" />
-            <Row label={service.name} value={formatMoney(service.priceCents)} />
-            {addonRules.map((rule) => {
-              const name = rule.targetService?.name ?? "Extra";
-              const price = addonFinalPrice(rule);
-              const isFree = rule.ruleType === "free_with";
-              return (
-                <div key={rule.id} className="flex items-center justify-between gap-4 py-1.5 text-sm">
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <CheckCircle2 className="size-3.5 text-accent" />
-                    {name}
-                  </span>
-                  <span className={cn("text-right", isFree && "text-green-600 dark:text-green-400")}>
-                    {isFree ? "GRATIS" : `+${formatMoney(price)}`}
-                  </span>
-                </div>
-              );
-            })}
-            <div className="my-1 h-px bg-border" />
-            <Row label="Total" value={formatMoney(total)} strong />
-          </>
-        ) : (
-          <Row label="Precio" value={formatMoney(service.priceCents)} strong />
-        )}
+        <Row label="Precio" value={formatMoney(service.priceCents)} strong />
       </div>
 
       {hasPaid && hasNoPay && (
@@ -923,14 +754,11 @@ function ConfirmStep({
 
       <div className="mt-6 space-y-2.5">
         {options.map((opt, i) => {
-          // Para opciones con pago, ajustar el monto si hay add-ons (el back lo valida; el front muestra).
-          const extraCents = addonRules.reduce((sum, r) => sum + addonFinalPrice(r), 0);
-          const adjustedAmount = (opt.amountCents ?? 0) + (opt.choice === "full" ? extraCents : 0);
           const label =
             opt.choice === "deposit"
               ? `Pagar seña y reservar · ${formatMoney(opt.amountCents)}`
               : opt.choice === "full"
-                ? `Pagar el total · ${formatMoney(adjustedAmount)}`
+                ? `Pagar el total · ${formatMoney(opt.amountCents)}`
                 : hasPaid
                   ? "Reservar sin pagar"
                   : "Confirmar turno";
@@ -967,13 +795,20 @@ function Confirmation({
   page,
   sel,
   provisional,
+  assignedProName,
   onReset,
 }: {
   page: ComercioPublicPageDto;
   sel: Selection;
   provisional: boolean;
+  assignedProName?: string;
   onReset: () => void;
 }) {
+  const proDisplay =
+    sel.professional === "any"
+      ? assignedProName ?? "un profesional disponible"
+      : sel.professional?.displayName ?? "";
+
   return (
     <div className="py-8 text-center">
       <span
@@ -987,11 +822,9 @@ function Confirmation({
       <h2 className="mt-4 font-display text-2xl font-semibold">
         {provisional ? "Turno provisional reservado" : "¡Turno confirmado!"}
       </h2>
-      {sel.service && sel.professional && sel.slot && (
+      {sel.service && sel.slot && (
         <p className="mt-2 text-muted-foreground">
-          {sel.service.name}
-          {sel.addonRules.length > 0 && ` + ${sel.addonRules.length} extra${sel.addonRules.length > 1 ? "s" : ""}`}
-          {" "}con {sel.professional.displayName}
+          {sel.service.name} con {proDisplay}
           <br />
           {formatDateLong(sel.slot.startAt)} · {formatTime(sel.slot.startAt)}
         </p>

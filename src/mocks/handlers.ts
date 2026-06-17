@@ -9,6 +9,7 @@ import {
   fichaFields,
   buildComercioPublicPage,
   buildProfessionalDetail,
+  buildPublicServices,
   buildWaitingRoom,
   me,
   clientUser,
@@ -510,12 +511,44 @@ export const handlers: RequestHandler[] = [
     return tokensFor("client");
   }),
 
-  // ---- Página pública de reserva por comercio (Fase 3) ----
+  // ---- Página pública de reserva por comercio (Fase 3 + Fase 5) ----
   http.get(url("/r/:slug"), ({ params }) =>
     params.slug === SLUG
       ? HttpResponse.json(buildComercioPublicPage())
       : new HttpResponse(null, { status: 404 }),
   ),
+  // Catálogo de servicios del comercio (Fase 5: flujo Servicio → Profesional → Horario).
+  http.get(url("/r/:slug/services"), ({ params }) =>
+    params.slug === SLUG
+      ? HttpResponse.json(buildPublicServices())
+      : new HttpResponse(null, { status: 404 }),
+  ),
+  // Slots/disponibilidad agregados por servicio (cualquier profesional asignado).
+  http.get(url("/r/:slug/services/:serviceId/slots"), ({ request }) =>
+    HttpResponse.json(slotsFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
+  ),
+  http.get(url("/r/:slug/services/:serviceId/day-availability"), ({ request }) =>
+    HttpResponse.json(dayAvailabilityFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
+  ),
+  // Reserva "cualquiera" por servicio: el back elige el profesional de menor carga.
+  http.post(url("/r/:slug/services/:serviceId/book"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const appt = createBooking(body);
+    return HttpResponse.json(
+      { ...appt, professionalDisplayName: professional.businessName },
+      { status: 201 },
+    );
+  }),
+  http.post(url("/r/:slug/services/:serviceId/book-with-deposit"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const result = bookWithDepositResult(body);
+    return HttpResponse.json({
+      ...result,
+      appointment: result.appointment
+        ? { ...result.appointment, professionalDisplayName: professional.businessName }
+        : null,
+    });
+  }),
   // Detalle de un profesional del comercio (servicios + ubicación).
   http.get(url("/r/:slug/professionals/:membershipId"), ({ params }) =>
     params.slug === SLUG
@@ -536,7 +569,7 @@ export const handlers: RequestHandler[] = [
   http.get(url("/r/:slug/day-availability"), ({ request }) =>
     HttpResponse.json(dayAvailabilityFromRequest(request, PUBLIC_BOOKING_STAFF_ID)),
   ),
-  // Reserva sin pago.
+  // Reserva sin pago (profesional específico).
   http.post(url("/r/:slug/professionals/:membershipId/book"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     return HttpResponse.json(createBooking(body), { status: 201 });
@@ -545,7 +578,7 @@ export const handlers: RequestHandler[] = [
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     return HttpResponse.json(createBooking(body), { status: 201 });
   }),
-  // Reserva con seña/pago total.
+  // Reserva con seña/pago total (profesional específico).
   http.post(url("/r/:slug/professionals/:membershipId/book-with-deposit"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     return HttpResponse.json(bookWithDepositResult(body));
@@ -599,6 +632,7 @@ export const handlers: RequestHandler[] = [
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       professionalId: professional.id,
+      comercioId: COMERCIO_ID,
       membershipId: MEMBERSHIP_ID,
       name: String(body.name ?? "Servicio"),
       durationMinutes: Number(body.durationMinutes ?? 30),

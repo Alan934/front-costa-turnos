@@ -203,7 +203,7 @@ export const useComerciosAccept = <TError = ErrorType<void>,
  * @summary Editar mi membresía en un comercio (p.ej. mi dirección propia)
  */
 export const comerciosUpdateMyMembership = (
-    comercioId: string,
+    comercioId: unknown,
     updateMembershipDto: BodyType<UpdateMembershipDto>,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -219,8 +219,8 @@ export const comerciosUpdateMyMembership = (
 
 
 export const getComerciosUpdateMyMembershipMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: unknown;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: unknown;data: BodyType<UpdateMembershipDto>}, TContext> => {
 
 const mutationKey = ['comerciosUpdateMyMembership'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -232,7 +232,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, {comercioId: string;data: BodyType<UpdateMembershipDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, {comercioId: unknown;data: BodyType<UpdateMembershipDto>}> = (props) => {
           const {comercioId,data} = props ?? {};
 
           return  comerciosUpdateMyMembership(comercioId,data,requestOptions)
@@ -251,11 +251,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Editar mi membresía en un comercio (p.ej. mi dirección propia)
  */
 export const useComerciosUpdateMyMembership = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: string;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdateMyMembership>>, TError,{comercioId: unknown;data: BodyType<UpdateMembershipDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof comerciosUpdateMyMembership>>,
         TError,
-        {comercioId: string;data: BodyType<UpdateMembershipDto>},
+        {comercioId: unknown;data: BodyType<UpdateMembershipDto>},
         TContext
       > => {
 
@@ -359,7 +359,7 @@ export function useComerciosMyComercios<TData = Awaited<ReturnType<typeof comerc
  * @summary Obtener un comercio
  */
 export const comerciosGet = (
-    comercioId: string,
+    comercioId: unknown,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -373,14 +373,14 @@ export const comerciosGet = (
 
 
 
-export const getComerciosGetQueryKey = (comercioId?: string,) => {
+export const getComerciosGetQueryKey = (comercioId?: unknown,) => {
     return [
     `/v1/comercios/${comercioId}`
     ] as const;
     }
 
     
-export const getComerciosGetQueryOptions = <TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getComerciosGetQueryOptions = <TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -403,7 +403,7 @@ export type ComerciosGetQueryError = ErrorType<void>
 
 
 export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(
- comercioId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>> & Pick<
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosGet>>,
           TError,
@@ -413,7 +413,7 @@ export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>> & Pick<
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosGet>>,
           TError,
@@ -423,7 +423,7 @@ export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -431,7 +431,7 @@ export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>
  */
 
 export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -451,7 +451,7 @@ export function useComerciosGet<TData = Awaited<ReturnType<typeof comerciosGet>>
  * @summary Actualizar un comercio
  */
 export const comerciosUpdate = (
-    comercioId: string,
+    comercioId: unknown,
     updateComercioDto: BodyType<UpdateComercioDto>,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -467,8 +467,8 @@ export const comerciosUpdate = (
 
 
 export const getComerciosUpdateMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: string;data: BodyType<UpdateComercioDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: string;data: BodyType<UpdateComercioDto>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: unknown;data: BodyType<UpdateComercioDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: unknown;data: BodyType<UpdateComercioDto>}, TContext> => {
 
 const mutationKey = ['comerciosUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -480,7 +480,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosUpdate>>, {comercioId: string;data: BodyType<UpdateComercioDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosUpdate>>, {comercioId: unknown;data: BodyType<UpdateComercioDto>}> = (props) => {
           const {comercioId,data} = props ?? {};
 
           return  comerciosUpdate(comercioId,data,requestOptions)
@@ -499,11 +499,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Actualizar un comercio
  */
 export const useComerciosUpdate = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: string;data: BodyType<UpdateComercioDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosUpdate>>, TError,{comercioId: unknown;data: BodyType<UpdateComercioDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof comerciosUpdate>>,
         TError,
-        {comercioId: string;data: BodyType<UpdateComercioDto>},
+        {comercioId: unknown;data: BodyType<UpdateComercioDto>},
         TContext
       > => {
 
@@ -515,7 +515,7 @@ export const useComerciosUpdate = <TError = ErrorType<void>,
  * @summary Roster del comercio (profesionales)
  */
 export const comerciosMembers = (
-    comercioId: string,
+    comercioId: unknown,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -529,14 +529,14 @@ export const comerciosMembers = (
 
 
 
-export const getComerciosMembersQueryKey = (comercioId?: string,) => {
+export const getComerciosMembersQueryKey = (comercioId?: unknown,) => {
     return [
     `/v1/comercios/${comercioId}/members`
     ] as const;
     }
 
     
-export const getComerciosMembersQueryOptions = <TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getComerciosMembersQueryOptions = <TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -559,7 +559,7 @@ export type ComerciosMembersQueryError = ErrorType<void>
 
 
 export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(
- comercioId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>> & Pick<
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosMembers>>,
           TError,
@@ -569,7 +569,7 @@ export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosM
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>> & Pick<
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosMembers>>,
           TError,
@@ -579,7 +579,7 @@ export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosM
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -587,7 +587,7 @@ export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosM
  */
 
 export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosMembers>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosMembers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -604,10 +604,74 @@ export function useComerciosMembers<TData = Awaited<ReturnType<typeof comerciosM
 
 
 /**
+ * Soft: marca la membresía inactiva y la desasigna de todos los servicios. Conserva los turnos ya tomados; no permite nuevas reservas con ese profesional.
+ * @summary Quitar un profesional del comercio
+ */
+export const comerciosRemoveMember = (
+    comercioId: unknown,
+    membershipId: string,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<Membership>(
+      {url: `/v1/comercios/${comercioId}/members/${membershipId}`, method: 'DELETE'
+    },
+      options);
+    }
+  
+
+
+export const getComerciosRemoveMemberMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosRemoveMember>>, TError,{comercioId: unknown;membershipId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosRemoveMember>>, TError,{comercioId: unknown;membershipId: string}, TContext> => {
+
+const mutationKey = ['comerciosRemoveMember'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosRemoveMember>>, {comercioId: unknown;membershipId: string}> = (props) => {
+          const {comercioId,membershipId} = props ?? {};
+
+          return  comerciosRemoveMember(comercioId,membershipId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ComerciosRemoveMemberMutationResult = NonNullable<Awaited<ReturnType<typeof comerciosRemoveMember>>>
+    
+    export type ComerciosRemoveMemberMutationError = ErrorType<void>
+
+    /**
+ * @summary Quitar un profesional del comercio
+ */
+export const useComerciosRemoveMember = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosRemoveMember>>, TError,{comercioId: unknown;membershipId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof comerciosRemoveMember>>,
+        TError,
+        {comercioId: unknown;membershipId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getComerciosRemoveMemberMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * El email no necesita tener cuenta de profesional al invitar: la invitación queda pendiente y se valida que sea profesional al aceptarla.
  * @summary Invitar un profesional por email
  */
 export const comerciosInvite = (
-    comercioId: string,
+    comercioId: unknown,
     inviteProfessionalDto: BodyType<InviteProfessionalDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
@@ -624,8 +688,8 @@ export const comerciosInvite = (
 
 
 export const getComerciosInviteMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: string;data: BodyType<InviteProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: string;data: BodyType<InviteProfessionalDto>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: unknown;data: BodyType<InviteProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: unknown;data: BodyType<InviteProfessionalDto>}, TContext> => {
 
 const mutationKey = ['comerciosInvite'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -637,7 +701,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosInvite>>, {comercioId: string;data: BodyType<InviteProfessionalDto>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosInvite>>, {comercioId: unknown;data: BodyType<InviteProfessionalDto>}> = (props) => {
           const {comercioId,data} = props ?? {};
 
           return  comerciosInvite(comercioId,data,requestOptions)
@@ -656,11 +720,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Invitar un profesional por email
  */
 export const useComerciosInvite = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: string;data: BodyType<InviteProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosInvite>>, TError,{comercioId: unknown;data: BodyType<InviteProfessionalDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof comerciosInvite>>,
         TError,
-        {comercioId: string;data: BodyType<InviteProfessionalDto>},
+        {comercioId: unknown;data: BodyType<InviteProfessionalDto>},
         TContext
       > => {
 
@@ -672,7 +736,7 @@ export const useComerciosInvite = <TError = ErrorType<void>,
  * @summary Listar invitaciones del comercio
  */
 export const comerciosListInvitations = (
-    comercioId: string,
+    comercioId: unknown,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
@@ -686,14 +750,14 @@ export const comerciosListInvitations = (
 
 
 
-export const getComerciosListInvitationsQueryKey = (comercioId?: string,) => {
+export const getComerciosListInvitationsQueryKey = (comercioId?: unknown,) => {
     return [
     `/v1/comercios/${comercioId}/invitations`
     ] as const;
     }
 
     
-export const getComerciosListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getComerciosListInvitationsQueryOptions = <TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -716,7 +780,7 @@ export type ComerciosListInvitationsQueryError = ErrorType<void>
 
 
 export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(
- comercioId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>> & Pick<
+ comercioId: unknown, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosListInvitations>>,
           TError,
@@ -726,7 +790,7 @@ export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof co
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>> & Pick<
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof comerciosListInvitations>>,
           TError,
@@ -736,7 +800,7 @@ export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof co
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -744,7 +808,7 @@ export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof co
  */
 
 export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof comerciosListInvitations>>, TError = ErrorType<void>>(
- comercioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ comercioId: unknown, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosListInvitations>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -764,7 +828,7 @@ export function useComerciosListInvitations<TData = Awaited<ReturnType<typeof co
  * @summary Cancelar una invitación
  */
 export const comerciosCancelInvitation = (
-    comercioId: string,
+    comercioId: unknown,
     id: string,
  options?: SecondParameter<typeof customInstance>,) => {
       
@@ -778,8 +842,8 @@ export const comerciosCancelInvitation = (
 
 
 export const getComerciosCancelInvitationMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: string;id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: unknown;id: string}, TContext> => {
 
 const mutationKey = ['comerciosCancelInvitation'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -791,7 +855,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosCancelInvitation>>, {comercioId: string;id: string}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof comerciosCancelInvitation>>, {comercioId: unknown;id: string}> = (props) => {
           const {comercioId,id} = props ?? {};
 
           return  comerciosCancelInvitation(comercioId,id,requestOptions)
@@ -810,11 +874,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Cancelar una invitación
  */
 export const useComerciosCancelInvitation = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: string;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof comerciosCancelInvitation>>, TError,{comercioId: unknown;id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof comerciosCancelInvitation>>,
         TError,
-        {comercioId: string;id: string},
+        {comercioId: unknown;id: string},
         TContext
       > => {
 

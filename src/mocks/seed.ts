@@ -32,6 +32,7 @@ import type {
 } from "./contract-extensions";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
+import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
 
 const now = new Date();
 const iso = (d: Date) => d.toISOString();
@@ -96,6 +97,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
     membershipId: MEMBERSHIP_ID,
     name: "Corte de pelo",
     durationMinutes: 30,
@@ -112,6 +114,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
     membershipId: MEMBERSHIP_ID,
     name: "Corte + barba",
     durationMinutes: 45,
@@ -128,6 +131,7 @@ export const services: Service[] = [
     createdAt: iso(at(9, 0, -120)),
     updatedAt: iso(now),
     professionalId: PROFESSIONAL_ID,
+    comercioId: COMERCIO_ID,
     membershipId: MEMBERSHIP_ID,
     name: "Color + lavado",
     durationMinutes: 90,
@@ -181,6 +185,30 @@ export function buildProfessionalDetail(): PublicProfessionalDetailDto {
     timezone: professional.timezone,
     services: services.filter((s) => s.isActive),
   };
+}
+
+/** Catálogo de servicios del comercio para la reserva pública (GET /r/:slug/services). */
+export function buildPublicServices(): PublicServiceDto[] {
+  return services
+    .filter((s) => s.isActive)
+    .map((s) => ({
+      serviceId: s.id,
+      name: s.name,
+      durationMinutes: s.durationMinutes,
+      priceCents: s.priceCents,
+      allowDeposit: s.allowDeposit,
+      allowFullPayment: s.allowFullPayment,
+      allowNoPayment: s.allowNoPayment,
+      depositAmountCents: s.depositAmountCents ?? null,
+      professionals: [
+        {
+          membershipId: MEMBERSHIP_ID,
+          professionalId: professional.id,
+          displayName: professional.businessName,
+          address: DEMO_ADDRESS,
+        },
+      ],
+    }));
 }
 
 export const fichaFields: FichaField[] = [

@@ -1,10 +1,10 @@
 /**
- * Wrappers tipados para la reserva pública por COMERCIO (Fase 3).
+ * Wrappers tipados para la reserva pública por COMERCIO (Fases 3 y 5).
  *
- * `/r/:slug` resuelve un comercio. El flujo es: comercio → elegir profesional (membership) →
- * sus servicios → slots → reservar, todo con `membershipId`. El contrato ahora SÍ tipa estas
- * respuestas (`ComercioPublicPageDto`, `PublicProfessionalDetailDto`, …), así que ya no hace
- * falta normalizar a mano. Las rutas planas `/r/:slug/{slots,book}` quedaron `deprecated`.
+ * Flujo Fase 5: comercio → elegir servicio → elegir profesional o "cualquiera" → slots → reservar.
+ * - Servicio elegido: slots y book via `/r/:slug/services/:serviceId/{slots,book}`.
+ * - Profesional específico: slots y book via `/r/:slug/professionals/:membershipId/{slots,book}`.
+ * Las rutas planas `/r/:slug/{slots,book}` quedaron `deprecated`.
  *
  * Hechos a mano (en vez de usar los hooks generados) para controlar queryKeys y tipos de slot.
  */
@@ -18,6 +18,7 @@ import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
 import type { PublicBookWithDepositDto } from "@/lib/api/generated/model/publicBookWithDepositDto";
 import type { Slot, BookWithDepositResult, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
 
 /** Página del comercio: datos + lista de profesionales (`/r/:slug`). */
 export function useComercioPublicPage(slug: string) {
@@ -133,6 +134,87 @@ export function useBookProfessionalWithDeposit(slug: string, membershipId: strin
     mutationFn: (data: PublicBookWithDepositAndAddons) =>
       customInstance<BookWithDepositResult>({
         url: `/r/${slug}/professionals/${membershipId}/book-with-deposit`,
+        method: "POST",
+        data,
+      }),
+  });
+}
+
+/** Catálogo de servicios del comercio para la reserva pública (Fase 5). */
+export function usePublicServices(slug: string) {
+  return useQuery({
+    queryKey: ["public-services", slug],
+    queryFn: ({ signal }) =>
+      customInstance<PublicServiceDto[]>({ url: `/r/${slug}/services`, method: "GET", signal }),
+    select: (list): PublicServiceDto[] =>
+      list.map((s) => ({
+        ...s,
+        name: titleCaseName(s.name),
+        professionals: s.professionals.map((p) => ({
+          ...p,
+          displayName: titleCaseName(p.displayName),
+        })),
+      })),
+    enabled: !!slug,
+  });
+}
+
+/** Slots agregados del servicio (cualquier profesional asignado). */
+export function usePublicServiceSlots(
+  slug: string,
+  serviceId: string | null,
+  params: ProfessionalSlotsQuery | null,
+) {
+  return useQuery({
+    queryKey: ["public-service-slots", slug, serviceId, params],
+    queryFn: ({ signal }) =>
+      customInstance<Slot[]>({
+        url: `/r/${slug}/services/${serviceId}/slots`,
+        method: "GET",
+        params: params ?? undefined,
+        signal,
+      }),
+    enabled: !!slug && !!serviceId && !!params,
+  });
+}
+
+/** Disponibilidad por día agregada del servicio (cualquier profesional asignado). */
+export function usePublicServiceDayAvailability(
+  slug: string,
+  serviceId: string | null,
+  params: ProfessionalSlotsQuery | null,
+) {
+  return useQuery({
+    queryKey: ["public-service-day-availability", slug, serviceId, params],
+    queryFn: ({ signal }) =>
+      customInstance<DayAvailabilityDto[]>({
+        url: `/r/${slug}/services/${serviceId}/day-availability`,
+        method: "GET",
+        params: params ?? undefined,
+        signal,
+      }),
+    enabled: !!slug && !!serviceId && !!params,
+  });
+}
+
+/** Reserva "cualquiera" sin pago: el back asigna el profesional de menor carga. */
+export function useBookService(slug: string, serviceId: string) {
+  return useMutation({
+    mutationFn: (data: PublicBookWithAddons) =>
+      customInstance<Appointment>({
+        url: `/r/${slug}/services/${serviceId}/book`,
+        method: "POST",
+        data,
+      }),
+  });
+}
+
+/** Reserva "cualquiera" con seña/pago total. */
+export function useBookServiceWithDeposit(slug: string, serviceId: string) {
+  return useMutation({
+    mutationFn: (data: PublicBookWithDepositAndAddons) =>
+      customInstance<BookWithDepositResult>({
+        url: `/r/${slug}/services/${serviceId}/book-with-deposit`,
         method: "POST",
         data,
       }),

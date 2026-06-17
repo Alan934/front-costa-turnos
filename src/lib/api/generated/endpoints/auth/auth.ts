@@ -30,6 +30,7 @@ import type {
   ClaimAccountDto,
   LoginDto,
   RefreshDto,
+  RegisterComercialDto,
   RegisterDto,
   RegisterProfessionalDto,
   RequestCodeDto,
@@ -171,6 +172,71 @@ export const useAuthRegisterProfessional = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAuthRegisterProfessionalMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Crea la cuenta + el comercio que va a gestionar. NO crea profesional ni suscripción: el comercial gestiona profesionales/servicios y no paga (la facturación es por profesional).
+ * @summary Registrarse como comercial (dueño de un comercio)
+ */
+export const authRegisterComercial = (
+    registerComercialDto: BodyType<RegisterComercialDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AuthTokensDto>(
+      {url: `/auth/register-comercial`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: registerComercialDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAuthRegisterComercialMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRegisterComercial>>, TError,{data: BodyType<RegisterComercialDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authRegisterComercial>>, TError,{data: BodyType<RegisterComercialDto>}, TContext> => {
+
+const mutationKey = ['authRegisterComercial'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authRegisterComercial>>, {data: BodyType<RegisterComercialDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authRegisterComercial(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthRegisterComercialMutationResult = NonNullable<Awaited<ReturnType<typeof authRegisterComercial>>>
+    export type AuthRegisterComercialMutationBody = BodyType<RegisterComercialDto>
+    export type AuthRegisterComercialMutationError = ErrorType<void>
+
+    /**
+ * @summary Registrarse como comercial (dueño de un comercio)
+ */
+export const useAuthRegisterComercial = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRegisterComercial>>, TError,{data: BodyType<RegisterComercialDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authRegisterComercial>>,
+        TError,
+        {data: BodyType<RegisterComercialDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthRegisterComercialMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

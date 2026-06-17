@@ -44,4 +44,6 @@ export interface Appointment {
   personEmail?: string | null;
   /** Nombre del servicio del turno */
   serviceName?: string;
+  /** Nombre del profesional asignado (se completa al reservar con "cualquiera"). */
+  professionalDisplayName?: string;
 }

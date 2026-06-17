@@ -8,6 +8,8 @@
 
 export interface CreateServiceDto {
   name: string;
+  /** Membresías (profesionales) que ofrecen este servicio. Requerido (≥1) al crear desde el comercio; en el alta del comercio-de-uno se asume el profesional logueado. */
+  membershipIds?: string[];
   /** duracion en minutos */
   durationMinutes: number;
   /** precio (pago completo) en centavos */
