@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Circle } from "lucide-react";
 import { useServices } from "@/lib/api/catalog";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
@@ -13,6 +14,7 @@ import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
  * equipo y horarios cargados. Se oculta solo cuando está todo hecho.
  */
 export function SetupChecklist() {
+  const pathname = usePathname();
   const services = useServices();
   const staff = useProfessionalsListStaff();
 
@@ -31,7 +33,8 @@ export function SetupChecklist() {
   const settled = (q: { isSuccess: boolean; isError: boolean }) => q.isSuccess || q.isError;
   const evaluated =
     settled(services) && settled(staff) && (!firstStaffId || settled(schedule));
-  if (!evaluated) return null;
+  // El dashboard tiene su propia bienvenida de configuración más elaborada.
+  if (pathname === "/app" || !evaluated) return null;
 
   const hasWork = (schedule.data ?? []).some((r) => r.kind === ScheduleRuleKind.work);
 

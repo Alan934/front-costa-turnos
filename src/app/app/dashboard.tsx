@@ -10,6 +10,7 @@ import {
   DollarSign,
   ArrowRight,
   CheckCircle2,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +21,8 @@ import { useAuth } from "@/components/auth-provider";
 import { useAppointments } from "@/lib/api/appointments";
 import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
+import { useMpStatus } from "@/lib/api/billing";
+import { WelcomeSetup } from "@/components/welcome-setup";
 import { usePersonLookup } from "@/lib/api/clients";
 import { dayRange, isSameLocalDay } from "@/lib/agenda";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
@@ -41,6 +44,7 @@ export function Dashboard() {
   const services = useServices();
   const lookupPerson = usePersonLookup();
   const pro = useProfessional();
+  const mp = useMpStatus();
   const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
   const todays = (appts.data ?? []).filter((a) => isSameLocalDay(new Date(a.startAt), today));
@@ -56,11 +60,15 @@ export function Dashboard() {
     .filter((a) => a.status !== AppointmentStatus.cancelled && a.status !== AppointmentStatus.no_show)
     .reduce((s, a) => s + priceOf(a), 0);
   const provisional = todays.filter((a) => a.isProvisional && ACTIVE.includes(a.status));
+  const mpNotConnected = !mp.isLoading && mp.data?.connected === false;
+  const hasPaidServices = (services.data ?? []).some((s) => s.allowDeposit || s.allowFullPayment);
 
   const loading = appts.isLoading || services.isLoading;
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
+      <WelcomeSetup />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar name={user?.fullName} fileId={logoFileId} className="size-11" />
@@ -100,6 +108,20 @@ export function Dashboard() {
           </div>
 
           {/* Alertas */}
+          {mpNotConnected && hasPaidServices && (
+            <div className="mt-4 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3.5">
+              <Wallet className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
+              <p className="text-sm text-warning-foreground">
+                Tenés servicios configurados con cobro online (seña o pago completo), pero{" "}
+                <strong>MercadoPago no está conectado</strong>. Esas opciones no estarán
+                disponibles para tus clientes hasta que lo conectes.{" "}
+                <Link href="/ajustes/pagos" className="font-medium underline underline-offset-2">
+                  Conectar cobros
+                </Link>
+                .
+              </p>
+            </div>
+          )}
           {provisional.length > 0 && (
             <div className="mt-4 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3.5">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning-foreground" />

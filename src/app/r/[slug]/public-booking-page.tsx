@@ -11,6 +11,7 @@ import {
   Info,
   ArrowRight,
   Users,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,6 +123,10 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
   // Si el servicio tiene un único profesional asignado, se omite el paso de selección.
   const singlePro = !sel.service || sel.service.professionals.length <= 1;
 
+  // El back envía mpConnected para indicar si hay cobros online disponibles.
+  // Si no viene el campo (backend anterior), asumimos true para no bloquear servicios.
+  const mpConnected = (page as ComercioPublicPageDto & { mpConnected?: boolean }).mpConnected ?? true;
+
   function pickService(service: PublicServiceDto) {
     const profs = service.professionals;
     // Un solo profesional: lo preseleccionamos y pasamos directo al selector de horario.
@@ -181,7 +186,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           </button>
         ) : null}
 
-        {step === 1 && <ServiceStep slug={slug} onPick={pickService} />}
+        {step === 1 && <ServiceStep slug={slug} onPick={pickService} mpConnected={mpConnected} />}
 
         {step === 2 && sel.service && (
           <ProfessionalStep service={sel.service} onPick={pickProfessional} />
@@ -278,9 +283,11 @@ function Stepper({ step, singlePro }: { step: Step; singlePro: boolean }) {
 function ServiceStep({
   slug,
   onPick,
+  mpConnected,
 }: {
   slug: string;
   onPick: (s: PublicServiceDto) => void;
+  mpConnected: boolean;
 }) {
   const { data, isLoading, isError, refetch } = usePublicServices(slug);
 
@@ -306,12 +313,27 @@ function ServiceStep({
     );
   }
 
+  // Sin MP conectado, solo se pueden reservar servicios con opción "sin pago".
+  const available = mpConnected ? data : data.filter((s) => s.allowNoPayment);
+
+  if (available.length === 0) {
+    return (
+      <EmptyState
+        icon={<CalendarX2 className="size-5" />}
+        title="Sin servicios disponibles"
+        message="Los servicios de este negocio requieren pago online, que no está activo en este momento."
+      />
+    );
+  }
+
   return (
     <div>
       <h2 className="font-display text-lg font-semibold">Elegí el servicio</h2>
       <div className="mt-4 space-y-3">
-        {data.map((s) => {
-          const summary = paymentSummary(s);
+        {available.map((s) => {
+          // Sin MP, no mostramos la badge de pago online para no confundir al cliente.
+          const displaySvc = mpConnected ? s : { ...s, allowDeposit: false, allowFullPayment: false };
+          const summary = paymentSummary(displaySvc);
           const proCount = s.professionals.length;
           return (
             <button

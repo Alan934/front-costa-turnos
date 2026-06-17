@@ -149,7 +149,7 @@ export const services: Service[] = [
 // profesional), así que `isPersonal: true` y un único item en `professionals`.
 const DEMO_ADDRESS = "Belgrano 245, Costa de Araujo, Mendoza";
 
-export function buildComercioPublicPage(): ComercioPublicPageDto {
+export function buildComercioPublicPage(): ComercioPublicPageDto & { mpConnected: boolean } {
   return {
     comercioId: COMERCIO_ID,
     name: professional.businessName,
@@ -157,6 +157,8 @@ export function buildComercioPublicPage(): ComercioPublicPageDto {
     timezone: professional.timezone,
     address: DEMO_ADDRESS,
     isPersonal: true,
+    // El back incluye este campo para que la página pública sepa si puede ofrecer pagos online.
+    mpConnected: !!professional.mpUserId,
     settings: {
       accentColor: "#16707A",
       bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",

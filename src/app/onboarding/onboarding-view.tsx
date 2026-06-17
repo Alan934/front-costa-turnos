@@ -11,6 +11,7 @@ import {
   Users,
   Clock,
   PartyPopper,
+  Wallet,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ import {
 } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { availabilityCreateScheduleRule } from "@/lib/api/generated/endpoints/availability/availability";
 import { useServices, useCreateService } from "@/lib/api/catalog";
+import { useMpStatus } from "@/lib/api/billing";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration, titleCaseName } from "@/lib/format";
@@ -219,6 +221,8 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
   const list = useServices();
   const create = useCreateService();
   const services = (list.data ?? []).filter((s) => s.isActive);
+  const mp = useMpStatus();
+  const mpConnected = mp.data?.connected ?? false;
 
   const [name, setName] = useState("");
   const [duration, setDuration] = useState("30");
@@ -229,6 +233,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
   const [depositAmount, setDepositAmount] = useState("");
 
   const anyOption = allowNoPayment || allowDeposit || allowFullPayment;
+  const wantPaid = allowDeposit || allowFullPayment;
   const canAdd =
     name.trim().length > 1 &&
     Number(duration) > 0 &&
@@ -237,15 +242,19 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
     (!allowDeposit || Number(depositAmount) > 0);
 
   function add() {
+    // Sin MP conectado, las opciones de cobro online no se persisten (el back las rechaza).
+    // El profesional puede activarlas después desde Configuración → Cobros.
+    const deposit = allowDeposit && mpConnected;
+    const fullPayment = allowFullPayment && mpConnected;
     create.mutate(
       {
         name: name.trim(),
         durationMinutes: Number(duration),
         priceCents: Math.round(Number(price) * 100),
         allowNoPayment,
-        allowDeposit,
-        allowFullPayment,
-        depositAmountCents: allowDeposit ? Math.round(Number(depositAmount) * 100) : undefined,
+        allowDeposit: deposit,
+        allowFullPayment: fullPayment,
+        depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       },
       {
         onSuccess: () => {
@@ -309,6 +318,16 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
             <div className="mt-2.5">
               <Label htmlFor="svc-depamt">Monto de la seña ($)</Label>
               <Input id="svc-depamt" type="number" min={0} className="mt-1.5" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="2000" />
+            </div>
+          )}
+          {wantPaid && !mpConnected && (
+            <div className="mt-2 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs text-warning-foreground">
+              <Wallet className="mt-0.5 size-4 shrink-0" />
+              <span>
+                Para cobrar con seña o pago completo necesitás{" "}
+                <strong>conectar MercadoPago</strong>. Podés hacerlo después del registro desde{" "}
+                Configuración → Cobros, y activar estas opciones en el servicio.
+              </span>
             </div>
           )}
         </div>
