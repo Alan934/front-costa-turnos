@@ -15,6 +15,7 @@ import { CreatedVia } from "@/lib/api/generated/model/createdVia";
 import type { ClientNote } from "@/lib/api/generated/model/clientNote";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
+import { TimeOffType } from "@/lib/api/generated/model/timeOffType";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
 import type { SubscriptionPayment } from "@/lib/api/generated/model/subscriptionPayment";
 import type { Payment } from "@/lib/api/generated/model/payment";
@@ -656,6 +657,7 @@ export const timeOffs: TimeOff[] = [
     membershipId: MEMBERSHIP_ID,
     startAt: iso(at(0, 0, 9)),
     endAt: iso(at(23, 59, 16)),
+    type: TimeOffType.vacation,
     // El contrato tipa reason como objeto|null (ver API-GAPS §1b); guardamos el texto.
     reason: "Vacaciones" as unknown as TimeOff["reason"],
   },
@@ -667,6 +669,7 @@ export const timeOffs: TimeOff[] = [
     membershipId: MEMBERSHIP_ID,
     startAt: iso(at(15, 0, 2)),
     endAt: iso(at(18, 0, 2)),
+    type: TimeOffType.block,
     reason: "Turno médico" as unknown as TimeOff["reason"],
   },
   {
@@ -677,6 +680,7 @@ export const timeOffs: TimeOff[] = [
     membershipId: MEMBERSHIP_ID,
     startAt: iso(at(0, 0, 3)),
     endAt: iso(at(23, 59, 3)),
+    type: TimeOffType.holiday,
     reason: "Feriado nacional" as unknown as TimeOff["reason"],
   },
 ];

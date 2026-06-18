@@ -34,6 +34,7 @@ import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabili
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
+import { TimeOffType } from "@/lib/api/generated/model/timeOffType";
 import type { Payment } from "@/lib/api/generated/model/payment";
 import type { Slot, MeResponse, AccountRole } from "./contract-extensions";
 
@@ -168,6 +169,52 @@ function generateSlots(params: {
 }
 
 /**
+ * Capacidad ofertada y huecos libres de UN día para un staff/servicio. Espeja exactamente la
+ * lógica de `generateSlots` (mismas franjas, pausas, bloqueos y la regla determinística de
+ * "ocupado"), pero además cuenta el total ofertado. Así el mock puede devolver freeSlots,
+ * totalSlots y occupancyRatio igual que el backend (Mejora A). Las pausas y el time_off NO
+ * cuentan como capacidad (son tiempo no atendido), igual que en el back.
+ */
+function dayCapacity(
+  staffId: string,
+  serviceId: string | undefined,
+  day: Date,
+  rangeFrom: Date,
+  rangeTo: Date,
+): { free: number; total: number } {
+  const weekday = day.getDay();
+  const rules = scheduleRules.filter((r) => r.staffId === staffId && r.dayOfWeek === weekday);
+  const works = rules.filter((r) => r.kind === ScheduleRuleKind.work);
+  const breaks = rules.filter((r) => r.kind === ScheduleRuleKind.break);
+  if (works.length === 0) return { free: 0, total: 0 };
+
+  void serviceId; // la duración del servicio no cambia la cantidad de posiciones de media hora.
+  let free = 0;
+  let total = 0;
+  for (let h = 0; h < 24; h++) {
+    for (const m of [0, 30]) {
+      const slotMin = h * 60 + m;
+      const inWork = works.some(
+        (w) => slotMin >= timeToMinutes(w.startTime) && slotMin < timeToMinutes(w.endTime),
+      );
+      if (!inWork) continue;
+      const inBreak = breaks.some(
+        (b) => slotMin >= timeToMinutes(b.startTime) && slotMin < timeToMinutes(b.endTime),
+      );
+      if (inBreak) continue;
+      const start = new Date(day);
+      start.setHours(h, m, 0, 0);
+      if (start < rangeFrom || start > rangeTo) continue;
+      if (isBlockedByTimeOff(staffId, start)) continue;
+      total += 1;
+      const taken = (slotMin + (staffId === "staff_lucia" ? 0 : 90)) % 150 === 0;
+      if (!taken) free += 1;
+    }
+  }
+  return { free, total };
+}
+
+/**
  * Crea un turno desde el body de reserva, lo persiste en el estado en memoria y lo
  * devuelve. Si no se paga seña y el servicio es required/hybrid, queda provisional.
  */
@@ -283,31 +330,37 @@ function dayAvailabilityFromRequest(request: Request, staffId: string): DayAvail
     const works = scheduleRules.filter(
       (r) => r.staffId === staffId && r.dayOfWeek === day.getDay() && r.kind === ScheduleRuleKind.work,
     );
-    // Slots libres de ESE día (acotamos el rango al día para no recorrer todo el período).
+    // Capacidad/huecos de ESE día (acotamos el rango al día para no recorrer todo el período).
     const dayStart = new Date(day);
     const dayEnd = new Date(day);
     dayEnd.setHours(23, 59, 59, 999);
-    const freeSlots = generateSlots({
-      staffId,
-      serviceId,
-      from: dayStart.toISOString(),
-      to: dayEnd.toISOString(),
-    });
+    const { free, total } = dayCapacity(staffId, serviceId, day, dayStart, dayEnd);
 
     let status: DayAvailabilityStatus;
     let reason: string | null = null;
+    let timeOffType: TimeOffType | null = null;
     if (block) {
       status = DayAvailabilityStatus.time_off;
       reason = (block.reason as unknown as string) ?? null;
+      timeOffType = block.type ?? null;
     } else if (works.length === 0) {
       status = DayAvailabilityStatus.closed;
-    } else if (freeSlots.length === 0) {
+    } else if (free === 0) {
       status = DayAvailabilityStatus.full;
     } else {
       status = DayAvailabilityStatus.available;
     }
 
-    out.push({ date, status, reason, bookable: status === DayAvailabilityStatus.available });
+    out.push({
+      date,
+      status,
+      reason,
+      timeOffType,
+      freeSlots: free,
+      totalSlots: total,
+      occupancyRatio: total > 0 ? (total - free) / total : 0,
+      bookable: status === DayAvailabilityStatus.available,
+    });
     day.setDate(day.getDate() + 1);
   }
   return out;
@@ -797,6 +850,8 @@ export const handlers: RequestHandler[] = [
       membershipId: MEMBERSHIP_ID,
       startAt: String(body.startAt ?? new Date().toISOString()),
       endAt: String(body.endAt ?? new Date().toISOString()),
+      // type opcional en CreateTimeOffDto; si se omite, el back asume "block".
+      type: (body.type as TimeOffType) ?? TimeOffType.block,
       // reason está mal tipado en el contrato (objeto|null); guardamos string libre.
       reason: ((body.reason as string) ?? null) as unknown as TimeOff["reason"],
     };

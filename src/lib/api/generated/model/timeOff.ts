@@ -5,6 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { TimeOffType } from './timeOffType';
 
 export interface TimeOff {
   id: string;
@@ -16,6 +17,7 @@ export interface TimeOff {
   membershipId: string;
   startAt: string;
   endAt: string;
+  type: TimeOffType;
   /** @nullable */
   reason?: string | null;
 }

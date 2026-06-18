@@ -5,9 +5,12 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { TimeOffType } from './timeOffType';
 
 export interface CreateTimeOffDto {
   startAt: string;
   endAt: string;
+  /** Tipo de ausencia (feriado / vacaciones / bloqueo). Default: block. */
+  type?: TimeOffType;
   reason?: string;
 }

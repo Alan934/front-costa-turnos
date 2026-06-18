@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { DayAvailabilityStatus } from './dayAvailabilityStatus';
+import type { DayAvailabilityDtoTimeOffType } from './dayAvailabilityDtoTimeOffType';
 
 export interface DayAvailabilityDto {
   /** Fecha (YYYY-MM-DD) en la zona del comercio. */
@@ -16,6 +17,17 @@ export interface DayAvailabilityDto {
    * @nullable
    */
   reason?: string | null;
+  /**
+   * Tipo de ausencia (feriado / vacaciones / bloqueo) cuando status=time_off. null en otros casos. Permite al front colorear feriado/vacaciones/bloqueo sin adivinar por el texto de reason.
+   * @nullable
+   */
+  timeOffType?: DayAvailabilityDtoTimeOffType;
+  /** Huecos libres ese día (slots reservables). 0 cuando el día no es reservable. */
+  freeSlots: number;
+  /** Capacidad total del día = libres + ocupados (turnos, holds, descansos y time_off). 0 si no hay horario de atención ese día (status=closed). */
+  totalSlots: number;
+  /** Ocupación 0..1 = (totalSlots - freeSlots) / totalSlots. 0 si totalSlots=0. Permite al front mostrar "casi lleno" con un umbral exacto. */
+  occupancyRatio: number;
   /** true si hay al menos un slot libre (status=available). */
   bookable: boolean;
 }

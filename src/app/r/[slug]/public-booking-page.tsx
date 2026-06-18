@@ -11,7 +11,6 @@ import {
   Info,
   ArrowRight,
   Users,
-  Wallet,
   Sunrise,
   Sun,
   Moon,
@@ -53,6 +52,7 @@ import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDt
 import type { PublicServiceProfessionalDto } from "@/lib/api/generated/model/publicServiceProfessionalDto";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
+import { TimeOffType } from "@/lib/api/generated/model/timeOffType";
 import type { Slot } from "@/mocks/contract-extensions";
 import {
   getApiErrorMessage,
@@ -100,8 +100,14 @@ function isBookableKind(kind: DayKind): boolean {
   return kind === "available" || kind === "almost";
 }
 
-/** Subtipo de un día bloqueado (time_off) según el texto del motivo. */
-function timeOffKind(reason: string | null | undefined): DayKind {
+/**
+ * Subtipo de un día bloqueado (time_off). Usa el `timeOffType` tipado del back;
+ * si no viene (back anterior), cae al texto libre `reason` como respaldo.
+ */
+function timeOffKind(type: TimeOffType | null | undefined, reason: string | null | undefined): DayKind {
+  if (type === TimeOffType.holiday) return "holiday";
+  if (type === TimeOffType.vacation) return "vacation";
+  if (type === TimeOffType.block) return "block";
   const r = (reason ?? "").toLowerCase();
   if (/vacac/.test(r)) return "vacation";
   if (/feriad/.test(r)) return "holiday";
@@ -577,46 +583,37 @@ function SlotStep({
 
   const slotsLoaded = slots != null;
 
-  // Cantidad de huecos libres por día (clave local YYYY-MM-DD): para "quedan pocos" y la leyenda.
-  const freeByDay = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const s of slots ?? []) {
-      const key = localDateKey(new Date(s.startAt));
-      map.set(key, (map.get(key) ?? 0) + 1);
-    }
-    return map;
-  }, [slots]);
+  // Ocupación ≥80% (dato exacto del back) ⇒ "quedan pocos".
+  const ALMOST_THRESHOLD = 0.8;
 
-  // Día más cargado del rango: lo usamos como referencia de capacidad para detectar "casi lleno".
-  const maxFree = useMemo(() => {
-    let m = 0;
-    for (const n of freeByDay.values()) m = Math.max(m, n);
-    return m;
-  }, [freeByDay]);
-
-  // "Quedan pocos": ≤25% de los huecos del día más cargado (al menos 1) y sin llegar a ese máximo.
-  const almostThreshold = Math.max(1, Math.round(maxFree * 0.25));
-  const isAlmost = (free: number) => free > 0 && free <= almostThreshold && free < maxFree;
-
-  // Estado visual de cada día (color + etiqueta), combinando disponibilidad del back y huecos libres.
+  // Estado visual de cada día (color + etiqueta) a partir de la disponibilidad del back:
+  // status + ocupación exacta (occupancyRatio) + tipo de ausencia (timeOffType).
   const dayInfos = useMemo(() => {
     return days.map((d) => {
       const a = availByDate.get(localDateKey(d));
-      const free = freeByDay.get(localDateKey(d)) ?? 0;
-      let kind: DayKind;
       if (a) {
-        if (a.status === DayAvailabilityStatus.full) kind = "full";
-        else if (a.status === DayAvailabilityStatus.closed) kind = "closed";
-        else if (a.status === DayAvailabilityStatus.time_off) kind = timeOffKind(a.reason);
-        else kind = slotsLoaded && isAlmost(free) ? "almost" : "available";
-      } else {
-        // Sin info de disponibilidad: inferimos desde los huecos libres.
-        kind = !slotsLoaded ? "available" : free === 0 ? "closed" : isAlmost(free) ? "almost" : "available";
+        let kind: DayKind;
+        switch (a.status) {
+          case DayAvailabilityStatus.full:
+            kind = "full";
+            break;
+          case DayAvailabilityStatus.closed:
+            kind = "closed";
+            break;
+          case DayAvailabilityStatus.time_off:
+            kind = timeOffKind(a.timeOffType, a.reason);
+            break;
+          default: // available
+            kind = a.occupancyRatio >= ALMOST_THRESHOLD ? "almost" : "available";
+        }
+        return { d, a, free: a.freeSlots, total: a.totalSlots, kind };
       }
-      return { d, a, free, kind };
+      // Fallback (back sin day-availability): inferimos desde los huecos libres.
+      const free = slotsLoaded ? (slots ?? []).filter((s) => isSameDay(s.startAt, d)).length : 0;
+      const kind: DayKind = !slotsLoaded ? "available" : free === 0 ? "closed" : "available";
+      return { d, a: undefined, free, total: free, kind };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, availByDate, freeByDay, slotsLoaded, maxFree]);
+  }, [days, availByDate, slots, slotsLoaded]);
 
   const activeInfo = dayInfos.find((di) => isSameDay(di.d, activeDay));
 
@@ -655,7 +652,7 @@ function SlotStep({
       </p>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-        {dayInfos.map(({ d, a, free, kind }) => {
+        {dayInfos.map(({ d, a, free, total, kind }) => {
           const chip = formatDayChip(d);
           const active = isSameDay(d, activeDay);
           const bookable = isBookableKind(kind);
@@ -668,15 +665,21 @@ function SlotStep({
                 : kind === "block"
                   ? a?.reason?.trim() || style.label
                   : style.label;
+          // En días reservables informamos la ocupación exacta (dato del back) como tooltip.
+          const occupancyTitle = bookable && total > 0 ? `Quedan ${free} de ${total} turnos` : null;
+          const ariaLabel =
+            `${chip.weekday} ${chip.day} — ${occupancyTitle ?? subLabel}` +
+            (active ? " (seleccionado)" : "");
           return (
             <button
               key={d.toISOString()}
               type="button"
               onClick={() => bookable && setActiveDay(d)}
               disabled={!bookable}
-              aria-pressed={active ? "true" : "false"}
-              aria-label={`${chip.weekday} ${chip.day} — ${subLabel}`}
-              title={kind === "block" && a?.reason ? a.reason : style.label}
+              aria-label={ariaLabel}
+              title={
+                occupancyTitle ?? (kind === "block" && a?.reason ? a.reason : style.label)
+              }
               className={cn(
                 "relative flex shrink-0 flex-col items-center rounded-xl border px-3.5 py-2.5 transition-colors",
                 style.chip,
