@@ -675,6 +675,70 @@ export const handlers: RequestHandler[] = [
     return HttpResponse.json(svc);
   }),
 
+  // ---- Comercios / membresías ----
+  // Membresías propias del profesional (usadas por ComercioProvider y ServiceFormDialog).
+  http.get(url("/comercios/memberships/mine"), () =>
+    HttpResponse.json([
+      {
+        id: MEMBERSHIP_ID,
+        professionalId: professional.id,
+        comercioId: COMERCIO_ID,
+        status: "active",
+        address: null,
+        minBookingHours: 0,
+        comercio: {
+          id: COMERCIO_ID,
+          name: professional.businessName,
+          slug: professional.slug,
+          address: professional.publicPageSettings?.address ?? null,
+          isPersonal: true,
+        },
+      },
+    ]),
+  ),
+  // Servicios del comercio (mismos que /services, filtrados por comercioId).
+  http.get(url("/comercios/:comercioId/services"), ({ params }) =>
+    params.comercioId === COMERCIO_ID
+      ? HttpResponse.json(services.filter((s) => s.comercioId === COMERCIO_ID))
+      : HttpResponse.json([]),
+  ),
+  // Crear servicio en el comercio: acepta membershipIds[] y asigna al profesional.
+  http.post(url("/comercios/:comercioId/services"), async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const svc = {
+      id: `svc_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      professionalId: professional.id,
+      comercioId: COMERCIO_ID,
+      membershipId: MEMBERSHIP_ID,
+      name: String(body.name ?? "Servicio"),
+      durationMinutes: Number(body.durationMinutes ?? 30),
+      priceCents: Number(body.priceCents ?? 0),
+      allowNoPayment: body.allowNoPayment !== false,
+      allowDeposit: !!body.allowDeposit,
+      allowFullPayment: !!body.allowFullPayment,
+      depositAmountCents: (body.depositAmountCents as number) ?? null,
+      capacity: Number(body.capacity ?? 1),
+      isActive: true,
+    };
+    services.push(svc);
+    return HttpResponse.json(svc, { status: 201 });
+  }),
+  http.patch(url("/comercios/:comercioId/services/:id"), async ({ params, request }) => {
+    const svc = services.find((s) => s.id === params.id);
+    if (!svc) return new HttpResponse(null, { status: 404 });
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    Object.assign(svc, body, { updatedAt: new Date().toISOString() });
+    return HttpResponse.json(svc);
+  }),
+  http.delete(url("/comercios/:comercioId/services/:id"), ({ params }) => {
+    const svc = services.find((s) => s.id === params.id);
+    if (!svc) return new HttpResponse(null, { status: 404 });
+    svc.isActive = false;
+    return HttpResponse.json(svc);
+  }),
+
   // ---- Profesional / staff ----
   http.post(url("/professionals/onboard"), async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;

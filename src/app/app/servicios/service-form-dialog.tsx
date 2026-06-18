@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useCreateComercioService, useUpdateComercioService } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
+import { useMyMemberships } from "@/lib/api/comercios";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api/generated/model/service";
 
@@ -44,6 +45,10 @@ export function ServiceFormDialog({
   const create = useCreateComercioService(comercioId);
   const update = useUpdateComercioService(comercioId, service?.id ?? "");
   const pending = create.isPending || update.isPending;
+
+  // Membresía propia en este comercio: necesaria para asignar el profesional al crear.
+  const memberships = useMyMemberships();
+  const myMembershipId = memberships.data?.find((m) => m.comercioId === comercioId)?.id;
 
   // Las formas de pago online (seña / pago completo) requieren MercadoPago conectado:
   // el cobro del cliente entra a la cuenta del profesional. Sin conexión no se ofrecen.
@@ -89,6 +94,9 @@ export function ServiceFormDialog({
       allowFullPayment: fullPayment,
       depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       capacity: capacityNum,
+      // Al crear, asignamos automáticamente al profesional actual. Al editar no se manda
+      // para no pisar las asignaciones existentes (pueden tener varios en un comercio multi-pro).
+      ...(!editing && myMembershipId ? { membershipIds: [myMembershipId] } : {}),
     };
     if (editing) update.mutate(payload, { onSuccess: onClose });
     else create.mutate(payload, { onSuccess: onClose });
