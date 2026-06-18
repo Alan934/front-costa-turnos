@@ -79,7 +79,10 @@ export function useCreateComercioService(comercioId: string) {
         method: "POST",
         data,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] });
+      qc.invalidateQueries({ queryKey: ["services"] });
+    },
   });
 }
 
@@ -92,7 +95,10 @@ export function useUpdateComercioService(comercioId: string, id: string) {
         method: "PATCH",
         data,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] });
+      qc.invalidateQueries({ queryKey: ["services"] });
+    },
   });
 }
 
@@ -104,7 +110,10 @@ export function useDeactivateComercioService(comercioId: string) {
         url: `/v1/comercios/${comercioId}/services/${id}`,
         method: "DELETE",
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comercio-services", comercioId] });
+      qc.invalidateQueries({ queryKey: ["services"] });
+    },
   });
 }
 
