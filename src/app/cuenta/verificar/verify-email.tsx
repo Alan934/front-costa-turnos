@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { useAuthRequestEmailCode, useAuthVerifyEmail } from "@/lib/api/generated/endpoints/auth/auth";
+import { useAuth } from "@/components/auth-provider";
 
 type Step = "email" | "codigo" | "listo";
 
@@ -19,6 +20,7 @@ export function VerifyEmail() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const { refresh } = useAuth();
   const requestCode = useAuthRequestEmailCode();
   const verify = useAuthVerifyEmail();
 
@@ -43,7 +45,10 @@ export function VerifyEmail() {
     verify.mutate(
       { data: { email, code } },
       {
-        onSuccess: () => setStep("listo"),
+        onSuccess: async () => {
+          await refresh(); // actualiza emailVerified en el contexto → oculta el banner
+          setStep("listo");
+        },
         onError: () => setError("El código no es válido o expiró."),
       },
     );
