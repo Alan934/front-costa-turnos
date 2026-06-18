@@ -106,6 +106,7 @@ export const services: Service[] = [
     allowNoPayment: true,
     allowDeposit: false,
     allowFullPayment: false,
+    allowCash: true,
     depositAmountCents: null,
     capacity: 1,
     isActive: true,
@@ -123,6 +124,7 @@ export const services: Service[] = [
     allowNoPayment: true,
     allowDeposit: true,
     allowFullPayment: true,
+    allowCash: false,
     depositAmountCents: 400000,
     capacity: 1,
     isActive: true,
@@ -140,6 +142,7 @@ export const services: Service[] = [
     allowNoPayment: false,
     allowDeposit: true,
     allowFullPayment: true,
+    allowCash: false,
     depositAmountCents: 1000000,
     capacity: 1,
     isActive: true,
@@ -202,6 +205,7 @@ export function buildPublicServices(): PublicServiceDto[] {
       allowDeposit: s.allowDeposit,
       allowFullPayment: s.allowFullPayment,
       allowNoPayment: s.allowNoPayment,
+      allowCash: s.allowCash,
       depositAmountCents: s.depositAmountCents ?? null,
       professionals: [
         {

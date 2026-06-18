@@ -90,13 +90,33 @@ export function usePayments() {
   });
 }
 
-/** Marca un pago en efectivo como cobrado. */
+/** Marca un pago en efectivo como cobrado (sirve también para cobrar un pagaré). */
 export function useMarkPaymentPaid() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
       customInstance<Payment>({ url: `/v1/payments/${id}/mark-paid`, method: "POST" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["payments"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["cash-closing"] });
+    },
+  });
+}
+
+/** Marca un pago en efectivo como pagaré (el cliente quedó debiendo; opcional `note`). */
+export function useMarkPaymentDeferred() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      customInstance<Payment>({
+        url: `/v1/payments/${id}/mark-deferred`,
+        method: "POST",
+        data: note ? { note } : {},
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["cash-closing"] });
+    },
   });
 }
 

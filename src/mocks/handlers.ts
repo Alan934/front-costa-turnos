@@ -453,6 +453,7 @@ function buildMetrics(range: "week" | "month") {
     totals: {
       appointments: totalAppts,
       incomeCents,
+      pendingCashCents: Math.round(incomeCents * 0.12),
       newClients: Math.round(totalAppts * 0.35),
       noShowRate: 0.06,
     },
@@ -703,6 +704,7 @@ export const handlers: RequestHandler[] = [
       allowNoPayment: body.allowNoPayment !== false,
       allowDeposit: !!body.allowDeposit,
       allowFullPayment: !!body.allowFullPayment,
+      allowCash: !!body.allowCash,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
       capacity: Number(body.capacity ?? 1),
       isActive: true,
@@ -771,6 +773,7 @@ export const handlers: RequestHandler[] = [
       allowNoPayment: body.allowNoPayment !== false,
       allowDeposit: !!body.allowDeposit,
       allowFullPayment: !!body.allowFullPayment,
+      allowCash: !!body.allowCash,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
       capacity: Number(body.capacity ?? 1),
       isActive: true,
@@ -881,6 +884,15 @@ export const handlers: RequestHandler[] = [
     p.paidAt = new Date().toISOString();
     return HttpResponse.json(p);
   }),
+  http.post(url("/payments/:id/mark-deferred"), async ({ params, request }) => {
+    const p = payments.find((x) => x.id === params.id);
+    if (!p) return new HttpResponse(null, { status: 404 });
+    const body = (await request.json().catch(() => ({}))) as { note?: string };
+    p.status = PaymentStatus.deferred;
+    p.method = "cash";
+    p.note = body.note ?? p.note ?? null;
+    return HttpResponse.json(p);
+  }),
   http.post(url("/payments/:id/mp-preference"), ({ params }) => {
     const p = payments.find((x) => x.id === params.id);
     if (!p) return new HttpResponse(null, { status: 404 });
@@ -893,6 +905,61 @@ export const handlers: RequestHandler[] = [
     return HttpResponse.json({
       preferenceId: `pref_${params.id}`,
       initPoint: `https://www.mercadopago.com.ar/checkout/pay-mock/${params.id}`,
+    });
+  }),
+  http.get(url("/cash-closing"), () => {
+    const now = Date.now();
+    const svcName = (id: string) => services.find((s) => s.id === id)?.name ?? "Servicio";
+    // Turnos pasados que siguen sin cerrar (no done/no_show/cancelled).
+    const pendingCompletion = appointments
+      .filter(
+        (a) =>
+          new Date(a.endAt).getTime() < now &&
+          a.status !== AppointmentStatus.done &&
+          a.status !== AppointmentStatus.no_show &&
+          a.status !== AppointmentStatus.cancelled,
+      )
+      .slice(0, 5)
+      .map((a) => ({
+        appointmentId: a.id,
+        personName: "Cliente",
+        serviceName: svcName(a.serviceId),
+        startAt: a.startAt,
+        endAt: a.endAt,
+        status: a.status,
+      }));
+    // Efectivo sin cobrar (pendiente o pagaré).
+    const cashPending = payments.filter(
+      (p) =>
+        p.method === "cash" &&
+        (p.status === PaymentStatus.pending || p.status === PaymentStatus.deferred),
+    );
+    const pendingCash = cashPending.map((p) => {
+      const apptId = p.appointmentId as unknown as string | null;
+      const appt = apptId ? appointments.find((a) => a.id === apptId) : undefined;
+      return {
+        paymentId: p.id,
+        appointmentId: apptId ?? null,
+        personName: "Cliente",
+        serviceName: appt ? svcName(appt.serviceId) : "Servicio",
+        amountCents: p.amountCents,
+        status: p.status,
+        appointmentStartAt: appt?.startAt ?? null,
+        note: p.note ?? null,
+      };
+    });
+    const pendingCashCents = pendingCash.reduce((s, p) => s + p.amountCents, 0);
+    const collectedList = payments.filter(
+      (p) => p.method === "cash" && p.status === PaymentStatus.paid,
+    );
+    return HttpResponse.json({
+      pendingCompletion,
+      pendingCash,
+      pendingCashCents,
+      collected: {
+        count: collectedList.length,
+        totalCents: collectedList.reduce((s, p) => s + p.amountCents, 0),
+      },
     });
   }),
 

@@ -15,6 +15,7 @@ export interface PublicServiceDto {
   allowDeposit: boolean;
   allowFullPayment: boolean;
   allowNoPayment: boolean;
+  allowCash: boolean;
   /** @nullable */
   depositAmountCents?: number | null;
   professionals: PublicServiceProfessionalDto[];

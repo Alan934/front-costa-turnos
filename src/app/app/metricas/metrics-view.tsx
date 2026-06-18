@@ -23,6 +23,7 @@ import {
   FileDown,
   Sheet,
   UserMinus,
+  CircleDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,7 +89,14 @@ function MetricsContent({ data }: { data: MetricsOverview }) {
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi icon={<CalendarCheck2 className="size-4" />} value={String(data.totals.appointments)} label="turnos atendidos" />
-        <Kpi icon={<DollarSign className="size-4" />} value={formatMoney(data.totals.incomeCents)} label="ingresos" />
+        <Kpi icon={<DollarSign className="size-4" />} value={formatMoney(data.totals.incomeCents)} label="ingresos cobrados" />
+        {data.totals.pendingCashCents != null && (
+          <Kpi
+            icon={<CircleDollarSign className="size-4" />}
+            value={formatMoney(data.totals.pendingCashCents)}
+            label="pendiente de cobro"
+          />
+        )}
         <Kpi icon={<UserPlus className="size-4" />} value={String(data.totals.newClients)} label="clientes nuevos" />
         <Kpi icon={<UserX className="size-4" />} value={`${Math.round(data.totals.noShowRate * 100)}%`} label="no-show" />
       </div>

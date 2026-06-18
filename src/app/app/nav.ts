@@ -10,6 +10,7 @@ import {
   Settings,
   Wallet,
   CreditCard,
+  Calculator,
   type LucideIcon,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export const APP_NAV: NavItem[] = [
   { href: "/app/servicios", label: "Servicios", icon: Scissors },
   { href: "/app/horarios", label: "Horarios", icon: Clock },
   { href: "/app/metricas", label: "Métricas", icon: BarChart3 },
+  { href: "/app/caja", label: "Cierre de caja", icon: Calculator },
   { href: "/ajustes/pagos", label: "Cobros", icon: Wallet },
   { href: "/app/suscripcion", label: "Suscripción", icon: CreditCard },
   { href: "/app/configuracion", label: "Configuración", icon: Settings },

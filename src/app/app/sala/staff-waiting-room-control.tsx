@@ -89,6 +89,12 @@ function RoomBoard({ staffId }: { staffId: string }) {
     mutate.mutate({ id }, { onSuccess: () => invalidate() });
   }
 
+  // El complete acepta un body opcional (cash outcome); desde la sala lo cerramos sin cobro.
+  // Si el turno tenía efectivo pendiente, queda en el cierre de caja para confirmarlo después.
+  function doComplete(id: string) {
+    complete.mutate({ id, data: {} }, { onSuccess: () => invalidate() });
+  }
+
   if (isLoading) {
     return (
       <div className="mt-6 space-y-4">
@@ -133,7 +139,7 @@ function RoomBoard({ staffId }: { staffId: string }) {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Button onClick={() => act(complete, serving.appointmentId)} disabled={busy}>
+            <Button onClick={() => doComplete(serving.appointmentId)} disabled={busy}>
               {complete.isPending ? <Spinner /> : <Check className="size-4" />}
               Terminé
             </Button>

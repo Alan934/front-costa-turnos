@@ -37,6 +37,9 @@ export function ServiceFormDialog({
   const [allowNoPayment, setAllowNoPayment] = useState(service ? service.allowNoPayment : true);
   const [allowDeposit, setAllowDeposit] = useState(service?.allowDeposit ?? false);
   const [allowFullPayment, setAllowFullPayment] = useState(service?.allowFullPayment ?? false);
+  // Efectivo: cobra el precio completo del servicio (sin IVA/recargo) y NO requiere MercadoPago,
+  // porque el pago se recibe en persona. El turno queda confirmado al reservar.
+  const [allowCash, setAllowCash] = useState(service?.allowCash ?? false);
   const [depositAmount, setDepositAmount] = useState(
     service?.depositAmountCents ? String(service.depositAmountCents / 100) : "",
   );
@@ -56,7 +59,7 @@ export function ServiceFormDialog({
   const mpConnected = mp.data?.connected ?? false;
   const paidLocked = !mp.isLoading && !mpConnected;
 
-  const anyOption = allowNoPayment || allowDeposit || allowFullPayment;
+  const anyOption = allowNoPayment || allowDeposit || allowFullPayment || allowCash;
   const depositOk = !allowDeposit || Number(depositAmount) > 0;
   // No permitir guardar opciones pagas si no hay MP (defensa: pudieron venir marcadas de antes).
   const paidOk = mpConnected || (!allowDeposit && !allowFullPayment);
@@ -92,6 +95,7 @@ export function ServiceFormDialog({
       allowNoPayment,
       allowDeposit: deposit,
       allowFullPayment: fullPayment,
+      allowCash,
       depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       capacity: capacityNum,
       // Al crear, asignamos automáticamente al profesional actual. Al editar no se manda
@@ -181,6 +185,12 @@ export function ServiceFormDialog({
                 disabled={paidLocked}
                 title="Pago completo"
                 hint="Paga el total al reservar."
+              />
+              <OptionToggle
+                checked={allowCash}
+                onChange={setAllowCash}
+                title="Aceptar efectivo"
+                hint="Reserva confirmada; paga el precio completo en persona (sin IVA)."
               />
             </div>
             {paidLocked && (

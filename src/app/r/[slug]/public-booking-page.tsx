@@ -803,12 +803,14 @@ function ConfirmStep({
   const isAny = professional === "any";
   const membershipId = isAny ? "" : professional.membershipId;
 
-  // Sin MP conectado, forzamos "sin pago" aunque el servicio tenga opciones de cobro online.
+  // Sin MP conectado, forzamos "sin pago" en las opciones online (seña/total). El efectivo NO
+  // requiere MP (se cobra en persona), así que se mantiene disponible aunque no haya MercadoPago.
   const effectiveSvc = mpConnected
     ? service
     : { ...service, allowDeposit: false, allowFullPayment: false };
   const options = getPaymentOptions(effectiveSvc);
   const hasNoPay = options.some((o) => o.choice === "none");
+  const hasCash = options.some((o) => o.choice === "cash");
   const hasPaid = mpConnected && options.some((o) => o.requiresPayment);
 
   // Siempre se montan los cuatro hooks; solo se llama al que corresponde al camino elegido.
@@ -850,7 +852,21 @@ function ConfirmStep({
       serviceId: service.serviceId,
       startAt: slot.startAt,
     };
-    if (option.paymentOption) {
+    if (option.flow === "cash") {
+      // Efectivo: turno confirmado al instante (no provisional). Sin paymentOption: el back
+      // cobra el precio completo del servicio. El cobro queda pendiente hasta el turno presencial.
+      bookWithDeposit.mutate(
+        { ...base, method: "cash" },
+        {
+          onSuccess: (res) => {
+            const proName = isAny
+              ? (res as { professionalDisplayName?: string } & typeof res).professionalDisplayName
+              : undefined;
+            onConfirmed(false, proName);
+          },
+        },
+      );
+    } else if (option.paymentOption) {
       setPayRedirectError(false);
       bookWithDeposit.mutate(
         { ...base, method: "mercadopago", paymentOption: option.paymentOption },
@@ -907,6 +923,15 @@ function ConfirmStep({
         <div className="mt-4 flex gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" />
           <p className="text-sm">Este servicio se reserva pagando para confirmar el turno.</p>
+        </div>
+      )}
+      {hasCash && (
+        <div className="mt-4 flex gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3.5">
+          <Info className="mt-0.5 size-4 shrink-0 text-accent" />
+          <p className="text-sm">
+            Pagando en efectivo tu turno queda <strong>confirmado</strong>. Abonás el total en
+            persona el día del turno.
+          </p>
         </div>
       )}
 
@@ -976,9 +1001,11 @@ function ConfirmStep({
               ? `Pagar seña y reservar · ${formatMoney(opt.amountCents)}`
               : opt.choice === "full"
                 ? `Pagar el total · ${formatMoney(opt.amountCents)}`
-                : hasPaid
-                  ? "Reservar sin pagar"
-                  : "Confirmar turno";
+                : opt.choice === "cash"
+                  ? `Pagar en efectivo · ${formatMoney(opt.amountCents)}`
+                  : hasPaid
+                    ? "Reservar sin pagar"
+                    : "Confirmar turno";
           return (
             <Button
               key={opt.choice}

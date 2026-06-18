@@ -26,6 +26,7 @@ import type {
 
 import type {
   CreatePreferenceDto,
+  DeferPaymentDto,
   Payment,
   PaymentsWebhookBody
 } from '../../model';
@@ -189,6 +190,71 @@ export const usePaymentsMarkPaid = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getPaymentsMarkPaidMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Marcar pago en efectivo como pagaré (el cliente quedó debiendo)
+ */
+export const paymentsMarkDeferred = (
+    id: string,
+    deferPaymentDto: BodyType<DeferPaymentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Payment>(
+      {url: `/v1/payments/${id}/mark-deferred`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: deferPaymentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsMarkDeferredMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkDeferred>>, TError,{id: string;data: BodyType<DeferPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkDeferred>>, TError,{id: string;data: BodyType<DeferPaymentDto>}, TContext> => {
+
+const mutationKey = ['paymentsMarkDeferred'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsMarkDeferred>>, {id: string;data: BodyType<DeferPaymentDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paymentsMarkDeferred(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsMarkDeferredMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsMarkDeferred>>>
+    export type PaymentsMarkDeferredMutationBody = BodyType<DeferPaymentDto>
+    export type PaymentsMarkDeferredMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar pago en efectivo como pagaré (el cliente quedó debiendo)
+ */
+export const usePaymentsMarkDeferred = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsMarkDeferred>>, TError,{id: string;data: BodyType<DeferPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsMarkDeferred>>,
+        TError,
+        {id: string;data: BodyType<DeferPaymentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsMarkDeferredMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

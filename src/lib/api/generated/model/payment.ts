@@ -28,4 +28,6 @@ export interface Payment {
   mercadopagoRef?: string | null;
   /** @nullable */
   paidAt?: string | null;
+  /** @nullable */
+  note?: string | null;
 }

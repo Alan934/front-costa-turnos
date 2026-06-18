@@ -8,7 +8,10 @@
 
 export interface MetricsTotalsDto {
   appointments: number;
+  /** Ingreso del período: solo pagos cobrados (Paid). */
   incomeCents: number;
+  /** Efectivo pendiente de cobro (pendiente + pagaré), en centavos. */
+  pendingCashCents: number;
   newClients: number;
   /** Proporcion 0..1 de no-show */
   noShowRate: number;

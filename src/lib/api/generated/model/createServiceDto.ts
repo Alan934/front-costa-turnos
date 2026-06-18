@@ -20,6 +20,8 @@ export interface CreateServiceDto {
   allowFullPayment?: boolean;
   /** Permitir reservar sin pagar */
   allowNoPayment?: boolean;
+  /** Permitir reservar pagando en efectivo (precio completo, sin IVA) */
+  allowCash?: boolean;
   /** monto de la seña en centavos */
   depositAmountCents?: number;
   /**

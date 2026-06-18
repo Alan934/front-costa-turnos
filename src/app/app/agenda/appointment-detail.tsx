@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert } from "lucide-react";
+import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
@@ -21,10 +23,13 @@ import {
 import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
+import { CashOutcome } from "@/lib/api/generated/model/cashOutcome";
 import { formatDateLong, formatTime, formatMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
+import type { Payment } from "@/lib/api/generated/model/payment";
 import type { PersonInfo } from "@/lib/api/clients";
 
 export function AppointmentDetail({
@@ -60,6 +65,31 @@ export function AppointmentDetail({
     m.mutate({ id }, { onSuccess: onChanged });
   const doCancel = () =>
     cancel.mutate({ id, data: {} }, { onSuccess: onChanged });
+
+  // Pago en efectivo aún sin cobrar de este turno: al marcar "atendido" pedimos confirmar
+  // si lo recibió (collected → pagado) o quedó en un pagaré (deferred → debe). Así el cobro
+  // no infla las métricas hasta que el profesional confirma que recibió la plata.
+  const { data: payments } = usePayments();
+  const cashPayment = payments?.find(
+    (p) =>
+      (p.appointmentId as unknown as string) === id &&
+      p.method === "cash" &&
+      (p.status === "pending" || p.status === "deferred"),
+  );
+  const [askCash, setAskCash] = useState(false);
+
+  function completeAppointment(cashOutcome?: CashOutcome, note?: string) {
+    complete.mutate(
+      { id, data: cashOutcome ? { cashOutcome, ...(note ? { note } : {}) } : {} },
+      { onSuccess: onChanged },
+    );
+  }
+
+  // Marcar atendido: si hay efectivo pendiente, primero preguntamos el resultado del cobro.
+  function onMarkDone() {
+    if (cashPayment) setAskCash(true);
+    else completeAppointment();
+  }
 
   const status = appointment.status;
   const isLive =
@@ -130,15 +160,25 @@ export function AppointmentDetail({
               Iniciar atención
             </Button>
           )}
-          {appointment.status === AppointmentStatus.in_progress && (
-            <Button className="w-full" onClick={() => run(complete)} disabled={busy}>
+          {appointment.status === AppointmentStatus.in_progress && !askCash && (
+            <Button className="w-full" onClick={onMarkDone} disabled={busy}>
               {complete.isPending ? <Spinner /> : <Check className="size-4" />}
               Marcar como atendido
             </Button>
           )}
 
-          {/* Acciones negativas (si el turno sigue vivo) */}
-          {isLive && (
+          {appointment.status === AppointmentStatus.in_progress && askCash && cashPayment && (
+            <CashOutcomePanel
+              payment={cashPayment}
+              pending={complete.isPending}
+              onCollected={() => completeAppointment(CashOutcome.collected)}
+              onDeferred={(note) => completeAppointment(CashOutcome.deferred, note)}
+              onCancel={() => setAskCash(false)}
+            />
+          )}
+
+          {/* Acciones negativas (si el turno sigue vivo y no estamos cerrando el cobro) */}
+          {isLive && !askCash && (
             <div className="flex gap-2">
               <Button
                 variant="ghost"
@@ -196,6 +236,99 @@ function ContactRow({ label, value, href }: { label: string; value: string; href
       >
         {value}
       </a>
+    </div>
+  );
+}
+
+/**
+ * Al cerrar un turno con efectivo pendiente, el profesional confirma el resultado del cobro:
+ * `collected` (recibió la plata → pago pagado) o `deferred` (pagaré: el cliente quedó debiendo,
+ * con motivo opcional). En ambos casos el turno se marca como atendido en la misma llamada.
+ */
+function CashOutcomePanel({
+  payment,
+  pending,
+  onCollected,
+  onDeferred,
+  onCancel,
+}: {
+  payment: Payment;
+  pending: boolean;
+  onCollected: () => void;
+  onDeferred: (note?: string) => void;
+  onCancel: () => void;
+}) {
+  const [defer, setDefer] = useState(false);
+  const [note, setNote] = useState("");
+
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
+      <p className="text-sm font-medium">
+        Cobro en efectivo · {formatMoney(payment.amountCents)}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        ¿Recibiste el pago al finalizar el turno?
+      </p>
+
+      {!defer ? (
+        <div className="space-y-2">
+          <Button className="w-full" onClick={onCollected} disabled={pending}>
+            {pending ? <Spinner /> : <Banknote className="size-4" />}
+            Sí, cobré el efectivo
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setDefer(true)}
+            disabled={pending}
+          >
+            <Clock className="size-4" />
+            No, queda en pagaré
+          </Button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="w-full py-1 text-center text-xs text-muted-foreground hover:text-foreground"
+          >
+            Volver
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <div>
+            <Label htmlFor="cash-note">Nota (opcional)</Label>
+            <Input
+              id="cash-note"
+              className="mt-1.5"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ej: paga la semana que viene"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            El turno queda atendido y el cliente aparece en el cierre de caja como pendiente de pago.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDefer(false)}
+              disabled={pending}
+            >
+              Volver
+            </Button>
+            <Button
+              className={cn("flex-1")}
+              onClick={() => onDeferred(note.trim() || undefined)}
+              disabled={pending}
+            >
+              {pending ? <Spinner /> : null}
+              Confirmar pagaré
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

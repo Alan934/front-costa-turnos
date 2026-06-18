@@ -29,7 +29,8 @@ import type {
   AppointmentsListParams,
   BookAppointmentDto,
   BookWithDepositDto,
-  CancelAppointmentDto
+  CancelAppointmentDto,
+  CompleteAppointmentDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -570,16 +571,20 @@ export const useAppointmentsStart = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Con pago en efectivo pendiente, enviar cashOutcome=collected (cobró) o deferred (pagaré, el cliente quedó debiendo). Si se omite, el pago queda pendiente en el cierre de caja.
  * @summary Completar un turno
  */
 export const appointmentsComplete = (
     id: string,
+    completeAppointmentDto: BodyType<CompleteAppointmentDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
       return customInstance<Appointment>(
-      {url: `/v1/appointments/${id}/complete`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/complete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: completeAppointmentDto, signal
     },
       options);
     }
@@ -587,8 +592,8 @@ export const appointmentsComplete = (
 
 
 export const getAppointmentsCompleteMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string;data: BodyType<CompleteAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string;data: BodyType<CompleteAppointmentDto>}, TContext> => {
 
 const mutationKey = ['appointmentsComplete'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -600,10 +605,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsComplete>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsComplete>>, {id: string;data: BodyType<CompleteAppointmentDto>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  appointmentsComplete(id,requestOptions)
+          return  appointmentsComplete(id,data,requestOptions)
         }
 
         
@@ -612,18 +617,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AppointmentsCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsComplete>>>
-    
+    export type AppointmentsCompleteMutationBody = BodyType<CompleteAppointmentDto>
     export type AppointmentsCompleteMutationError = ErrorType<void>
 
     /**
  * @summary Completar un turno
  */
 export const useAppointmentsComplete = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsComplete>>, TError,{id: string;data: BodyType<CompleteAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof appointmentsComplete>>,
         TError,
-        {id: string},
+        {id: string;data: BodyType<CompleteAppointmentDto>},
         TContext
       > => {
 

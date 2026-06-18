@@ -22,6 +22,7 @@ export interface Service {
   allowDeposit: boolean;
   allowFullPayment: boolean;
   allowNoPayment: boolean;
+  allowCash: boolean;
   /** @nullable */
   depositAmountCents?: number | null;
   /** @minimum 1 */

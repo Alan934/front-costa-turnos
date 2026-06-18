@@ -258,7 +258,10 @@ export interface MetricsOverview {
   /** KPIs de cabecera. */
   totals: {
     appointments: number;
+    /** Ingresos efectivamente cobrados (solo pagos en estado pagado). */
     incomeCents: number;
+    /** Efectivo pendiente de cobro (pending + pagarés). Opcional: backs anteriores no lo envían. */
+    pendingCashCents?: number;
     newClients: number;
     noShowRate: number; // 0..1
   };
