@@ -296,6 +296,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             service={sel.service}
             professional={sel.professional}
             slot={sel.slot}
+            mpConnected={mpConnected}
             onConfirmed={(provisional, professionalDisplayName) =>
               setConfirmed({ provisional, professionalDisplayName })
             }
@@ -781,12 +782,14 @@ function ConfirmStep({
   service,
   professional,
   slot,
+  mpConnected,
   onConfirmed,
 }: {
   slug: string;
   service: PublicServiceDto;
   professional: ProfessionalChoice;
   slot: Slot;
+  mpConnected: boolean;
   onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
 }) {
   const [fullName, setFullName] = useState("");
@@ -797,9 +800,13 @@ function ConfirmStep({
   const isAny = professional === "any";
   const membershipId = isAny ? "" : professional.membershipId;
 
-  const options = getPaymentOptions(service);
+  // Sin MP conectado, forzamos "sin pago" aunque el servicio tenga opciones de cobro online.
+  const effectiveSvc = mpConnected
+    ? service
+    : { ...service, allowDeposit: false, allowFullPayment: false };
+  const options = getPaymentOptions(effectiveSvc);
   const hasNoPay = options.some((o) => o.choice === "none");
-  const hasPaid = options.some((o) => o.requiresPayment);
+  const hasPaid = mpConnected && options.some((o) => o.requiresPayment);
 
   // Siempre se montan los cuatro hooks; solo se llama al que corresponde al camino elegido.
   const bookPro = useBookProfessional(slug, membershipId);
