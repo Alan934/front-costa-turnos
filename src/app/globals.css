@@ -51,6 +51,30 @@
   --color-status-cancelled: var(--status-cancelled);
   --color-status-cancelled-foreground: var(--status-cancelled-foreground);
 
+  /* Agenda pública: estado de cada día (fondo suave + texto del mismo tono) */
+  --color-cal-available: var(--cal-available);
+  --color-cal-available-foreground: var(--cal-available-foreground);
+  --color-cal-almost: var(--cal-almost);
+  --color-cal-almost-foreground: var(--cal-almost-foreground);
+  --color-cal-full: var(--cal-full);
+  --color-cal-full-foreground: var(--cal-full-foreground);
+  --color-cal-block: var(--cal-block);
+  --color-cal-block-foreground: var(--cal-block-foreground);
+  --color-cal-holiday: var(--cal-holiday);
+  --color-cal-holiday-foreground: var(--cal-holiday-foreground);
+  --color-cal-vacation: var(--cal-vacation);
+  --color-cal-vacation-foreground: var(--cal-vacation-foreground);
+  --color-cal-closed: var(--cal-closed);
+  --color-cal-closed-foreground: var(--cal-closed-foreground);
+
+  /* Agenda pública: franja horaria de cada turno */
+  --color-cal-morning: var(--cal-morning);
+  --color-cal-morning-foreground: var(--cal-morning-foreground);
+  --color-cal-afternoon: var(--cal-afternoon);
+  --color-cal-afternoon-foreground: var(--cal-afternoon-foreground);
+  --color-cal-evening: var(--cal-evening);
+  --color-cal-evening-foreground: var(--cal-evening-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -111,6 +135,30 @@
   --status-noshow-foreground: oklch(0.5 0.006 60);
   --status-cancelled: oklch(0.93 0.04 5);
   --status-cancelled-foreground: oklch(0.5 0.12 15);
+
+  /* Agenda pública — estado de día (claro). Tonos suaves, bien diferenciados. */
+  --cal-available: oklch(0.94 0.045 150); /* verde: hay lugar */
+  --cal-available-foreground: oklch(0.45 0.09 150);
+  --cal-almost: oklch(0.94 0.07 75); /* ámbar: quedan pocos */
+  --cal-almost-foreground: oklch(0.5 0.1 65);
+  --cal-full: oklch(0.93 0.05 25); /* rojo: completo / ocupado */
+  --cal-full-foreground: oklch(0.52 0.15 28);
+  --cal-block: oklch(0.93 0.05 300); /* violeta: bloqueo manual */
+  --cal-block-foreground: oklch(0.5 0.13 300);
+  --cal-holiday: oklch(0.93 0.05 350); /* rosa: feriado */
+  --cal-holiday-foreground: oklch(0.52 0.14 350);
+  --cal-vacation: oklch(0.93 0.05 265); /* índigo: vacaciones */
+  --cal-vacation-foreground: oklch(0.5 0.14 265);
+  --cal-closed: oklch(0.95 0.003 60); /* gris: no atiende ese día */
+  --cal-closed-foreground: oklch(0.55 0.006 60);
+
+  /* Agenda pública — franja horaria (claro). */
+  --cal-morning: oklch(0.95 0.06 90); /* amanecer */
+  --cal-morning-foreground: oklch(0.48 0.09 75);
+  --cal-afternoon: oklch(0.94 0.05 235); /* celeste */
+  --cal-afternoon-foreground: oklch(0.48 0.11 245);
+  --cal-evening: oklch(0.93 0.05 290); /* atardecer */
+  --cal-evening-foreground: oklch(0.5 0.12 290);
 }
 
 /* ---------- OSCURO (carbón cálido) ---------- */
@@ -161,6 +209,30 @@
   --status-noshow-foreground: oklch(0.72 0.006 60);
   --status-cancelled: oklch(0.36 0.06 15);
   --status-cancelled-foreground: oklch(0.82 0.1 15);
+
+  /* Agenda pública — estado de día (oscuro). Fondo translúcido + texto claro. */
+  --cal-available: oklch(0.36 0.06 150);
+  --cal-available-foreground: oklch(0.85 0.11 150);
+  --cal-almost: oklch(0.38 0.06 70);
+  --cal-almost-foreground: oklch(0.87 0.1 80);
+  --cal-full: oklch(0.37 0.09 25);
+  --cal-full-foreground: oklch(0.85 0.12 25);
+  --cal-block: oklch(0.37 0.07 300);
+  --cal-block-foreground: oklch(0.86 0.1 300);
+  --cal-holiday: oklch(0.37 0.08 350);
+  --cal-holiday-foreground: oklch(0.86 0.11 350);
+  --cal-vacation: oklch(0.37 0.07 265);
+  --cal-vacation-foreground: oklch(0.86 0.11 265);
+  --cal-closed: oklch(0.3 0.004 60);
+  --cal-closed-foreground: oklch(0.72 0.006 60);
+
+  /* Agenda pública — franja horaria (oscuro). */
+  --cal-morning: oklch(0.38 0.06 85);
+  --cal-morning-foreground: oklch(0.88 0.1 90);
+  --cal-afternoon: oklch(0.37 0.07 240);
+  --cal-afternoon-foreground: oklch(0.86 0.1 240);
+  --cal-evening: oklch(0.38 0.07 290);
+  --cal-evening-foreground: oklch(0.86 0.1 290);
 }
 
 @layer base {

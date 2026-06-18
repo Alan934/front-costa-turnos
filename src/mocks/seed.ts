@@ -669,6 +669,16 @@ export const timeOffs: TimeOff[] = [
     endAt: iso(at(18, 0, 2)),
     reason: "Turno médico" as unknown as TimeOff["reason"],
   },
+  {
+    id: "to_3",
+    createdAt: iso(now),
+    updatedAt: iso(now),
+    staffId: "staff_lucia",
+    membershipId: MEMBERSHIP_ID,
+    startAt: iso(at(0, 0, 3)),
+    endAt: iso(at(23, 59, 3)),
+    reason: "Feriado nacional" as unknown as TimeOff["reason"],
+  },
 ];
 
 /** Suscripción del profesional (activa, con próximo cobro). */

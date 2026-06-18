@@ -90,6 +90,18 @@ export function formatDayChip(input: DateInput): { weekday: string; day: string 
   return { weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1), day };
 }
 
+/** Franja del día: mañana (<12), tarde (12–18) o noche (≥18). */
+export type TimeBand = "morning" | "afternoon" | "evening";
+
+/** Devuelve la franja horaria de una fecha/hora, calculada en la TZ de AR. */
+export function timeBand(input: DateInput | null | undefined): TimeBand {
+  const d = toDate(input);
+  const hour = d ? Number(formatInTimeZone(d, TIME_ZONE, "H")) : 12;
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  return "evening";
+}
+
 /** ¿Dos fechas caen en el mismo día calendario (en la TZ de AR)? */
 export function isSameDay(a: DateInput, b: DateInput): boolean {
   const da = toDate(a);
