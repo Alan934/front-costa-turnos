@@ -10,6 +10,13 @@ import type { PublicServiceProfessionalDto } from './publicServiceProfessionalDt
 export interface PublicServiceDto {
   serviceId: string;
   name: string;
+  /**
+   * Descripción del servicio (qué incluye / qué se realiza).
+   * @nullable
+   */
+  description?: string | null;
+  /** URLs firmadas (temporales) de las imágenes de ejemplo del servicio. */
+  imageUrls: string[];
   durationMinutes: number;
   priceCents: number;
   allowDeposit: boolean;

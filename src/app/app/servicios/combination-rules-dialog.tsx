@@ -61,6 +61,7 @@ export function CombinationRulesDialog({
   const [ruleType, setRuleType] = useState<CombinationRuleType>("enables");
   const [discountType, setDiscountType] = useState<DiscountType>("percentage");
   const [discountAmount, setDiscountAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
 
   const needsDiscount = ruleType === "discount";
@@ -82,6 +83,7 @@ export function CombinationRulesDialog({
         sourceServiceId: service.id,
         targetServiceId: targetId,
         ruleType,
+        description: description.trim() || undefined,
         discountAmountCents,
         discountType: needsDiscount ? discountType : undefined,
       },
@@ -89,6 +91,7 @@ export function CombinationRulesDialog({
         onSuccess: () => {
           setTargetId("");
           setDiscountAmount("");
+          setDescription("");
           setRuleType("enables");
         },
         onError: (err) => {
@@ -155,7 +158,14 @@ export function CombinationRulesDialog({
                       >
                         {RULE_TYPE_LABELS[rule.ruleType]}
                       </span>
-                      <span className="min-w-0 flex-1 text-sm font-medium">{targetName}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">{targetName}</span>
+                        {rule.description && (
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {rule.description}
+                          </span>
+                        )}
+                      </div>
                       {rule.ruleType === "discount" && (
                         <Badge variant="muted">
                           {discountLabel(rule.discountAmountCents, rule.discountType)}
@@ -290,6 +300,25 @@ export function CombinationRulesDialog({
                     </div>
                   </div>
                 )}
+
+                <div>
+                  <Label htmlFor="cr-desc">
+                    Aclaración <span className="text-muted-foreground">(opcional)</span>
+                  </Label>
+                  <textarea
+                    id="cr-desc"
+                    rows={2}
+                    maxLength={400}
+                    className={cn(
+                      "mt-1.5 flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm shadow-sm transition-colors",
+                      "placeholder:text-muted-foreground",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                    )}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Qué se realiza al combinar estos servicios o qué tener en cuenta."
+                  />
+                </div>
 
                 {createError && <p className="text-sm text-destructive">{createError}</p>}
 

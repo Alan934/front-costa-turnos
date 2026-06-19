@@ -14,6 +14,8 @@ export interface CreateCombinationRuleDto {
   /** Servicio afectado por la regla */
   targetServiceId: string;
   ruleType: CombinationRuleType;
+  /** Descripción opcional de la relación: qué se realiza al combinar estos servicios o qué tener en cuenta para relacionarlos */
+  description?: string;
   /** Monto del descuento en centavos. Requerido cuando ruleType=discount */
   discountAmountCents?: number;
   /** Tipo de descuento. Requerido cuando ruleType=discount */

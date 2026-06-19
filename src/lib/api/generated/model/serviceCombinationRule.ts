@@ -19,6 +19,8 @@ export interface ServiceCombinationRule {
   sourceServiceId: string;
   /** Servicio afectado por la regla */
   targetServiceId: string;
+  /** @nullable */
+  description?: string | null;
   ruleType: CombinationRuleType;
   /**
    * Monto del descuento (centavos). Solo para ruleType=discount

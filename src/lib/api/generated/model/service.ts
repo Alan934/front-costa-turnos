@@ -17,6 +17,10 @@ export interface Service {
   comercioId: string;
   membershipId: string;
   name: string;
+  /** @nullable */
+  description?: string | null;
+  /** object_keys de imágenes de ejemplo (máx. 3) */
+  imageKeys: string[];
   durationMinutes: number;
   priceCents: number;
   allowDeposit: boolean;

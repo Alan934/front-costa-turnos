@@ -86,10 +86,12 @@ export function useCreateComercioService(comercioId: string) {
   });
 }
 
-export function useUpdateComercioService(comercioId: string, id: string) {
+export function useUpdateComercioService(comercioId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: UpdateServiceDto) =>
+    // El id va en las variables (no al crear el hook) para poder parchear un servicio
+    // recién creado: en el alta subimos las imágenes después de tener el serviceId.
+    mutationFn: ({ id, data }: { id: string; data: UpdateServiceDto }) =>
       customInstance<Service>({
         url: `/v1/comercios/${comercioId}/services/${id}`,
         method: "PATCH",

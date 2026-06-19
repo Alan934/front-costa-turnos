@@ -438,8 +438,23 @@ function ServiceStep({
               onClick={() => onPick(s)}
               className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
             >
+              {s.imageUrls.length > 0 && (
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  {/* URL firmada lista para mostrar (la provee el back, ~15 min). */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.imageUrls[0]} alt="" className="size-full object-cover" />
+                  {s.imageUrls.length > 1 && (
+                    <span className="absolute bottom-0.5 right-0.5 rounded bg-black/60 px-1 text-[10px] font-medium text-white">
+                      +{s.imageUrls.length - 1}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{s.name}</p>
+                {s.description && (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{s.description}</p>
+                )}
                 <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                   <Clock3 className="size-3.5" />
                   {formatDuration(s.durationMinutes)}
@@ -458,7 +473,7 @@ function ServiceStep({
                   </p>
                 )}
               </div>
-              <div className="text-right">
+              <div className="shrink-0 text-right">
                 <p className="font-display font-semibold tabular-nums">{formatMoney(s.priceCents)}</p>
                 <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
               </div>

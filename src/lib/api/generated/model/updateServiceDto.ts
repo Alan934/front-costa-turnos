@@ -8,6 +8,10 @@
 
 export interface UpdateServiceDto {
   name?: string;
+  /** Descripción opcional del servicio (qué incluye, qué se realiza, etc.) */
+  description?: string;
+  /** Hasta 3 imágenes de ejemplo (object_keys obtenidos de POST /files?ownerType=service) */
+  imageKeys?: string[];
   /** Membresías (profesionales) que ofrecen este servicio. Requerido (≥1) al crear desde el comercio; en el alta del comercio-de-uno se asume el profesional logueado. */
   membershipIds?: string[];
   /** duracion en minutos */

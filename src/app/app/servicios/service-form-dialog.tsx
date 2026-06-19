@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Wallet } from "lucide-react";
+import { Wallet, ImagePlus, X, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,26 @@ import { Spinner } from "@/components/ui/spinner";
 import { useCreateComercioService, useUpdateComercioService } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
 import { useMyMemberships } from "@/lib/api/comercios";
+import {
+  uploadFile,
+  ACCEPTED_IMAGE_TYPES,
+  MAX_IMAGE_BYTES,
+  uploadErrorMessage,
+} from "@/lib/api/files";
 import { cn } from "@/lib/utils";
+import type { AxiosError } from "axios";
 import type { Service } from "@/lib/api/generated/model/service";
+
+/** Máximo de imágenes de ejemplo por servicio (lo valida también el back con 400). */
+const MAX_IMAGES = 3;
+
+/**
+ * Imagen del servicio dentro del formulario. "saved" ya está persistida (su `key` viaja en
+ * imageKeys); "new" se eligió en esta sesión y se sube recién al guardar (necesita el serviceId).
+ */
+type ServiceImage =
+  | { kind: "saved"; key: string; url?: string }
+  | { kind: "new"; localId: string; file: File; url: string };
 
 export function ServiceFormDialog({
   comercioId,
@@ -30,8 +48,20 @@ export function ServiceFormDialog({
 }) {
   const editing = !!service;
   const [name, setName] = useState(service?.name ?? "");
+  const [description, setDescription] = useState(service?.description ?? "");
   const [duration, setDuration] = useState(String(service?.durationMinutes ?? 30));
   const [price, setPrice] = useState(service ? String(service.priceCents / 100) : "");
+
+  // Imágenes de ejemplo. Las ya guardadas traen su URL firmada si el back la incluye
+  // (`imageUrls`, paralelo a `imageKeys`); si no, se muestran como tiles sin miniatura.
+  const [images, setImages] = useState<ServiceImage[]>(() => {
+    const urls = (service as (Service & { imageUrls?: string[] }) | undefined)?.imageUrls;
+    return (service?.imageKeys ?? []).map((key, i) => ({
+      kind: "saved" as const,
+      key,
+      url: urls?.[i],
+    }));
+  });
 
   // Formas de pago habilitadas (el profesional puede elegir varias).
   const [allowNoPayment, setAllowNoPayment] = useState(service ? service.allowNoPayment : true);
@@ -46,8 +76,11 @@ export function ServiceFormDialog({
   const [capacity, setCapacity] = useState(String(service?.capacity ?? 1));
 
   const create = useCreateComercioService(comercioId);
-  const update = useUpdateComercioService(comercioId, service?.id ?? "");
-  const pending = create.isPending || update.isPending;
+  const update = useUpdateComercioService(comercioId);
+  // El guardado abarca subida de imágenes + create/patch, así que llevamos nuestro propio flag.
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const pending = saving || create.isPending || update.isPending;
 
   // Membresía propia en este comercio: necesaria para asignar el profesional al crear.
   const memberships = useMyMemberships();
@@ -84,12 +117,15 @@ export function ServiceFormDialog({
     return null;
   })();
 
-  function submit() {
+  async function submit() {
+    setSaveError(null);
     // Sin MP conectado nunca se persisten opciones de cobro online.
     const deposit = allowDeposit && mpConnected;
     const fullPayment = allowFullPayment && mpConnected;
-    const payload = {
+    const base = {
       name: name.trim(),
+      // Se manda siempre (string): vacío permite borrar la descripción existente.
+      description: description.trim(),
       durationMinutes: Number(duration),
       priceCents: Math.round(Number(price) * 100),
       allowNoPayment,
@@ -98,17 +134,51 @@ export function ServiceFormDialog({
       allowCash,
       depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       capacity: capacityNum,
-      // Al crear, asignamos automáticamente al profesional actual. Al editar no se manda
-      // para no pisar las asignaciones existentes (pueden tener varios en un comercio multi-pro).
-      ...(!editing && myMembershipId ? { membershipIds: [myMembershipId] } : {}),
     };
-    if (editing) update.mutate(payload, { onSuccess: onClose });
-    else create.mutate(payload, { onSuccess: onClose });
+
+    setSaving(true);
+    try {
+      // Las imágenes se suben a /files con ownerId = serviceId, así que para un servicio
+      // nuevo primero lo creamos (con descripción, sin imágenes) y luego subimos + PATCH.
+      const serviceId = editing
+        ? service!.id
+        : (
+            await create.mutateAsync({
+              ...base,
+              ...(myMembershipId ? { membershipIds: [myMembershipId] } : {}),
+            })
+          ).id;
+
+      // Subimos las imágenes nuevas y resolvemos el orden final de object_keys.
+      const newImages = images.filter((i): i is Extract<ServiceImage, { kind: "new" }> => i.kind === "new");
+      const uploadedByLocalId = new Map<string, string>();
+      for (const img of newImages) {
+        const uploaded = await uploadFile({ file: img.file, ownerType: "service", ownerId: serviceId });
+        uploadedByLocalId.set(img.localId, uploaded.objectKey);
+      }
+      const imageKeys = images
+        .map((i) => (i.kind === "saved" ? i.key : uploadedByLocalId.get(i.localId)))
+        .filter((k): k is string => !!k);
+
+      // En edición parcheamos siempre. En alta, solo si hay imágenes (el create ya guardó el resto):
+      // un PATCH con imageKeys que omita una key previa hace que el back borre ese objeto de MinIO.
+      if (editing) {
+        await update.mutateAsync({ id: serviceId, data: { ...base, imageKeys } });
+      } else if (imageKeys.length > 0) {
+        await update.mutateAsync({ id: serviceId, data: { imageKeys } });
+      }
+      onClose();
+    } catch (err) {
+      const status = (err as AxiosError).response?.status;
+      setSaveError(uploadErrorMessage(status));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+    <Dialog open onOpenChange={(o) => !o && !pending && onClose()}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "Editar servicio" : "Nuevo servicio"}</DialogTitle>
         </DialogHeader>
@@ -117,6 +187,26 @@ export function ServiceFormDialog({
           <div>
             <Label htmlFor="sf-name">Nombre</Label>
             <Input id="sf-name" className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} placeholder="Corte + barba" />
+          </div>
+
+          <div>
+            <Label htmlFor="sf-desc">
+              Descripción <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <textarea
+              id="sf-desc"
+              rows={3}
+              maxLength={600}
+              className={cn(
+                "mt-1.5 flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm shadow-sm transition-colors",
+                "placeholder:text-muted-foreground",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Qué incluye el servicio o qué se realiza."
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -148,6 +238,17 @@ export function ServiceFormDialog({
             {capacityNum < 1 && capacity !== "" && (
               <p className="mt-1.5 text-xs text-destructive">Mínimo 1 cupo.</p>
             )}
+          </div>
+
+          {/* Imágenes de ejemplo (hasta 3) */}
+          <div>
+            <Label>
+              Imágenes de ejemplo <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
+              Hasta {MAX_IMAGES} fotos de lo que ofrecés. JPG, PNG o WebP · hasta 10 MB.
+            </p>
+            <ServiceImagesField images={images} onChange={setImages} disabled={pending} />
           </div>
 
           {/* Formas de pago para reservar (varias a la vez) */}
@@ -212,6 +313,7 @@ export function ServiceFormDialog({
         </div>
 
         <div className="space-y-2 p-6 pt-3">
+          {saveError && <p className="text-center text-xs text-destructive">{saveError}</p>}
           {blockReason && !pending && (
             <p className="text-center text-xs text-muted-foreground">{blockReason}</p>
           )}
@@ -222,6 +324,120 @@ export function ServiceFormDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Galería editable de imágenes de ejemplo (hasta MAX_IMAGES). */
+function ServiceImagesField({
+  images,
+  onChange,
+  disabled,
+}: {
+  images: ServiceImage[];
+  onChange: (next: ServiceImage[]) => void;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Liberamos los object URLs de los previews locales al desmontar.
+  useEffect(() => {
+    return () => {
+      for (const img of images) if (img.kind === "new") URL.revokeObjectURL(img.url);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ""; // permite re-elegir el mismo archivo
+    if (files.length === 0) return;
+    setError(null);
+
+    const room = MAX_IMAGES - images.length;
+    const next: ServiceImage[] = [];
+    for (const file of files.slice(0, room)) {
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setError("Formato no permitido. Usá JPG, PNG o WebP.");
+        continue;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        setError("Cada imagen debe pesar menos de 10 MB.");
+        continue;
+      }
+      next.push({
+        kind: "new",
+        localId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file,
+        url: URL.createObjectURL(file),
+      });
+    }
+    if (files.length > room) setError(`Solo se permiten ${MAX_IMAGES} imágenes.`);
+    if (next.length > 0) onChange([...images, ...next]);
+  }
+
+  function removeAt(index: number) {
+    const img = images[index];
+    if (img.kind === "new") URL.revokeObjectURL(img.url);
+    onChange(images.filter((_, i) => i !== index));
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2.5">
+        {images.map((img, i) => (
+          <div
+            key={img.kind === "new" ? img.localId : img.key}
+            className="relative size-20 overflow-hidden rounded-xl border border-border bg-muted/40"
+          >
+            {img.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={img.url} alt="" className="size-full object-cover" />
+            ) : (
+              <span className="grid size-full place-items-center text-muted-foreground">
+                <ImagePlus className="size-6" />
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => removeAt(i)}
+              disabled={disabled}
+              aria-label="Quitar imagen"
+              className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-card/90 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ))}
+
+        {images.length < MAX_IMAGES && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={disabled}
+            className={cn(
+              "grid size-20 place-items-center rounded-xl border border-dashed border-border bg-muted/40 text-muted-foreground transition-colors hover:border-accent hover:text-accent",
+              disabled && "pointer-events-none opacity-50",
+            )}
+            aria-label="Agregar imagen"
+          >
+            {disabled ? <Loader2 className="size-5 animate-spin" /> : <ImagePlus className="size-6" />}
+          </button>
+        )}
+      </div>
+
+      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+        multiple
+        className="hidden"
+        onChange={onPick}
+        aria-label="Agregar imagen"
+      />
+    </div>
   );
 }
 
