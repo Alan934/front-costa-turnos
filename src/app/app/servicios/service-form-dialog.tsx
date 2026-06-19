@@ -54,14 +54,13 @@ export function ServiceFormDialog({
 
   // Imágenes de ejemplo. Las ya guardadas traen su URL firmada si el back la incluye
   // (`imageUrls`, paralelo a `imageKeys`); si no, se muestran como tiles sin miniatura.
-  const [images, setImages] = useState<ServiceImage[]>(() => {
-    const urls = (service as (Service & { imageUrls?: string[] }) | undefined)?.imageUrls;
-    return (service?.imageKeys ?? []).map((key, i) => ({
+  const [images, setImages] = useState<ServiceImage[]>(() =>
+    (service?.imageKeys ?? []).map((key, i) => ({
       kind: "saved" as const,
       key,
-      url: urls?.[i],
-    }));
-  });
+      url: service?.imageUrls?.[i],
+    })),
+  );
 
   // Formas de pago habilitadas (el profesional puede elegir varias).
   const [allowNoPayment, setAllowNoPayment] = useState(service ? service.allowNoPayment : true);

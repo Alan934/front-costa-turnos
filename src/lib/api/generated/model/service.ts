@@ -33,4 +33,6 @@ export interface Service {
   capacity: number;
   isActive: boolean;
   assignedMemberships?: ServiceAssignedMembership[];
+  /** URLs firmadas (temporales) de imageKeys */
+  imageUrls?: string[];
 }
