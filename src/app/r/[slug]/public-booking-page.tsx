@@ -828,6 +828,13 @@ function ConfirmStep({
   const hasCash = options.some((o) => o.choice === "cash");
   const hasPaid = mpConnected && options.some((o) => o.requiresPayment);
 
+  // ¿Una reserva sin seña podría quedar provisional (desplazable por quien pague)? Depende de la
+  // config del profesional. En "cualquiera" basta con que UNO la tenga activa: la reserva podría
+  // caer en él. Con profesional concreto, su propio flag manda. false = el aviso no aplica.
+  const provisionalPossible = isAny
+    ? service.professionals.some((p) => p.allowProvisionalBookings)
+    : professional.allowProvisionalBookings;
+
   // Siempre se montan los cuatro hooks; solo se llama al que corresponde al camino elegido.
   const bookPro = useBookProfessional(slug, membershipId);
   const bookProDeposit = useBookProfessionalWithDeposit(slug, membershipId);
@@ -925,7 +932,7 @@ function ConfirmStep({
         <Row label="Precio" value={formatMoney(service.priceCents)} strong />
       </div>
 
-      {hasPaid && hasNoPay && (
+      {hasPaid && hasNoPay && provisionalPossible && (
         <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-warning-foreground" />
           <p className="text-sm text-warning-foreground">

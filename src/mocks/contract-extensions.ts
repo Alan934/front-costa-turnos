@@ -81,6 +81,11 @@ export interface WaitingItem {
   status: AppointmentStatus;
   serviceName: string;
   startAt: string;
+  /**
+   * Turno sin seña que quedó provisional (solo cuando la membresía tiene
+   * `allowProvisionalBookings`). NO se infiere del estado: el back lo computa.
+   */
+  isProvisional?: boolean;
 }
 
 /** Respuesta de `GET /appointments/waiting-room/{staffId}` (API-GAPS §1). */
@@ -176,6 +181,17 @@ export interface MembershipWithComercio {
    * al menos estas horas en el futuro. 0 = sin restricción. La configura el profesional por comercio.
    */
   minBookingHours?: number;
+  /**
+   * Ventana máxima de reserva, en días: un cliente solo puede reservar un turno que empiece como
+   * mucho estos días en el futuro (7 = una semana, 30 = un mes). 0 = sin límite. La configura el
+   * profesional por comercio.
+   */
+  maxBookingDays?: number;
+  /**
+   * Si es true, un turno reservado sin seña queda provisional y puede ser desplazado por otro
+   * cliente que pague la seña. false (default) = el turno sin seña queda firme. Por comercio.
+   */
+  allowProvisionalBookings?: boolean;
   comercio?: {
     id: string;
     name: string;

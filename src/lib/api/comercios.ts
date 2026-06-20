@@ -39,9 +39,12 @@ export function useAcceptInvitation() {
 }
 
 /**
- * Editar la membresía propia en un comercio (Fase 3). Hoy solo la **ubicación propia**
- * (`address`): texto = dónde atiende este profesional en ese comercio; `null`/`""` = la limpia
- * y vuelve a usar la dirección del comercio. Se refleja en la página pública.
+ * Editar la membresía propia en un comercio (Fase 3). Campos:
+ * - `address`: ubicación propia (texto = dónde atiende; `null`/`""` = usa la del comercio).
+ * - `minBookingHours`: anticipación mínima de reserva en horas (0 = sin restricción).
+ * - `maxBookingDays`: ventana máxima de reserva en días (0 = sin límite).
+ * - `allowProvisionalBookings`: si true, un turno sin seña queda provisional/desplazable (default false).
+ * El back filtra los slots y rechaza reservas fuera de la ventana (400). Se refleja en la página pública.
  */
 export function useUpdateMyMembership(comercioId: string) {
   const qc = useQueryClient();

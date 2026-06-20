@@ -19,4 +19,6 @@ export interface Membership {
   /** @nullable */
   address?: string | null;
   minBookingHours: number;
+  maxBookingDays: number;
+  allowProvisionalBookings: boolean;
 }

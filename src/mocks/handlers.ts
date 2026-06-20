@@ -743,6 +743,8 @@ export const handlers: RequestHandler[] = [
         status: "active",
         address: null,
         minBookingHours: 0,
+        maxBookingDays: 0,
+        allowProvisionalBookings: false,
         comercio: {
           id: COMERCIO_ID,
           name: professional.businessName,

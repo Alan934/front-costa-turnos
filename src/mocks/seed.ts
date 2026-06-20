@@ -180,6 +180,7 @@ export function buildComercioPublicPage(): ComercioPublicPageDto & { mpConnected
         professionalId: professional.id,
         displayName: professional.businessName,
         address: DEMO_ADDRESS,
+        allowProvisionalBookings: false,
       },
     ],
   };
@@ -194,6 +195,7 @@ export function buildProfessionalDetail(): PublicProfessionalDetailDto {
     address: DEMO_ADDRESS,
     bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
     phone: "+54 9 261 555-0245",
+    allowProvisionalBookings: false,
     timezone: professional.timezone,
     services: services.filter((s) => s.isActive),
   };
@@ -222,6 +224,7 @@ export function buildPublicServices(): PublicServiceDto[] {
           professionalId: professional.id,
           displayName: professional.businessName,
           address: DEMO_ADDRESS,
+          allowProvisionalBookings: false,
         },
       ],
     }));
@@ -437,6 +440,7 @@ export function buildWaitingRoom(staffId: string): WaitingRoom {
     status: a.status,
     serviceName: services.find((s) => s.id === a.serviceId)?.name ?? "Servicio",
     startAt: a.startAt,
+    isProvisional: a.isProvisional,
   });
 
   return {

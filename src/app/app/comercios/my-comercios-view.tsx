@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, MapPin, User, Pencil, Clock3 } from "lucide-react";
+import { Building2, MapPin, User, Pencil, Clock3, CalendarRange } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState, EmptyState, SkeletonList } from "@/components/state-views";
@@ -52,6 +52,7 @@ export function MyComerciosView() {
               const ownAddress = m.address?.trim();
               const shownAddress = ownAddress || m.comercio?.address;
               const minHours = m.minBookingHours ?? 0;
+              const maxDays = m.maxBookingDays ?? 0;
               return (
                 <li
                   key={m.id}
@@ -78,6 +79,12 @@ export function MyComerciosView() {
                       <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
                         <Clock3 className="size-3.5 shrink-0" />
                         Reservas con {minHours} {minHours === 1 ? "hora" : "horas"} de anticipación
+                      </p>
+                    )}
+                    {maxDays > 0 && (
+                      <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+                        <CalendarRange className="size-3.5 shrink-0" />
+                        Hasta {maxDays} {maxDays === 1 ? "día" : "días"} de anticipación
                       </p>
                     )}
                   </div>
@@ -111,6 +118,8 @@ export function MyComerciosView() {
           comercioAddress={editing.comercio?.address ?? null}
           currentAddress={editing.address ?? null}
           currentMinBookingHours={editing.minBookingHours ?? 0}
+          currentMaxBookingDays={editing.maxBookingDays ?? 0}
+          currentAllowProvisionalBookings={editing.allowProvisionalBookings ?? false}
           onClose={() => setEditing(null)}
         />
       )}

@@ -27,6 +27,8 @@ export interface PublicProfessionalDetailDto {
    * @nullable
    */
   phone?: string | null;
+  /** Si es true, una reserva sin seña con este profesional queda provisional (desplazable por quien pague la seña). El front lo usa para mostrar/ocultar el aviso pre-reserva. false = el turno sin seña queda firme. */
+  allowProvisionalBookings: boolean;
   timezone: string;
   /** Servicios activos del profesional en este comercio. */
   services: Service[];

@@ -21,7 +21,6 @@ import {
   useAppointmentsNoShow,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useWaitingRoom, type ConnectionState } from "@/lib/realtime/use-waiting-room";
-import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { formatTime, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
@@ -200,7 +199,9 @@ function RoomBoard({ staffId }: { staffId: string }) {
 }
 
 function QueueRow({ item, isNext }: { item: WaitingItem; isNext: boolean }) {
-  const provisional = item.status === AppointmentStatus.requested;
+  // El back marca `isProvisional` solo si la membresía permite reservas provisionales.
+  // NO se infiere de `status === requested`: con la opción apagada, un turno sin seña queda firme.
+  const provisional = item.isProvisional ?? false;
   return (
     <li
       className={cn(

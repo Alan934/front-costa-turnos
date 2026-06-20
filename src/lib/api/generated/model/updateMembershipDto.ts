@@ -14,4 +14,8 @@ export interface UpdateMembershipDto {
   address?: string | null;
   /** Anticipación mínima de reserva, en horas. Un cliente solo puede reservar un turno que empiece al menos estas horas en el futuro. 0 = sin restricción. */
   minBookingHours?: number;
+  /** Ventana máxima de reserva, en días. Un cliente solo puede reservar un turno que empiece como mucho estos días en el futuro (7 = una semana, 30 = un mes). 0 = sin límite. */
+  maxBookingDays?: number;
+  /** Si es true, un turno reservado sin seña (cuando el servicio admite pago) queda provisional y puede ser desplazado por otro cliente que pague la seña. false (default) = el turno sin seña queda firme. */
+  allowProvisionalBookings?: boolean;
 }
