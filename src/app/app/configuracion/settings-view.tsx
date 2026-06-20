@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Link2, Save, Check, ExternalLink, CreditCard } from "lucide-react";
+import { Save, Check, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
 import { ImageUpload } from "@/components/image-upload";
+import { PublicPageLink } from "@/components/public-page-link";
 import { useProfessional, useUpdateProfessional, useSubscription } from "@/lib/api/professional";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { subscriptionEndInfo } from "@/lib/subscription";
@@ -156,16 +157,7 @@ function BrandingSection({
       <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">Página pública</h2>
 
       {/* Link público */}
-      <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3">
-        <Link2 className="size-4 shrink-0 text-accent" />
-        <span className="min-w-0 flex-1 truncate text-sm">costaturnos.com.ar/r/{professional.slug}</span>
-        <Button variant="outline" size="sm" asChild>
-          <a href={`/r/${professional.slug}`} target="_blank" rel="noreferrer">
-            Ver
-            <ExternalLink className="size-3.5" />
-          </a>
-        </Button>
-      </div>
+      <PublicPageLink slug={professional.slug} className="mb-4" />
 
       <div className="space-y-4">
         <div>

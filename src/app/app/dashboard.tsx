@@ -23,6 +23,7 @@ import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
 import { WelcomeSetup } from "@/components/welcome-setup";
+import { PublicPageLink } from "@/components/public-page-link";
 import { usePersonLookup } from "@/lib/api/clients";
 import { dayRange, isSameLocalDay } from "@/lib/agenda";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
@@ -94,6 +95,15 @@ export function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {pro.data?.slug && (
+        <div className="mt-5">
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+            Compartí tu página de reservas
+          </p>
+          <PublicPageLink slug={pro.data.slug} />
+        </div>
+      )}
 
       {appts.isError ? (
         <ErrorState className="mt-6" message="No pudimos cargar tu día." onRetry={() => appts.refetch()} />
