@@ -4,6 +4,8 @@ import { CalendarOff } from "lucide-react";
 import {
   gridHours,
   positionAppointment,
+  positionTimeOff,
+  partialTimeOffsForDay,
   weekDays,
   isSameLocalDay,
   isToday,
@@ -13,7 +15,7 @@ import {
   DAY_START_HOUR,
   DAY_END_HOUR,
 } from "@/lib/agenda";
-import { formatDayChip } from "@/lib/format";
+import { formatDayChip, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AppointmentChip } from "./appointment-chip";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -77,6 +79,12 @@ export function WeekGrid({
             const chip = formatDayChip(day);
             const today = isToday(day);
             const off = dayOffStatus(day, closed, timeOff);
+            // Bloqueos por horas: franjas grises dentro del día (no cierran el día entero).
+            const blocks = off
+              ? []
+              : partialTimeOffsForDay(day, timeOff)
+                  .map((b) => positionTimeOff(b, day))
+                  .filter((p): p is NonNullable<typeof p> => p !== null);
             const cols = appointments.filter((a) =>
               isSameLocalDay(new Date(a.startAt), day),
             );
@@ -119,6 +127,22 @@ export function WeekGrid({
                       className="absolute inset-x-0 border-t border-border/60"
                       style={{ top: i * HOUR_PX }}
                     />
+                  ))}
+                  {blocks.map(({ block, top, height }) => (
+                    <div
+                      key={block.id}
+                      className="bg-off absolute inset-x-0.5 overflow-hidden rounded-md border border-border bg-muted/60 px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
+                      style={{ top, height }}
+                      title={`Bloqueado${block.reason ? `: ${block.reason}` : ""}`}
+                    >
+                      <span className="flex items-center gap-1 font-medium">
+                        <CalendarOff className="size-3 shrink-0" />
+                        <span className="truncate">
+                          {formatTime(block.startAt)}–{formatTime(block.endAt)}
+                        </span>
+                      </span>
+                      {block.reason && <span className="block truncate">{block.reason}</span>}
+                    </div>
                   ))}
                   {cols.map((a) => {
                     const pos = positionAppointment(a);

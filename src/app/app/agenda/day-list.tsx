@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarX2, CalendarOff } from "lucide-react";
+import { CalendarX2, CalendarOff, Clock } from "lucide-react";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
   isSameLocalDay,
   closedWeekdays,
   dayOffStatus,
+  partialTimeOffsForDay,
 } from "@/lib/agenda";
 import type { PersonInfo, EmbeddedPerson } from "@/lib/api/clients";
 import { formatTime } from "@/lib/format";
@@ -47,6 +48,8 @@ export function DayList({
   const multiStaff = staff.length > 1;
   const active = items.filter((a) => a.status !== "cancelled").length;
   const off = dayOffStatus(date, closedWeekdays(scheduleRules), timeOff);
+  // Bloqueos por horas: se listan como aviso, sin cerrar el día entero.
+  const partials = off ? [] : partialTimeOffsForDay(date, timeOff);
 
   // Día sin atención y sin turnos: solo el aviso de por qué no se atiende.
   if (off && items.length === 0) {
@@ -68,6 +71,7 @@ export function DayList({
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-2xl p-4 sm:p-6">
+        {partials.length > 0 && <PartialBlocksNotice blocks={partials} />}
         <EmptyState
           icon={<CalendarX2 className="size-5" />}
           title="Día libre"
@@ -79,6 +83,7 @@ export function DayList({
 
   return (
     <div className="mx-auto max-w-2xl p-4 sm:p-6">
+      {partials.length > 0 && <PartialBlocksNotice blocks={partials} />}
       {off && (
         <div className="mb-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
           <CalendarOff className="mt-0.5 size-4 shrink-0 text-warning" />
@@ -139,6 +144,29 @@ export function DayList({
             </li>
           );
         })}
+      </ul>
+    </div>
+  );
+}
+
+/** Aviso de los bloqueos por horas del día (no cierran el día entero, solo ese rango). */
+function PartialBlocksNotice({ blocks }: { blocks: TimeOff[] }) {
+  return (
+    <div className="mb-3 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
+      <p className="flex items-center gap-2 font-medium">
+        <CalendarOff className="size-4 shrink-0 text-warning" />
+        {blocks.length === 1 ? "Tenés un bloqueo este día" : "Tenés bloqueos este día"}
+      </p>
+      <ul className="mt-1.5 space-y-1 text-muted-foreground">
+        {blocks.map((b) => (
+          <li key={b.id} className="flex items-center gap-1.5">
+            <Clock className="size-3.5 shrink-0" />
+            <span className="tabular-nums">
+              {formatTime(b.startAt)}–{formatTime(b.endAt)}
+            </span>
+            {b.reason && <span className="truncate">· {b.reason}</span>}
+          </li>
+        ))}
       </ul>
     </div>
   );

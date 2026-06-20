@@ -139,7 +139,7 @@ export function closedWeekdays(rules: ScheduleRule[]): Set<number> {
   return closed;
 }
 
-/** Bloqueo (time-off) que cubre el día, si lo hay. */
+/** Bloqueo (time-off) que se solapa con el día (parcial o completo), si lo hay. */
 export function timeOffForDay(day: Date, timeOff: TimeOff[]): TimeOff | undefined {
   const dayStart = startOfDay(day).getTime();
   const dayEnd = dayStart + 24 * 60 * 60 * 1000;
@@ -152,16 +152,50 @@ export function timeOffForDay(day: Date, timeOff: TimeOff[]): TimeOff | undefine
 }
 
 /**
- * Determina si el profesional no atiende ese día y por qué. El time-off (bloqueo puntual)
- * tiene prioridad sobre el cierre habitual: si justo cae en un día cerrado, igual mostramos
- * el motivo del bloqueo. Devuelve `null` cuando el día es laborable.
+ * ¿El bloqueo cubre el día COMPLETO? (feriado/vacaciones cargados como "días completos",
+ * o cualquier bloqueo que abarque de 00:00 a 00:00). Solo estos vuelven al día entero
+ * "no atendido"; un bloqueo por horas (p.ej. 16–20) NO bloquea el día entero.
+ */
+export function isFullDayBlock(block: TimeOff, day: Date): boolean {
+  const dayStart = startOfDay(day).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+  const from = new Date(block.startAt).getTime();
+  const to = new Date(block.endAt).getTime();
+  return from <= dayStart && to >= dayEnd;
+}
+
+/** Bloqueo que cubre el día COMPLETO, si lo hay. */
+export function fullDayTimeOffForDay(day: Date, timeOff: TimeOff[]): TimeOff | undefined {
+  return timeOff.find((t) => isFullDayBlock(t, day));
+}
+
+/**
+ * Bloqueos PARCIALES (por horas) que caen en el día sin cubrirlo entero. Estos se dibujan
+ * como franjas dentro de la grilla (igual que un turno), no como día completo cerrado.
+ */
+export function partialTimeOffsForDay(day: Date, timeOff: TimeOff[]): TimeOff[] {
+  const dayStart = startOfDay(day).getTime();
+  const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+  return timeOff.filter((t) => {
+    const from = new Date(t.startAt).getTime();
+    const to = new Date(t.endAt).getTime();
+    const overlaps = from < dayEnd && to > dayStart;
+    return overlaps && !isFullDayBlock(t, day);
+  });
+}
+
+/**
+ * Determina si el profesional no atiende TODO el día y por qué. Solo un bloqueo de día
+ * completo (o el cierre habitual) marca el día entero como no atendido; los bloqueos por
+ * horas se muestran como franjas y NO disparan esto. El bloqueo de día completo tiene
+ * prioridad sobre el cierre habitual. Devuelve `null` cuando el día es laborable.
  */
 export function dayOffStatus(
   day: Date,
   closed: Set<number>,
   timeOff: TimeOff[],
 ): DayOff | null {
-  const block = timeOffForDay(day, timeOff);
+  const block = fullDayTimeOffForDay(day, timeOff);
   if (block) return { kind: "timeoff", reason: block.reason?.trim() || "Bloqueado" };
   if (closed.has(day.getDay())) return { kind: "closed", reason: "Cerrado" };
   return null;
@@ -183,6 +217,33 @@ export function positionAppointment(a: Appointment): PositionedAppointment {
     appointment: a,
     top: (startMin / 60) * HOUR_PX,
     height: (durMin / 60) * HOUR_PX,
+  };
+}
+
+export interface PositionedBlock {
+  block: TimeOff;
+  top: number;
+  height: number;
+}
+
+/**
+ * Posiciona un bloqueo PARCIAL (por horas) dentro de la grilla horaria del día, recortado a
+ * la ventana visible [DAY_START_HOUR, DAY_END_HOUR]. Devuelve `null` si, tras el recorte, no
+ * queda nada visible (el bloqueo cae fuera del horario dibujado).
+ */
+export function positionTimeOff(block: TimeOff, day: Date): PositionedBlock | null {
+  const dayStart = startOfDay(day).getTime();
+  const winStart = DAY_START_HOUR * 60;
+  const winEnd = DAY_END_HOUR * 60;
+  const fromMin = (new Date(block.startAt).getTime() - dayStart) / 60000;
+  const toMin = (new Date(block.endAt).getTime() - dayStart) / 60000;
+  const startMin = Math.max(fromMin, winStart);
+  const endMin = Math.min(toMin, winEnd);
+  if (endMin <= startMin) return null;
+  return {
+    block,
+    top: ((startMin - winStart) / 60) * HOUR_PX,
+    height: ((endMin - startMin) / 60) * HOUR_PX,
   };
 }
 

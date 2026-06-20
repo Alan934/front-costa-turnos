@@ -9,6 +9,7 @@ import {
   isToday,
   closedWeekdays,
   dayOffStatus,
+  partialTimeOffsForDay,
 } from "@/lib/agenda";
 import { cn } from "@/lib/utils";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -69,12 +70,16 @@ export function MonthGrid({
             const level = loadLevel(count);
             const today = isToday(d);
             const off = dayOffStatus(d, closed, timeOff);
+            // Bloqueos por horas: marca puntual, sin cerrar el día entero.
+            const hasPartialBlock = !off && partialTimeOffsForDay(d, timeOff).length > 0;
 
             const title = off
               ? `No atiende: ${off.reason}`
-              : count > 0
-                ? `${count} ${count === 1 ? "turno" : "turnos"} · doble click para ver`
-                : "Sin turnos";
+              : hasPartialBlock
+                ? `Bloqueo por horas${count > 0 ? ` · ${count} ${count === 1 ? "turno" : "turnos"}` : ""}`
+                : count > 0
+                  ? `${count} ${count === 1 ? "turno" : "turnos"} · doble click para ver`
+                  : "Sin turnos";
 
             return (
               <button
@@ -110,10 +115,17 @@ export function MonthGrid({
                     <span className="truncate">{off.reason}</span>
                   </span>
                 ) : (
-                  count > 0 && (
+                  (count > 0 || hasPartialBlock) && (
                     <span className="mt-auto flex items-center gap-1 self-start rounded-md bg-background/70 px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
-                      <span className="size-1.5 rounded-full bg-accent" />
-                      {count}
+                      {hasPartialBlock && (
+                        <CalendarOff className="size-3 shrink-0 text-warning" />
+                      )}
+                      {count > 0 && (
+                        <>
+                          <span className="size-1.5 rounded-full bg-accent" />
+                          {count}
+                        </>
+                      )}
                     </span>
                   )
                 )}
