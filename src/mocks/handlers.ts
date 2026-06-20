@@ -79,7 +79,12 @@ function isBlockedByTimeOff(staffId: string, start: Date): boolean {
   );
 }
 
-/** Bloqueo (time-off) que cubre el día calendario para ese staff, si lo hay (con su motivo). */
+/**
+ * Bloqueo (time-off) que cubre el día calendario COMPLETO para ese staff (feriado/vacaciones,
+ * de 00:00 a 00:00), si lo hay (con su motivo). Solo estos cierran el día entero: un bloqueo
+ * por horas (p.ej. 16–20) NO marca el día como time_off — sus slots se descuentan uno a uno en
+ * `dayCapacity`/`generateSlots` (igual que el back real). Espeja `isFullDayBlock` de agenda.ts.
+ */
 function timeOffForDay(staffId: string, day: Date): TimeOff | undefined {
   const dayStart = new Date(day);
   dayStart.setHours(0, 0, 0, 0);
@@ -89,7 +94,7 @@ function timeOffForDay(staffId: string, day: Date): TimeOff | undefined {
     if (to.staffId !== staffId) return false;
     const from = new Date(to.startAt).getTime();
     const until = new Date(to.endAt).getTime();
-    return from < end && until > start; // se solapa con el día
+    return from <= start && until >= end; // cubre el día COMPLETO
   });
 }
 
