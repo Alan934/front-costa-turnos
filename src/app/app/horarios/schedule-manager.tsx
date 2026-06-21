@@ -125,12 +125,9 @@ function DayRow({
   const update = useUpdateComercioScheduleRule(comercioId);
   const del = useDeleteComercioScheduleRule(comercioId);
   const works = rules.filter((r) => r.kind === ScheduleRuleKind.work);
-  // null = cerrado; { rule } = editar esa franja; { rule: undefined } = agregar una nueva.
-  const [workDialog, setWorkDialog] = useState<{ rule?: ScheduleRule } | null>(null);
+  // null = cerrado; `kind` = qué se crea (work/break); `rule` = si viene, editamos esa regla.
+  const [dialog, setDialog] = useState<{ rule?: ScheduleRule; kind: ScheduleRuleKind } | null>(null);
 
-  function addBreak() {
-    create.mutate({ dayOfWeek: day, startTime: "13:00", endTime: "14:00", kind: ScheduleRuleKind.break });
-  }
   function remove(id: string) {
     del.mutate(id);
   }
@@ -143,12 +140,22 @@ function DayRow({
           <span className="text-xs text-muted-foreground">Cerrado</span>
         ) : (
           <div className="flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setWorkDialog({})} disabled={create.isPending}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDialog({ kind: ScheduleRuleKind.work })}
+              disabled={create.isPending}
+            >
               <Briefcase className="size-3.5" />
               Franja
             </Button>
             {works.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={addBreak} disabled={create.isPending}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDialog({ kind: ScheduleRuleKind.break })}
+                disabled={create.isPending}
+              >
                 <Coffee className="size-3.5" />
                 Descanso
               </Button>
@@ -160,7 +167,7 @@ function DayRow({
       {rules.length === 0 ? (
         <button
           type="button"
-          onClick={() => setWorkDialog({})}
+          onClick={() => setDialog({ kind: ScheduleRuleKind.work })}
           className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
         >
           <Plus className="size-3.5" />
@@ -176,33 +183,32 @@ function DayRow({
                 key={r.id}
                 rule={r}
                 services={services}
-                onEdit={() => setWorkDialog({ rule: r })}
+                onEdit={() => setDialog({ rule: r, kind: r.kind })}
                 onRemove={() => remove(r.id)}
               />
             ))}
         </div>
       )}
 
-      {workDialog && (
-        <WorkRuleDialog
+      {dialog && (
+        <RuleDialog
           day={day}
+          kind={dialog.kind}
           services={services}
-          rule={workDialog.rule}
+          rule={dialog.rule}
           pending={create.isPending || update.isPending}
-          onClose={() => setWorkDialog(null)}
+          onClose={() => setDialog(null)}
           onSubmit={(startTime, endTime, serviceIds) => {
-            const editing = workDialog.rule;
+            const editing = dialog.rule;
             if (editing) {
-              // En breaks no aplica serviceIds (lo omitimos en el PATCH).
-              const isBreak = editing.kind === ScheduleRuleKind.break;
               update.mutate(
-                { id: editing.id, data: isBreak ? { startTime, endTime } : { startTime, endTime, serviceIds } },
-                { onSuccess: () => setWorkDialog(null) },
+                { id: editing.id, data: { startTime, endTime, serviceIds } },
+                { onSuccess: () => setDialog(null) },
               );
             } else {
               create.mutate(
-                { dayOfWeek: day, startTime, endTime, kind: ScheduleRuleKind.work, serviceIds },
-                { onSuccess: () => setWorkDialog(null) },
+                { dayOfWeek: day, startTime, endTime, kind: dialog.kind, serviceIds },
+                { onSuccess: () => setDialog(null) },
               );
             }
           }}
@@ -226,13 +232,22 @@ function RuleChip({
 }) {
   const isWork = rule.kind === ScheduleRuleKind.work;
   // serviceIds vacío = aplica a todos. Si trae ids, mostramos los nombres (los que conocemos).
-  const targeted = isWork && rule.serviceIds.length > 0;
+  const targeted = rule.serviceIds.length > 0;
   const names = targeted
     ? rule.serviceIds
         .map((id) => services.find((s) => s.id === id)?.name)
         .filter((n): n is string => !!n)
         .map(titleCaseName)
     : [];
+  // Las franjas de trabajo siempre indican alcance ("Todos"/nombres). Los descansos solo
+  // lo muestran cuando afectan a servicios puntuales (sin ids = descanso total, sin etiqueta).
+  const scopeLabel = targeted
+    ? names.length > 0
+      ? names.join(", ")
+      : `${rule.serviceIds.length} servicio${rule.serviceIds.length > 1 ? "s" : ""}`
+    : isWork
+      ? "Todos los servicios"
+      : null;
 
   return (
     <span
@@ -245,16 +260,7 @@ function RuleChip({
     >
       {isWork ? <Briefcase className="size-3" /> : <Coffee className="size-3" />}
       {rule.startTime}–{rule.endTime}
-      {isWork && (
-        <span className="opacity-80">
-          ·{" "}
-          {targeted
-            ? names.length > 0
-              ? names.join(", ")
-              : `${rule.serviceIds.length} servicio${rule.serviceIds.length > 1 ? "s" : ""}`
-            : "Todos los servicios"}
-        </span>
-      )}
+      {scopeLabel && <span className="opacity-80">· {scopeLabel}</span>}
       {onEdit && (
         <button
           type="button"
@@ -278,12 +284,14 @@ function RuleChip({
 }
 
 /**
- * Diálogo para agregar/editar una franja. Al CREAR siempre es una franja de trabajo (work);
- * al EDITAR puede ser un descanso (break, `rule.kind`), en cuyo caso solo se ajusta el horario
- * (sin mapeo de servicios).
+ * Diálogo para agregar/editar una regla del día. `kind` define si es una franja de trabajo
+ * (work) o un descanso (break): ambos eligen horario y a qué servicios aplican/afectan.
+ * Para una franja, los servicios marcan dónde se puede reservar; para un descanso, qué
+ * servicios quedan bloqueados (sin marcar = todos → descanso total).
  */
-function WorkRuleDialog({
+function RuleDialog({
   day,
+  kind,
   services,
   rule,
   pending,
@@ -291,18 +299,20 @@ function WorkRuleDialog({
   onSubmit,
 }: {
   day: number;
+  kind: ScheduleRuleKind;
   services: Service[];
-  /** Si viene, editamos esa regla (precargada); si no, creamos una franja de trabajo nueva. */
+  /** Si viene, editamos esa regla (precargada); si no, creamos una nueva del `kind` dado. */
   rule?: ScheduleRule;
   pending: boolean;
   onClose: () => void;
   onSubmit: (startTime: string, endTime: string, serviceIds: string[]) => void;
 }) {
   const editing = !!rule;
-  const isBreak = rule?.kind === ScheduleRuleKind.break;
+  const isBreak = kind === ScheduleRuleKind.break;
   const noun = isBreak ? "descanso" : "franja";
-  const [start, setStart] = useState(rule?.startTime ?? "09:00");
-  const [end, setEnd] = useState(rule?.endTime ?? "18:00");
+  // Default según el tipo: descanso típico de mediodía vs. jornada de trabajo.
+  const [start, setStart] = useState(rule?.startTime ?? (isBreak ? "13:00" : "09:00"));
+  const [end, setEnd] = useState(rule?.endTime ?? (isBreak ? "14:00" : "18:00"));
   // "all" = todos los servicios (serviceIds vacío); "some" = solo los marcados.
   const [scope, setScope] = useState<"all" | "some">(
     rule && rule.serviceIds.length > 0 ? "some" : "all",
@@ -314,8 +324,7 @@ function WorkRuleDialog({
   }
 
   const validRange = start < end;
-  // Los breaks no eligen servicios; solo validan el horario.
-  const canSubmit = validRange && (isBreak || scope === "all" || selected.length > 0) && !pending;
+  const canSubmit = validRange && (scope === "all" || selected.length > 0) && !pending;
 
   function submit() {
     onSubmit(start, end, scope === "all" ? [] : selected);
@@ -326,11 +335,12 @@ function WorkRuleDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {editing ? `Editar ${noun}` : "Agregar franja"} — {DAYS[day]}
+            {editing ? `Editar ${noun}` : isBreak ? "Agregar descanso" : "Agregar franja"} —{" "}
+            {DAYS[day]}
           </DialogTitle>
           <DialogDescription>
             {isBreak
-              ? "Ajustá el horario de este descanso."
+              ? "Elegí el horario del descanso y a qué servicios afecta."
               : "Elegí el horario y a qué servicios aplica esta franja de atención."}
           </DialogDescription>
         </DialogHeader>
@@ -350,54 +360,60 @@ function WorkRuleDialog({
             <p className="text-xs text-destructive">La hora de fin debe ser posterior a la de inicio.</p>
           )}
 
-          {!isBreak && (
-            <div>
-              <Label>¿A qué servicios aplica?</Label>
-              <div className="mt-1.5 space-y-2">
-                <ScopeOption
-                  checked={scope === "all"}
-                  onSelect={() => setScope("all")}
-                  title="Todos los servicios"
-                  hint="La franja sirve para cualquier servicio que ofrezcas."
-                />
-                <ScopeOption
-                  checked={scope === "some"}
-                  onSelect={() => setScope("some")}
-                  title="Solo algunos servicios"
-                  hint="Elegí en qué servicios se puede reservar en esta franja."
-                  disabled={services.length === 0}
-                />
-              </div>
-
-              {scope === "some" && (
-                <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2.5">
-                  {services.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Todavía no tenés servicios en este comercio.
-                    </p>
-                  ) : (
-                    services.map((s) => (
-                      <label key={s.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selected.includes(s.id)}
-                          onChange={() => toggle(s.id)}
-                          className="size-4 accent-[var(--color-accent)]"
-                        />
-                        {titleCaseName(s.name)}
-                      </label>
-                    ))
-                  )}
-                </div>
-              )}
+          <div>
+            <Label>{isBreak ? "¿A qué servicios afecta?" : "¿A qué servicios aplica?"}</Label>
+            <div className="mt-1.5 space-y-2">
+              <ScopeOption
+                checked={scope === "all"}
+                onSelect={() => setScope("all")}
+                title="Todos los servicios"
+                hint={
+                  isBreak
+                    ? "Durante el descanso no se podrá reservar ningún servicio."
+                    : "La franja sirve para cualquier servicio que ofrezcas."
+                }
+              />
+              <ScopeOption
+                checked={scope === "some"}
+                onSelect={() => setScope("some")}
+                title="Solo algunos servicios"
+                hint={
+                  isBreak
+                    ? "Solo se bloquean los servicios que elijas en ese rango."
+                    : "Elegí en qué servicios se puede reservar en esta franja."
+                }
+                disabled={services.length === 0}
+              />
             </div>
-          )}
+
+            {scope === "some" && (
+              <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2.5">
+                {services.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Todavía no tenés servicios en este comercio.
+                  </p>
+                ) : (
+                  services.map((s) => (
+                    <label key={s.id} className="flex cursor-pointer items-center gap-2.5 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(s.id)}
+                        onChange={() => toggle(s.id)}
+                        className="size-4 accent-[var(--color-accent)]"
+                      />
+                      {titleCaseName(s.name)}
+                    </label>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-6 pt-3">
           <Button className="w-full" disabled={!canSubmit} onClick={submit}>
             {pending ? <Spinner /> : null}
-            {editing ? "Guardar cambios" : "Agregar franja"}
+            {editing ? "Guardar cambios" : isBreak ? "Agregar descanso" : "Agregar franja"}
           </Button>
         </div>
       </DialogContent>

@@ -190,7 +190,9 @@
   --success-foreground: oklch(0.2 0.01 55);
 
   --warning: oklch(0.78 0.1 70);
-  --warning-foreground: oklch(0.2 0.02 60);
+  /* Texto de avisos: en oscuro siempre va sobre fondos translúcidos (bg-warning/10..20),
+     así que necesita ser claro para contrastar con el carbón, no oscuro como en claro. */
+  --warning-foreground: oklch(0.86 0.09 75);
 
   --border: oklch(0.32 0.008 55);
   --input: oklch(0.32 0.008 55);
