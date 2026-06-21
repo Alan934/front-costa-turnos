@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -23,6 +23,7 @@ import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
 import { WelcomeSetup } from "@/components/welcome-setup";
+import { ComercioWelcomeBanner } from "./comercio-welcome-banner";
 import { PublicPageLink } from "@/components/public-page-link";
 import { usePersonLookup } from "@/lib/api/clients";
 import { dayRange, isSameLocalDay } from "@/lib/agenda";
@@ -68,6 +69,9 @@ export function Dashboard() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
+      <Suspense fallback={null}>
+        <ComercioWelcomeBanner />
+      </Suspense>
       <WelcomeSetup />
 
       <div className="flex flex-wrap items-center justify-between gap-3">

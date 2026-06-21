@@ -28,6 +28,8 @@ import type {
   AcceptInvitationDto,
   Comercio,
   ComercioInvitation,
+  ComerciosPreviewInvitationParams,
+  InvitationPreviewDto,
   InviteProfessionalDto,
   Membership,
   UpdateComercioDto,
@@ -123,6 +125,100 @@ export function useComerciosMyMemberships<TData = Awaited<ReturnType<typeof come
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getComerciosMyMembershipsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Sin auth. Devuelve lo necesario para que la landing decida registrarse vs ingresar. Token inexistente → 404; cancelado o vencido → 410.
+ * @summary Preview público de una invitación (landing)
+ */
+export const comerciosPreviewInvitation = (
+    params: ComerciosPreviewInvitationParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<InvitationPreviewDto>(
+      {url: `/v1/comercios/invitations/preview`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComerciosPreviewInvitationQueryKey = (params?: ComerciosPreviewInvitationParams,) => {
+    return [
+    `/v1/comercios/invitations/preview`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getComerciosPreviewInvitationQueryOptions = <TData = Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError = ErrorType<void>>(params: ComerciosPreviewInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComerciosPreviewInvitationQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comerciosPreviewInvitation>>> = ({ signal }) => comerciosPreviewInvitation(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComerciosPreviewInvitationQueryResult = NonNullable<Awaited<ReturnType<typeof comerciosPreviewInvitation>>>
+export type ComerciosPreviewInvitationQueryError = ErrorType<void>
+
+
+export function useComerciosPreviewInvitation<TData = Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError = ErrorType<void>>(
+ params: ComerciosPreviewInvitationParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comerciosPreviewInvitation>>,
+          TError,
+          Awaited<ReturnType<typeof comerciosPreviewInvitation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComerciosPreviewInvitation<TData = Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError = ErrorType<void>>(
+ params: ComerciosPreviewInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comerciosPreviewInvitation>>,
+          TError,
+          Awaited<ReturnType<typeof comerciosPreviewInvitation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComerciosPreviewInvitation<TData = Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError = ErrorType<void>>(
+ params: ComerciosPreviewInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Preview público de una invitación (landing)
+ */
+
+export function useComerciosPreviewInvitation<TData = Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError = ErrorType<void>>(
+ params: ComerciosPreviewInvitationParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comerciosPreviewInvitation>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComerciosPreviewInvitationQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -6,10 +6,12 @@ import type { Comercio } from "@/lib/api/generated/model/comercio";
 import type { ComercioInvitation } from "@/lib/api/generated/model/comercioInvitation";
 import type { Membership } from "@/lib/api/generated/model/membership";
 import type { UpdateMembershipDto } from "@/lib/api/generated/model/updateMembershipDto";
+import type { InvitationPreviewDto } from "@/lib/api/generated/model/invitationPreviewDto";
 import type {
   MembershipWithComercio,
   MembershipWithProfessional,
 } from "@/mocks/contract-extensions";
+import type { AxiosError } from "axios";
 
 /** Endpoints de comercios/membresías (Fase 1). */
 
@@ -25,6 +27,30 @@ export function useMyMemberships() {
         method: "GET",
         signal,
       }),
+  });
+}
+
+/**
+ * Vista previa pública de una invitación por token (no requiere sesión). La landing del
+ * email la usa para guiar al profesional a registrarse o ingresar y pre-cargar el email.
+ * Token inexistente/expirado/cancelado → 404/410: no reintentamos.
+ */
+export function useInvitationPreview(token: string | null) {
+  return useQuery({
+    queryKey: ["invitation-preview", token],
+    queryFn: ({ signal }) =>
+      customInstance<InvitationPreviewDto>({
+        url: `/v1/comercios/invitations/preview?token=${encodeURIComponent(token ?? "")}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!token,
+    retry: (count, err) => {
+      const status = (err as AxiosError).response?.status;
+      // Token inválido/expirado o endpoint inexistente: no insistir.
+      if (status === 404 || status === 410 || status === 400 || status === 405) return false;
+      return count < 2;
+    },
   });
 }
 

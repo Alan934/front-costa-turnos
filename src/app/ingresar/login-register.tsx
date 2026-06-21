@@ -31,8 +31,6 @@ function toSlug(value: string) {
 }
 
 export function LoginRegister() {
-  const [tab, setTab] = useState<Tab>("login");
-  const [regType, setRegType] = useState<RegType>("cliente");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, registerProfessional, registerComercial } = useAuth();
@@ -40,7 +38,19 @@ export function LoginRegister() {
   const rawNext = searchParams.get("next");
   const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
 
-  const [email, setEmail] = useState("");
+  // Pre-carga desde una invitación a comercio: email fijo + (opcional) alta de profesional.
+  const invitedEmail = searchParams.get("email") ?? "";
+  const forceRegType = searchParams.get("registro") as RegType | null;
+  const invited = !!invitedEmail;
+
+  const [tab, setTab] = useState<Tab>(forceRegType ? "registro" : "login");
+  const [regType, setRegType] = useState<RegType>(
+    forceRegType === "profesional" || forceRegType === "comercio" || forceRegType === "cliente"
+      ? forceRegType
+      : "cliente",
+  );
+
+  const [email, setEmail] = useState(invitedEmail);
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -227,7 +237,14 @@ export function LoginRegister() {
             placeholder="vos@email.com"
             autoComplete="email"
             required
+            readOnly={invited}
+            aria-readonly={invited}
           />
+          {invited && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Usá este email: es al que llegó la invitación del comercio.
+            </p>
+          )}
         </div>
 
         <div>
