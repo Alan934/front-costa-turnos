@@ -13,4 +13,5 @@ export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 export const PaymentMethod = {
   cash: 'cash',
   mercadopago: 'mercadopago',
+  transfer: 'transfer',
 } as const;

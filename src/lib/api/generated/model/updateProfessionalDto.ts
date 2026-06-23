@@ -13,6 +13,10 @@ export interface UpdateProfessionalDto {
   timezone?: string;
   address?: string;
   defaultDepositMode?: UpdateProfessionalDtoDefaultDepositMode;
+  /** IVA por defecto (%) cobrado al cliente en pagos por Mercado Pago (0–100). */
+  defaultVatPercent?: number;
+  /** true = el IVA se le suma al cliente; false = el profesional lo absorbe. */
+  vatChargedToClient?: boolean;
   cancellationWindowHours?: number;
   /** Horas mínimas antes del turno hasta las que el cliente puede reprogramar. 0 = sin restricción. */
   rescheduleWindowHours?: number;

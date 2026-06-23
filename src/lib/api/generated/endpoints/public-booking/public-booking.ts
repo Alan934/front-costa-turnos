@@ -26,6 +26,7 @@ import type {
 
 import type {
   Appointment,
+  BookWithDepositResultDto,
   ComercioPublicPageDto,
   DayAvailabilityDto,
   PublicBookDto,
@@ -524,7 +525,7 @@ export const publicBookingBookServiceWithDeposit = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<BookWithDepositResultDto>(
       {url: `/r/${slug}/services/${serviceId}/book-with-deposit`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: publicBookWithDepositDto, signal
@@ -1077,7 +1078,7 @@ export const publicBookingBookWithDeposit = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<BookWithDepositResultDto>(
       {url: `/r/${slug}/professionals/${membershipId}/book-with-deposit`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: publicBookWithDepositDto, signal
@@ -1414,7 +1415,7 @@ export const publicBookingBookWithDepositFlat = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<BookWithDepositResultDto>(
       {url: `/r/${slug}/book-with-deposit`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: publicBookWithDepositDto, signal

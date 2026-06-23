@@ -5,6 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { ServicePricing } from './servicePricing';
 import type { PublicServiceProfessionalDto } from './publicServiceProfessionalDto';
 
 export interface PublicServiceDto {
@@ -23,7 +24,10 @@ export interface PublicServiceDto {
   allowFullPayment: boolean;
   allowNoPayment: boolean;
   allowCash: boolean;
+  allowTransfer: boolean;
   /** @nullable */
   depositAmountCents?: number | null;
+  /** Precios con/sin IVA (full y seña). El IVA solo aplica a pagos por Mercado Pago. */
+  pricing?: ServicePricing;
   professionals: PublicServiceProfessionalDto[];
 }

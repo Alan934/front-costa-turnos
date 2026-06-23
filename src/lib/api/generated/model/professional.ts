@@ -21,6 +21,8 @@ export interface Professional {
   /** @nullable */
   address?: string | null;
   defaultDepositMode: DepositMode;
+  defaultVatPercent: number;
+  vatChargedToClient: boolean;
   cancellationWindowHours: number;
   rescheduleWindowHours: number;
   publicPageSettings: ProfessionalPublicPageSettings;

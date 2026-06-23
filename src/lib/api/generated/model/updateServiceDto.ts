@@ -26,6 +26,18 @@ export interface UpdateServiceDto {
   allowNoPayment?: boolean;
   /** Permitir reservar pagando en efectivo (precio completo, sin IVA) */
   allowCash?: boolean;
+  /** Permitir reservar por transferencia/QR (precio completo, sin IVA) */
+  allowTransfer?: boolean;
+  /**
+   * IVA (%) de este servicio. null = hereda el default del profesional.
+   * @nullable
+   */
+  vatPercent?: number | null;
+  /**
+   * Si el IVA se cobra al cliente en este servicio. null = hereda del profesional.
+   * @nullable
+   */
+  vatChargedToClient?: boolean | null;
   /** monto de la seña en centavos */
   depositAmountCents?: number;
   /**

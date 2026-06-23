@@ -32,7 +32,7 @@ import { useMetrics } from "@/lib/api/metrics";
 import { useTokenColors } from "@/lib/use-token-colors";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { MetricsOverview } from "@/mocks/contract-extensions";
+import type { MetricsOverviewDto } from "@/lib/api/generated/model/metricsOverviewDto";
 
 type Range = "week" | "month";
 
@@ -81,7 +81,7 @@ export function MetricsView() {
   );
 }
 
-function MetricsContent({ data }: { data: MetricsOverview }) {
+function MetricsContent({ data }: { data: MetricsOverviewDto }) {
   const c = useTokenColors();
 
   return (
@@ -90,13 +90,11 @@ function MetricsContent({ data }: { data: MetricsOverview }) {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi icon={<CalendarCheck2 className="size-4" />} value={String(data.totals.appointments)} label="turnos atendidos" />
         <Kpi icon={<DollarSign className="size-4" />} value={formatMoney(data.totals.incomeCents)} label="ingresos cobrados" />
-        {data.totals.pendingCashCents != null && (
-          <Kpi
-            icon={<CircleDollarSign className="size-4" />}
-            value={formatMoney(data.totals.pendingCashCents)}
-            label="pendiente de cobro"
-          />
-        )}
+        <Kpi
+          icon={<CircleDollarSign className="size-4" />}
+          value={formatMoney(data.totals.pendingCashCents)}
+          label="pendiente de cobro"
+        />
         <Kpi icon={<UserPlus className="size-4" />} value={String(data.totals.newClients)} label="clientes nuevos" />
         <Kpi icon={<UserX className="size-4" />} value={`${Math.round(data.totals.noShowRate * 100)}%`} label="no-show" />
       </div>
@@ -213,7 +211,7 @@ function MetricsContent({ data }: { data: MetricsOverview }) {
   );
 }
 
-function range_gap(data: MetricsOverview) {
+function range_gap(data: MetricsOverviewDto) {
   return data.attendanceByDay.length > 10 ? "10%" : "30%";
 }
 
@@ -287,7 +285,7 @@ function MetricsSkeleton() {
 }
 
 /** Exporta el resumen a CSV (abrible en Excel). */
-function exportCsv(data: MetricsOverview) {
+function exportCsv(data: MetricsOverviewDto) {
   const rows: string[] = ["Período,Atendidos,Cancelados,No vino,Ingresos"];
   data.attendanceByDay.forEach((d, i) => {
     const income = (data.incomeByDay[i]?.cents ?? 0) / 100;

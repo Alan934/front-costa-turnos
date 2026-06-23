@@ -230,11 +230,12 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
   const [allowNoPayment, setAllowNoPayment] = useState(true);
   const [allowDeposit, setAllowDeposit] = useState(false);
   const [allowFullPayment, setAllowFullPayment] = useState(false);
-  // Efectivo: precio completo en persona, sin IVA y sin requerir MercadoPago.
+  // Efectivo y transferencia: precio completo en persona, sin IVA y sin requerir MercadoPago.
   const [allowCash, setAllowCash] = useState(false);
+  const [allowTransfer, setAllowTransfer] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
 
-  const anyOption = allowNoPayment || allowDeposit || allowFullPayment || allowCash;
+  const anyOption = allowNoPayment || allowDeposit || allowFullPayment || allowCash || allowTransfer;
   const wantPaid = allowDeposit || allowFullPayment;
   const canAdd =
     name.trim().length > 1 &&
@@ -257,6 +258,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
         allowDeposit: deposit,
         allowFullPayment: fullPayment,
         allowCash,
+        allowTransfer,
         depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       },
       {
@@ -268,6 +270,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
           setAllowDeposit(false);
           setAllowFullPayment(false);
           setAllowCash(false);
+          setAllowTransfer(false);
         },
       },
     );
@@ -318,6 +321,7 @@ function ServicesStep({ onNext }: { onNext: () => void }) {
             <PayChip label="Con seña" checked={allowDeposit} onToggle={() => setAllowDeposit((v) => !v)} />
             <PayChip label="Pago completo" checked={allowFullPayment} onToggle={() => setAllowFullPayment((v) => !v)} />
             <PayChip label="Efectivo" checked={allowCash} onToggle={() => setAllowCash((v) => !v)} />
+            <PayChip label="Transferencia" checked={allowTransfer} onToggle={() => setAllowTransfer((v) => !v)} />
           </div>
           {allowDeposit && (
             <div className="mt-2.5">

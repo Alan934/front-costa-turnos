@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useCreateComercioService, useUpdateComercioService } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
+import { useProfessional } from "@/lib/api/professional";
 import { useMyMemberships } from "@/lib/api/comercios";
 import {
   uploadFile,
@@ -66,13 +67,26 @@ export function ServiceFormDialog({
   const [allowNoPayment, setAllowNoPayment] = useState(service ? service.allowNoPayment : true);
   const [allowDeposit, setAllowDeposit] = useState(service?.allowDeposit ?? false);
   const [allowFullPayment, setAllowFullPayment] = useState(service?.allowFullPayment ?? false);
-  // Efectivo: cobra el precio completo del servicio (sin IVA/recargo) y NO requiere MercadoPago,
-  // porque el pago se recibe en persona. El turno queda confirmado al reservar.
+  // Efectivo y transferencia/QR: cobran el precio completo (sin IVA/recargo) y NO requieren
+  // MercadoPago, porque el pago se recibe en persona. El turno queda confirmado al reservar.
   const [allowCash, setAllowCash] = useState(service?.allowCash ?? false);
+  const [allowTransfer, setAllowTransfer] = useState(service?.allowTransfer ?? false);
   const [depositAmount, setDepositAmount] = useState(
     service?.depositAmountCents ? String(service.depositAmountCents / 100) : "",
   );
   const [capacity, setCapacity] = useState(String(service?.capacity ?? 1));
+
+  // IVA del servicio (solo aplica a pagos por Mercado Pago). null = hereda el default del perfil.
+  const pro = useProfessional();
+  const proVatPercent = pro.data?.defaultVatPercent ?? 4.5;
+  const proVatChargedToClient = pro.data?.vatChargedToClient ?? true;
+  const [customVat, setCustomVat] = useState(service?.vatPercent != null);
+  const [vatPercent, setVatPercent] = useState(
+    service?.vatPercent != null ? String(service.vatPercent) : "",
+  );
+  const [vatChargedToClient, setVatChargedToClient] = useState(
+    service?.vatChargedToClient ?? true,
+  );
 
   const create = useCreateComercioService(comercioId);
   const update = useUpdateComercioService(comercioId);
@@ -91,11 +105,15 @@ export function ServiceFormDialog({
   const mpConnected = mp.data?.connected ?? false;
   const paidLocked = !mp.isLoading && !mpConnected;
 
-  const anyOption = allowNoPayment || allowDeposit || allowFullPayment || allowCash;
+  const anyOption = allowNoPayment || allowDeposit || allowFullPayment || allowCash || allowTransfer;
+  // Solo los pagos por Mercado Pago (seña/total) llevan IVA; por eso el bloque se muestra ahí.
+  const mpOption = (allowDeposit || allowFullPayment) && mpConnected;
   const depositOk = !allowDeposit || Number(depositAmount) > 0;
   // No permitir guardar opciones pagas si no hay MP (defensa: pudieron venir marcadas de antes).
   const paidOk = mpConnected || (!allowDeposit && !allowFullPayment);
   const capacityNum = Number(capacity);
+  // Si personaliza el IVA, el porcentaje debe ser un número 0–100 válido.
+  const vatOk = !customVat || (vatPercent.trim() !== "" && Number(vatPercent) >= 0 && Number(vatPercent) <= 100);
   const canSubmit =
     name.trim().length > 1 &&
     Number(duration) > 0 &&
@@ -103,6 +121,7 @@ export function ServiceFormDialog({
     anyOption &&
     depositOk &&
     paidOk &&
+    vatOk &&
     capacityNum >= 1;
 
   // Motivo por el que el botón está deshabilitado, para no dejar al usuario sin pistas.
@@ -113,6 +132,7 @@ export function ServiceFormDialog({
     if (!anyOption) return "Marcá al menos una forma de reservar.";
     if (!depositOk) return "Ingresá un monto de seña mayor a 0.";
     if (!paidOk) return "Conectá MercadoPago para cobrar seña o pago completo.";
+    if (!vatOk) return "Ingresá un IVA válido (0 a 100%).";
     return null;
   })();
 
@@ -131,6 +151,10 @@ export function ServiceFormDialog({
       allowDeposit: deposit,
       allowFullPayment: fullPayment,
       allowCash,
+      allowTransfer,
+      // IVA por servicio: null = hereda el default del profesional. Solo afecta pagos por MP.
+      vatPercent: customVat ? Number(vatPercent) : null,
+      vatChargedToClient: customVat ? vatChargedToClient : null,
       depositAmountCents: deposit ? Math.round(Number(depositAmount) * 100) : undefined,
       capacity: capacityNum,
     };
@@ -292,6 +316,12 @@ export function ServiceFormDialog({
                 title="Aceptar efectivo"
                 hint="Reserva confirmada; paga el precio completo en persona (sin IVA)."
               />
+              <OptionToggle
+                checked={allowTransfer}
+                onChange={setAllowTransfer}
+                title="Aceptar transferencia / QR"
+                hint="Reserva confirmada; te paga por transferencia o QR (sin IVA)."
+              />
             </div>
             {paidLocked && (
               <div className="mt-2 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs text-warning-foreground">
@@ -309,6 +339,62 @@ export function ServiceFormDialog({
               <p className="mt-2 text-xs text-destructive">Marcá al menos una forma de reservar.</p>
             )}
           </div>
+
+          {/* IVA del servicio: solo afecta a los pagos por Mercado Pago (seña/total). */}
+          {mpOption && (
+            <div className="rounded-lg border border-border p-3">
+              <Label>IVA en pagos por Mercado Pago</Label>
+              <p className="mb-2 mt-0.5 text-xs text-muted-foreground">
+                Cubre la comisión de acreditación de Checkout. No se aplica a efectivo ni transferencia.
+              </p>
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={!customVat}
+                  onChange={(e) => setCustomVat(!e.target.checked)}
+                  className="mt-0.5 size-4 accent-[var(--color-accent)]"
+                />
+                <span className="text-sm">
+                  Usar el IVA de mi perfil
+                  <span className="text-muted-foreground">
+                    {" "}({proVatPercent}% · {proVatChargedToClient ? "se cobra al cliente" : "lo absorbo yo"})
+                  </span>
+                </span>
+              </label>
+              {customVat && (
+                <div className="mt-3 space-y-3 pl-7">
+                  <div>
+                    <Label htmlFor="sf-vat">IVA de este servicio (%)</Label>
+                    <Input
+                      id="sf-vat"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      className="mt-1.5 w-32"
+                      value={vatPercent}
+                      onChange={(e) => setVatPercent(e.target.value)}
+                      placeholder={String(proVatPercent)}
+                    />
+                  </div>
+                  <label className="flex cursor-pointer items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={vatChargedToClient}
+                      onChange={(e) => setVatChargedToClient(e.target.checked)}
+                      className="mt-0.5 size-4 accent-[var(--color-accent)]"
+                    />
+                    <span className="text-sm">
+                      Cobrárselo al cliente
+                      <span className="block text-xs text-muted-foreground">
+                        Si lo destildás, el IVA lo absorbés vos (no se le suma al precio).
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 p-6 pt-3">

@@ -20,8 +20,6 @@ export interface ServiceCombinationRuleWithService extends ServiceCombinationRul
 }
 import type { DepositMode } from "@/lib/api/generated/model/depositMode";
 import type { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import type { Appointment } from "@/lib/api/generated/model/appointment";
-import type { Payment } from "@/lib/api/generated/model/payment";
 import type { Professional } from "@/lib/api/generated/model/professional";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
 
@@ -137,20 +135,6 @@ export interface AdminProfessionalRow {
   subscription: Subscription;
 }
 
-/**
- * Respuesta de la reserva con seña (`POST /r/{slug}/book-with-deposit` y
- * `POST /appointments/with-deposit`). El back devuelve `{ appointment, payment, mpInitPoint }`:
- * cuando `method: "mercadopago"` y el pago queda pendiente, `mpInitPoint` trae la `init_point`
- * de la preferencia (creada con el token del profesional) para redirigir al checkout. Así el
- * cliente anónimo no necesita llamar al endpoint autenticado `/payments/{id}/mp-preference`.
- * (Se mantiene en contract-extensions porque el OpenAPI tipa la respuesta como `void`.)
- */
-export interface BookWithDepositResult {
-  appointment: Appointment;
-  payment?: Payment;
-  mpInitPoint?: string | null;
-}
-
 /** Roles del usuario autenticado (alineado a AppRole del contrato). */
 export type AccountRole = "admin" | "professional" | "comercial" | "client";
 
@@ -254,35 +238,6 @@ export interface AdminMetrics {
 export interface WaitingRoomUpdateEvent {
   staffId: string;
   room: WaitingRoom;
-}
-
-/**
- * Métricas agregadas del negocio (vista /app/metricas y dashboard). El contrato no
- * expone métricas (ver API-GAPS §2); el back debería ofrecer algo como
- * `GET /metrics/overview?range=`. Provisional mockeado.
- */
-export interface MetricsOverview {
-  range: "week" | "month";
-  /** Turnos atendidos por día (label es-AR + cantidad). */
-  attendanceByDay: { label: string; atendidos: number; cancelados: number; noShow: number }[];
-  /** Clientes nuevos vs recurrentes en el período. */
-  newVsReturning: { nuevos: number; recurrentes: number };
-  /** Distribución por hora del día (horarios pico). */
-  peakHours: { hour: string; turnos: number }[];
-  /** Ingresos por día (en centavos). */
-  incomeByDay: { label: string; cents: number }[];
-  /** KPIs de cabecera. */
-  totals: {
-    appointments: number;
-    /** Ingresos efectivamente cobrados (solo pagos en estado pagado). */
-    incomeCents: number;
-    /** Efectivo pendiente de cobro (pending + pagarés). Opcional: backs anteriores no lo envían. */
-    pendingCashCents?: number;
-    newClients: number;
-    noShowRate: number; // 0..1
-  };
-  /** Clientes que no vuelven hace tiempo (riesgo de baja). */
-  atRiskClients: { id: string; fullName: string; lastVisitLabel: string }[];
 }
 
 /**

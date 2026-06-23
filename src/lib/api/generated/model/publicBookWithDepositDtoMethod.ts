@@ -13,4 +13,5 @@ export type PublicBookWithDepositDtoMethod = typeof PublicBookWithDepositDtoMeth
 export const PublicBookWithDepositDtoMethod = {
   cash: 'cash',
   mercadopago: 'mercadopago',
+  transfer: 'transfer',
 } as const;

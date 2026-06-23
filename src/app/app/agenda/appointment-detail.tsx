@@ -66,14 +66,14 @@ export function AppointmentDetail({
   const doCancel = () =>
     cancel.mutate({ id, data: {} }, { onSuccess: onChanged });
 
-  // Pago en efectivo aún sin cobrar de este turno: al marcar "atendido" pedimos confirmar
-  // si lo recibió (collected → pagado) o quedó en un pagaré (deferred → debe). Así el cobro
-  // no infla las métricas hasta que el profesional confirma que recibió la plata.
+  // Pago en persona (efectivo o transferencia) aún sin cobrar de este turno: al marcar "atendido"
+  // pedimos confirmar si lo recibió (collected → pagado) o quedó en un pagaré (deferred → debe).
+  // Así el cobro no infla las métricas hasta que el profesional confirma que recibió la plata.
   const { data: payments } = usePayments();
   const cashPayment = payments?.find(
     (p) =>
       (p.appointmentId as unknown as string) === id &&
-      p.method === "cash" &&
+      (p.method === "cash" || p.method === "transfer") &&
       (p.status === "pending" || p.status === "deferred"),
   );
   const [askCash, setAskCash] = useState(false);
@@ -260,11 +260,12 @@ function CashOutcomePanel({
 }) {
   const [defer, setDefer] = useState(false);
   const [note, setNote] = useState("");
+  const methodLabel = payment.method === "transfer" ? "transferencia" : "efectivo";
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-3">
       <p className="text-sm font-medium">
-        Cobro en efectivo · {formatMoney(payment.amountCents)}
+        Cobro en {methodLabel} · {formatMoney(payment.amountCents)}
       </p>
       <p className="text-xs text-muted-foreground">
         ¿Recibiste el pago al finalizar el turno?
@@ -274,7 +275,7 @@ function CashOutcomePanel({
         <div className="space-y-2">
           <Button className="w-full" onClick={onCollected} disabled={pending}>
             {pending ? <Spinner /> : <Banknote className="size-4" />}
-            Sí, cobré el efectivo
+            Sí, cobré en {methodLabel}
           </Button>
           <Button
             variant="outline"

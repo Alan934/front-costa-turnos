@@ -29,6 +29,7 @@ import type {
   AppointmentsListParams,
   BookAppointmentDto,
   BookWithDepositDto,
+  BookWithDepositResultDto,
   CancelAppointmentDto,
   CompleteAppointmentDto
 } from '../../model';
@@ -207,7 +208,7 @@ export const appointmentsBookWithDeposit = (
 ) => {
       
       
-      return customInstance<void>(
+      return customInstance<BookWithDepositResultDto>(
       {url: `/v1/appointments/with-deposit`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: bookWithDepositDto, signal

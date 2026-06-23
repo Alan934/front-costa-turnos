@@ -2,14 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
-import type { MetricsOverview } from "@/mocks/contract-extensions";
+import type { MetricsOverviewDto } from "@/lib/api/generated/model/metricsOverviewDto";
+import type { MetricsRange } from "@/lib/api/generated/model/metricsRange";
 
-/** Métricas agregadas. Endpoint provisional (ver API-GAPS §2). */
-export function useMetrics(range: "week" | "month") {
+/** Métricas agregadas del negocio (`GET /v1/metrics/overview?range=`). */
+export function useMetrics(range: MetricsRange) {
   return useQuery({
     queryKey: ["metrics", range],
     queryFn: ({ signal }) =>
-      customInstance<MetricsOverview>({
+      customInstance<MetricsOverviewDto>({
         url: "/v1/metrics/overview",
         method: "GET",
         params: { range },

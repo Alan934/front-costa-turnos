@@ -22,6 +22,8 @@ export interface Payment {
   personId: string;
   type: PaymentType;
   amountCents: number;
+  vatPercent: number;
+  vatAmountCents: number;
   method: PaymentMethod;
   status: PaymentStatus;
   /** @nullable */

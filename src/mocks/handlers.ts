@@ -10,6 +10,7 @@ import {
   buildComercioPublicPage,
   buildProfessionalDetail,
   buildPublicServices,
+  buildPricing,
   buildWaitingRoom,
   me,
   clientUser,
@@ -375,8 +376,16 @@ function dayAvailabilityFromRequest(request: Request, staffId: string): DayAvail
 function bookWithDepositResult(body: Record<string, unknown>) {
   const appointment = createBooking(body, { provisional: false });
   const method = String(body.method ?? "mercadopago");
-  const fullPayment = body.paymentOption === "full";
   const svc = services.find((s) => s.id === appointment.serviceId);
+  const pricing = svc ? buildPricing(svc) : null;
+  // Efectivo y transferencia se cobran en persona: precio base (sin IVA), siempre el total.
+  const inPerson = method === "cash" || method === "transfer";
+  const fullPayment = inPerson || body.paymentOption === "full";
+  // En persona no hay IVA; por MP el IVA sale del breakdown (full o seña).
+  const mpBreakdown = fullPayment ? pricing?.full : pricing?.deposit;
+  const amountCents = inPerson
+    ? (svc?.priceCents ?? 0)
+    : (mpBreakdown?.totalCents ?? svc?.priceCents ?? 0);
   const payment: Payment = {
     id: `pay_${Date.now()}`,
     createdAt: new Date().toISOString(),
@@ -385,21 +394,24 @@ function bookWithDepositResult(body: Record<string, unknown>) {
     appointmentId: appointment.id as unknown as Payment["appointmentId"],
     personId: appointment.personId,
     type: fullPayment ? "service" : "deposit",
-    amountCents: fullPayment ? (svc?.priceCents ?? 0) : (svc?.depositAmountCents ?? 0),
-    method: method === "cash" ? "cash" : "mercadopago",
+    amountCents,
+    vatPercent: inPerson ? 0 : (pricing?.vatPercent ?? 0),
+    vatAmountCents: inPerson ? 0 : (mpBreakdown?.vatAmountCents ?? 0),
+    method: inPerson ? (method as Payment["method"]) : "mercadopago",
     status: PaymentStatus.pending,
     mercadopagoRef: null,
     paidAt: null,
   };
   payments.push(payment);
+  // BookWithDepositResultDto: en MP el turno se crea al acreditar el pago (appointment null) y
+  // viaja mpInitPoint para redirigir al checkout. En efectivo/transferencia el turno ya está firme.
   return {
-    appointment,
+    appointment: method === "mercadopago" ? null : appointment,
     payment,
-    // Extensión del front: punto de pago directo para el cliente anónimo (ver API-GAPS).
     mpInitPoint:
       method === "mercadopago"
         ? `https://www.mercadopago.com.ar/checkout/dep-mock/${payment.id}`
-        : null,
+        : undefined,
   };
 }
 
@@ -712,6 +724,9 @@ export const handlers: RequestHandler[] = [
       allowDeposit: !!body.allowDeposit,
       allowFullPayment: !!body.allowFullPayment,
       allowCash: !!body.allowCash,
+      allowTransfer: !!body.allowTransfer,
+      vatPercent: (body.vatPercent as number | null) ?? null,
+      vatChargedToClient: (body.vatChargedToClient as boolean | null) ?? null,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
       capacity: Number(body.capacity ?? 1),
       isActive: true,
@@ -785,6 +800,9 @@ export const handlers: RequestHandler[] = [
       allowDeposit: !!body.allowDeposit,
       allowFullPayment: !!body.allowFullPayment,
       allowCash: !!body.allowCash,
+      allowTransfer: !!body.allowTransfer,
+      vatPercent: (body.vatPercent as number | null) ?? null,
+      vatChargedToClient: (body.vatChargedToClient as boolean | null) ?? null,
       depositAmountCents: (body.depositAmountCents as number) ?? null,
       capacity: Number(body.capacity ?? 1),
       isActive: true,
@@ -891,7 +909,6 @@ export const handlers: RequestHandler[] = [
     const p = payments.find((x) => x.id === params.id);
     if (!p) return new HttpResponse(null, { status: 404 });
     p.status = PaymentStatus.paid;
-    p.method = "cash";
     p.paidAt = new Date().toISOString();
     return HttpResponse.json(p);
   }),
@@ -900,7 +917,6 @@ export const handlers: RequestHandler[] = [
     if (!p) return new HttpResponse(null, { status: 404 });
     const body = (await request.json().catch(() => ({}))) as { note?: string };
     p.status = PaymentStatus.deferred;
-    p.method = "cash";
     p.note = body.note ?? p.note ?? null;
     return HttpResponse.json(p);
   }),
@@ -939,13 +955,13 @@ export const handlers: RequestHandler[] = [
         endAt: a.endAt,
         status: a.status,
       }));
-    // Efectivo sin cobrar (pendiente o pagaré).
-    const cashPending = payments.filter(
+    // Efectivo/transferencia sin cobrar (pendiente o pagaré). Ambos se cobran en persona.
+    const inPersonPending = payments.filter(
       (p) =>
-        p.method === "cash" &&
+        (p.method === "cash" || p.method === "transfer") &&
         (p.status === PaymentStatus.pending || p.status === PaymentStatus.deferred),
     );
-    const pendingCash = cashPending.map((p) => {
+    const pendingCash = inPersonPending.map((p) => {
       const apptId = p.appointmentId as unknown as string | null;
       const appt = apptId ? appointments.find((a) => a.id === apptId) : undefined;
       return {
@@ -961,7 +977,7 @@ export const handlers: RequestHandler[] = [
     });
     const pendingCashCents = pendingCash.reduce((s, p) => s + p.amountCents, 0);
     const collectedList = payments.filter(
-      (p) => p.method === "cash" && p.status === PaymentStatus.paid,
+      (p) => (p.method === "cash" || p.method === "transfer") && p.status === PaymentStatus.paid,
     );
     return HttpResponse.json({
       pendingCompletion,

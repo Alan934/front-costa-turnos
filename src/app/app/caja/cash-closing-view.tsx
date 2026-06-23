@@ -90,12 +90,12 @@ export function CashClosingView() {
             ))}
           </Section>
 
-          {/* Efectivo sin cobrar */}
+          {/* Efectivo / transferencia sin cobrar */}
           <Section
-            title="Efectivo pendiente"
-            hint="Clientes que todavía no pagaron o quedaron en un pagaré."
+            title="Pagos en persona pendientes"
+            hint="Efectivo o transferencia que todavía no cobraste, o que quedó en un pagaré."
             count={data.pendingCash.length}
-            emptyLabel="No tenés efectivo pendiente de cobro."
+            emptyLabel="No tenés pagos en persona pendientes de cobro."
           >
             {data.pendingCash.map((p) => (
               <PendingCashRow key={p.paymentId} item={p} />

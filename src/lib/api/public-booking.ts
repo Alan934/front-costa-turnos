@@ -16,8 +16,9 @@ import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publ
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
 import type { PublicBookDto } from "@/lib/api/generated/model/publicBookDto";
 import type { PublicBookWithDepositDto } from "@/lib/api/generated/model/publicBookWithDepositDto";
-import type { Slot, BookWithDepositResult, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
+import type { Slot, ServiceCombinationRuleWithService } from "@/mocks/contract-extensions";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
+import type { BookWithDepositResultDto } from "@/lib/api/generated/model/bookWithDepositResultDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
 
 /** Página del comercio: datos + lista de profesionales (`/r/:slug`). */
@@ -132,7 +133,7 @@ export function useBookProfessional(slug: string, membershipId: string) {
 export function useBookProfessionalWithDeposit(slug: string, membershipId: string) {
   return useMutation({
     mutationFn: (data: PublicBookWithDepositAndAddons) =>
-      customInstance<BookWithDepositResult>({
+      customInstance<BookWithDepositResultDto>({
         url: `/r/${slug}/professionals/${membershipId}/book-with-deposit`,
         method: "POST",
         data,
@@ -213,7 +214,7 @@ export function useBookService(slug: string, serviceId: string) {
 export function useBookServiceWithDeposit(slug: string, serviceId: string) {
   return useMutation({
     mutationFn: (data: PublicBookWithDepositAndAddons) =>
-      customInstance<BookWithDepositResult>({
+      customInstance<BookWithDepositResultDto>({
         url: `/r/${slug}/services/${serviceId}/book-with-deposit`,
         method: "POST",
         data,

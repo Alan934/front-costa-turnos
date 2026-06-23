@@ -34,6 +34,7 @@ import type {
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
+import type { ServicePricing } from "@/lib/api/generated/model/servicePricing";
 
 const now = new Date();
 const iso = (d: Date) => d.toISOString();
@@ -60,6 +61,8 @@ export const professional: Professional = {
   slug: SLUG,
   timezone: "America/Argentina/Buenos_Aires",
   defaultDepositMode: DepositMode.hybrid,
+  defaultVatPercent: 4.5,
+  vatChargedToClient: true,
   cancellationWindowHours: 24,
   rescheduleWindowHours: 8,
   publicPageSettings: {
@@ -109,6 +112,7 @@ export const services: Service[] = [
     allowDeposit: false,
     allowFullPayment: false,
     allowCash: true,
+    allowTransfer: true,
     depositAmountCents: null,
     capacity: 1,
     isActive: true,
@@ -129,6 +133,7 @@ export const services: Service[] = [
     allowDeposit: true,
     allowFullPayment: true,
     allowCash: false,
+    allowTransfer: true,
     depositAmountCents: 400000,
     capacity: 1,
     isActive: true,
@@ -149,6 +154,10 @@ export const services: Service[] = [
     allowDeposit: true,
     allowFullPayment: true,
     allowCash: false,
+    allowTransfer: false,
+    // IVA propio de este servicio (sobreescribe el 4.5% del perfil).
+    vatPercent: 6.45,
+    vatChargedToClient: true,
     depositAmountCents: 1000000,
     capacity: 1,
     isActive: true,
@@ -201,6 +210,25 @@ export function buildProfessionalDetail(): PublicProfessionalDetailDto {
   };
 }
 
+/**
+ * Calcula `ServicePricing` (precios con/sin IVA) como lo hace el back. El IVA solo aplica a los
+ * pagos por Mercado Pago. El % y "se cobra al cliente" salen del servicio o, si son null, del perfil.
+ */
+export function buildPricing(s: Service): ServicePricing {
+  const vatPercent = s.vatPercent ?? professional.defaultVatPercent;
+  const vatChargedToClient = s.vatChargedToClient ?? professional.vatChargedToClient;
+  const breakdown = (base: number) => {
+    const vat = vatChargedToClient ? Math.round((base * vatPercent) / 100) : 0;
+    return { baseCents: base, vatAmountCents: vat, totalCents: base + vat };
+  };
+  return {
+    vatPercent,
+    vatChargedToClient,
+    full: breakdown(s.priceCents),
+    deposit: s.allowDeposit && s.depositAmountCents ? breakdown(s.depositAmountCents) : null,
+  };
+}
+
 /** Catálogo de servicios del comercio para la reserva pública (GET /r/:slug/services). */
 export function buildPublicServices(): PublicServiceDto[] {
   return services
@@ -217,6 +245,8 @@ export function buildPublicServices(): PublicServiceDto[] {
       allowFullPayment: s.allowFullPayment,
       allowNoPayment: s.allowNoPayment,
       allowCash: s.allowCash,
+      allowTransfer: s.allowTransfer,
+      pricing: buildPricing(s),
       depositAmountCents: s.depositAmountCents ?? null,
       professionals: [
         {
@@ -500,6 +530,8 @@ function adminRow(args: {
     slug: args.slug,
     timezone: "America/Argentina/Buenos_Aires",
     defaultDepositMode: DepositMode.hybrid,
+    defaultVatPercent: 4.5,
+    vatChargedToClient: true,
     cancellationWindowHours: 24,
     rescheduleWindowHours: 24,
     publicPageSettings: {},
@@ -755,7 +787,9 @@ export const payments: Payment[] = [
     appointmentId: "apt_3" as unknown as Payment["appointmentId"],
     personId: "per_juan",
     type: PaymentType.deposit,
-    amountCents: 400000,
+    amountCents: 418000,
+    vatPercent: 4.5,
+    vatAmountCents: 18000,
     method: PaymentMethod.mercadopago,
     status: PaymentStatus.pending,
     mercadopagoRef: null,

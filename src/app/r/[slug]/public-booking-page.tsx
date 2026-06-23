@@ -34,7 +34,7 @@ import {
   useBookService,
   useBookServiceWithDeposit,
 } from "@/lib/api/public-booking";
-import { getPaymentOptions, paymentSummary, type PayOption } from "@/lib/deposit";
+import { getPaymentOptions, paymentSummary, baseCents, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
 import {
   formatMoney,
@@ -825,7 +825,8 @@ function ConfirmStep({
     : { ...service, allowDeposit: false, allowFullPayment: false };
   const options = getPaymentOptions(effectiveSvc);
   const hasNoPay = options.some((o) => o.choice === "none");
-  const hasCash = options.some((o) => o.choice === "cash");
+  // Efectivo y transferencia comparten el mismo aviso (turno confirmado, se paga en persona).
+  const hasInPerson = options.some((o) => o.choice === "cash" || o.choice === "transfer");
   const hasPaid = mpConnected && options.some((o) => o.requiresPayment);
 
   // ¿Una reserva sin seña podría quedar provisional (desplazable por quien pague)? Depende de la
@@ -874,18 +875,14 @@ function ConfirmStep({
       serviceId: service.serviceId,
       startAt: slot.startAt,
     };
-    if (option.flow === "cash") {
-      // Efectivo: turno confirmado al instante (no provisional). Sin paymentOption: el back
-      // cobra el precio completo del servicio. El cobro queda pendiente hasta el turno presencial.
+    if (option.flow === "cash" || option.flow === "transfer") {
+      // Efectivo / transferencia: turno confirmado al instante (no provisional). Sin paymentOption:
+      // el back cobra el precio base. El cobro queda pendiente hasta el turno presencial.
       bookWithDeposit.mutate(
-        { ...base, method: "cash" },
+        { ...base, method: option.flow === "transfer" ? "transfer" : "cash" },
         {
-          onSuccess: (res) => {
-            const proName = isAny
-              ? (res as { professionalDisplayName?: string } & typeof res).professionalDisplayName
-              : undefined;
-            onConfirmed(false, proName);
-          },
+          // En cash/transfer el back devuelve el turno creado (con professionalDisplayName si fue "cualquiera").
+          onSuccess: (res) => onConfirmed(false, res.appointment?.professionalDisplayName),
         },
       );
     } else if (option.paymentOption) {
@@ -894,14 +891,12 @@ function ConfirmStep({
         { ...base, method: "mercadopago", paymentOption: option.paymentOption },
         {
           onSuccess: (res) => {
+            // En MP el turno se crea al acreditar el pago (appointment llega null): redirigimos al checkout.
             if (env.mockingEnabled) {
-              const proName = isAny
-                ? (res as { professionalDisplayName?: string } & typeof res).professionalDisplayName
-                : undefined;
-              onConfirmed(false, proName);
+              onConfirmed(false, res.appointment?.professionalDisplayName);
               return;
             }
-            if (res?.mpInitPoint) {
+            if (res.mpInitPoint) {
               window.location.href = res.mpInitPoint;
               return;
             }
@@ -929,7 +924,12 @@ function ConfirmStep({
         <Row label="Servicio" value={service.name} />
         <Row label="Profesional" value={proSummary} />
         <Row label="Cuándo" value={`${formatDateLong(slot.startAt)} · ${formatTime(slot.startAt)}`} />
-        <Row label="Precio" value={formatMoney(service.priceCents)} strong />
+        <Row label="Precio" value={formatMoney(baseCents(service))} strong />
+        {hasPaid && (
+          <p className="pt-1 text-right text-xs text-muted-foreground">
+            Los pagos por Mercado Pago suman IVA (ver cada opción).
+          </p>
+        )}
       </div>
 
       {hasPaid && hasNoPay && provisionalPossible && (
@@ -947,12 +947,12 @@ function ConfirmStep({
           <p className="text-sm">Este servicio se reserva pagando para confirmar el turno.</p>
         </div>
       )}
-      {hasCash && (
+      {hasInPerson && (
         <div className="mt-4 flex gap-3 rounded-xl border border-accent/40 bg-accent/10 p-3.5">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" />
           <p className="text-sm">
-            Pagando en efectivo tu turno queda <strong>confirmado</strong>. Abonás el total en
-            persona el día del turno.
+            Pagando en efectivo o por transferencia tu turno queda <strong>confirmado</strong>.
+            Abonás el total en persona el día del turno (sin IVA).
           </p>
         </div>
       )}
@@ -1025,21 +1025,32 @@ function ConfirmStep({
                 ? `Pagar el total · ${formatMoney(opt.amountCents)}`
                 : opt.choice === "cash"
                   ? `Pagar en efectivo · ${formatMoney(opt.amountCents)}`
-                  : hasPaid
-                    ? "Reservar sin pagar"
-                    : "Confirmar turno";
+                  : opt.choice === "transfer"
+                    ? `Pagar por transferencia · ${formatMoney(opt.amountCents)}`
+                    : hasPaid
+                      ? "Reservar sin pagar"
+                      : "Confirmar turno";
+          // Para pagos por MP que suman IVA al cliente, mostramos el desglose sin IVA / IVA.
+          const br = opt.breakdown;
+          const showVat = br && br.vatChargedToClient && br.vatAmountCents > 0;
           return (
-            <Button
-              key={opt.choice}
-              className="w-full"
-              size="lg"
-              variant={i === 0 ? "default" : "outline"}
-              disabled={!canSubmit || submitting}
-              onClick={() => submit(opt)}
-            >
-              {submitting && i === 0 ? <Spinner /> : null}
-              {label}
-            </Button>
+            <div key={opt.choice}>
+              <Button
+                className="w-full"
+                size="lg"
+                variant={i === 0 ? "default" : "outline"}
+                disabled={!canSubmit || submitting}
+                onClick={() => submit(opt)}
+              >
+                {submitting && i === 0 ? <Spinner /> : null}
+                {label}
+              </Button>
+              {showVat && (
+                <p className="mt-1 text-center text-xs text-muted-foreground">
+                  Sin IVA {formatMoney(br.baseCents)} · IVA {br.vatPercent}% {formatMoney(br.vatAmountCents)}
+                </p>
+              )}
+            </div>
           );
         })}
       </div>

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { ServiceAssignedMembership } from './serviceAssignedMembership';
+import type { ServicePricing } from './servicePricing';
 
 export interface Service {
   id: string;
@@ -27,6 +28,11 @@ export interface Service {
   allowFullPayment: boolean;
   allowNoPayment: boolean;
   allowCash: boolean;
+  allowTransfer: boolean;
+  /** @nullable */
+  vatPercent?: number | null;
+  /** @nullable */
+  vatChargedToClient?: boolean | null;
   /** @nullable */
   depositAmountCents?: number | null;
   /** @minimum 1 */
@@ -35,4 +41,5 @@ export interface Service {
   assignedMemberships?: ServiceAssignedMembership[];
   /** URLs firmadas (temporales) de imageKeys */
   imageUrls?: string[];
+  pricing?: ServicePricing;
 }

@@ -39,6 +39,8 @@ export function SettingsView() {
         <div className="mt-7 space-y-8">
           <BusinessSection professional={pro.data} />
           <Separator />
+          <VatSection professional={pro.data} />
+          <Separator />
           <BrandingSection professional={pro.data} />
           <Separator />
           <SubscriptionSection />
@@ -112,6 +114,82 @@ function BusinessSection({
           </p>
         </div>
         <Button size="sm" onClick={save} disabled={update.isPending}>
+          {update.isPending ? <Spinner /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
+          {saved ? "Guardado" : "Guardar"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * IVA por defecto del profesional. Solo afecta a los pagos por Mercado Pago: cubre la comisión de
+ * acreditación de Checkout (que varía según el plazo de cobro). Cada servicio puede tener su propio
+ * IVA; si no, hereda este valor. Efectivo y transferencia nunca llevan IVA.
+ */
+function VatSection({
+  professional,
+}: {
+  professional: { defaultVatPercent: number; vatChargedToClient: boolean };
+}) {
+  const update = useUpdateProfessional();
+  const [vat, setVat] = useState(String(professional.defaultVatPercent));
+  const [chargedToClient, setChargedToClient] = useState(professional.vatChargedToClient);
+  const [saved, setSaved] = useState(false);
+
+  const vatNum = Number(vat);
+  const vatOk = vat.trim() !== "" && vatNum >= 0 && vatNum <= 100;
+
+  function save() {
+    update.mutate(
+      { defaultVatPercent: vatNum, vatChargedToClient: chargedToClient },
+      {
+        onSuccess: () => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        },
+      },
+    );
+  }
+
+  return (
+    <section>
+      <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">IVA en pagos online</h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        El IVA cubre la comisión de acreditación de Mercado Pago Checkout (varía según en cuántos días
+        recibís la plata). Solo se aplica a los pagos por Mercado Pago; en efectivo o transferencia no
+        hay IVA. Es el valor por defecto: cada servicio puede tener el suyo.
+      </p>
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="vat-percent">IVA por defecto (%)</Label>
+          <Input
+            id="vat-percent"
+            type="number"
+            min={0}
+            max={100}
+            step={0.5}
+            className="mt-1.5 w-32"
+            value={vat}
+            onChange={(e) => setVat(e.target.value)}
+          />
+          {!vatOk && <p className="mt-1.5 text-xs text-destructive">Ingresá un valor entre 0 y 100.</p>}
+        </div>
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={chargedToClient}
+            onChange={(e) => setChargedToClient(e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Cobrarle el IVA al cliente
+            <span className="block text-xs text-muted-foreground">
+              Si lo destildás, el IVA lo absorbés vos: el cliente paga el precio sin recargo.
+            </span>
+          </span>
+        </label>
+        <Button size="sm" onClick={save} disabled={update.isPending || !vatOk}>
           {update.isPending ? <Spinner /> : saved ? <Check className="size-4" /> : <Save className="size-4" />}
           {saved ? "Guardado" : "Guardar"}
         </Button>
