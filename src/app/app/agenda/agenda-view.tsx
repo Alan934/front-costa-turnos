@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
+import { RefreshButton } from "@/components/refresh-button";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
@@ -87,6 +88,7 @@ export function AgendaView() {
             <p className="text-sm capitalize text-muted-foreground">{title}</p>
           </div>
           <div className="flex items-center gap-2">
+            <RefreshButton fetching={apptQuery.isFetching} onClick={() => apptQuery.refetch()} />
             <Button variant="outline" size="sm" onClick={() => setDate(new Date())}>
               Hoy
             </Button>

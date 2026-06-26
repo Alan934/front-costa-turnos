@@ -442,7 +442,7 @@ function ServiceStep({
               key={s.serviceId}
               type="button"
               onClick={() => onPick(s)}
-              className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
+              className="group flex w-full items-start gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
             >
               {s.imageUrls.length > 0 && (
                 // Span (no <button>) para no anidar interactivos dentro del botón del servicio.

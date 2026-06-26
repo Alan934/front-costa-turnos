@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
+import { RefreshButton } from "@/components/refresh-button";
 import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/components/auth-provider";
 import { useAppointments } from "@/lib/api/appointments";
@@ -85,6 +86,7 @@ export function Dashboard() {
           </div>
         </div>
         <div className="flex gap-2">
+          <RefreshButton fetching={appts.isFetching} onClick={() => appts.refetch()} />
           <Button variant="outline" size="sm" asChild>
             <Link href="/app/sala">
               <Radio className="size-4" />

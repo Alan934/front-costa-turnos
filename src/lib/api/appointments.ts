@@ -25,6 +25,10 @@ export function useAppointments(params: AppointmentsQuery) {
         params,
         signal,
       }),
+    // La agenda cambia sola cuando entran reservas online: refrescamos al volver a la
+    // pestaña y cada 60 s mientras está visible (react-query pausa el polling en segundo plano).
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 }
 

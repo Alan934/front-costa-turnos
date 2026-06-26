@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
+import { RefreshButton } from "@/components/refresh-button";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -53,7 +54,7 @@ const TERMINAL: AppointmentStatus[] = [
 
 export function MyAppointmentsView() {
   const { user, logout } = useAuth();
-  const { data, isLoading, isError, refetch } = useMyAppointments();
+  const { data, isLoading, isError, isFetching, refetch } = useMyAppointments();
 
   const { upcoming, past } = useMemo(() => {
     const now = Date.now();
@@ -73,6 +74,7 @@ export function MyAppointmentsView() {
       <header className="flex items-center justify-between py-5">
         <Logo href="/" size="md" />
         <div className="flex items-center gap-1.5">
+          <RefreshButton fetching={isFetching} onClick={() => refetch()} />
           <ThemeToggle />
           <Button variant="ghost" size="sm" onClick={() => logout()}>
             <LogOut className="size-4" />
