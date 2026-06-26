@@ -47,6 +47,7 @@ import {
   type TimeBand,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
 import type { PublicServiceProfessionalDto } from "@/lib/api/generated/model/publicServiceProfessionalDto";
@@ -810,10 +811,21 @@ function ConfirmStep({
   mpConnected: boolean;
   onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
 }) {
+  const { user } = useAuth();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [payRedirectError, setPayRedirectError] = useState(false);
+
+  // Cliente logueado: precargamos nombre y email desde la cuenta (la sesión carga async, por eso
+  // lo hacemos en efecto). El turno se asocia a la cuenta por el token de sesión; precargar estos
+  // datos hace que el contacto del turno coincida con la cuenta. El teléfono no está en la cuenta,
+  // así que se sigue cargando a mano. Solo rellenamos campos vacíos para no pisar lo que tipee.
+  useEffect(() => {
+    if (!user) return;
+    setFullName((v) => v || user.fullName || "");
+    setEmail((v) => v || user.email || "");
+  }, [user]);
 
   const isAny = professional === "any";
   const membershipId = isAny ? "" : professional.membershipId;
