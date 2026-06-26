@@ -442,64 +442,70 @@ function ServiceStep({
               key={s.serviceId}
               type="button"
               onClick={() => onPick(s)}
-              className="group flex w-full items-start gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
+              className="group flex w-full flex-col gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
             >
-              {s.imageUrls.length > 0 && (
-                // Span (no <button>) para no anidar interactivos dentro del botón del servicio.
-                // stopPropagation evita que ver la imagen dispare la selección del servicio.
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Ver imágenes de ${s.name}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightbox({ images: s.imageUrls, index: 0 });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+              {/* Título principal del servicio, arriba de todo (con el precio a la derecha). */}
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 flex-1 font-medium">{s.name}</p>
+                <p className="shrink-0 font-display font-semibold tabular-nums">
+                  {formatMoney(s.priceCents)}
+                </p>
+              </div>
+
+              <div className="flex items-start gap-4">
+                {s.imageUrls.length > 0 && (
+                  // Span (no <button>) para no anidar interactivos dentro del botón del servicio.
+                  // stopPropagation evita que ver la imagen dispare la selección del servicio.
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver imágenes de ${s.name}`}
+                    onClick={(e) => {
                       e.stopPropagation();
                       setLightbox({ images: s.imageUrls, index: 0 });
-                    }
-                  }}
-                  className="relative block size-16 shrink-0 cursor-zoom-in overflow-hidden rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {/* URL firmada lista para mostrar (la provee el back, ~15 min). */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.imageUrls[0]} alt="" className="size-full object-cover" />
-                  {s.imageUrls.length > 1 && (
-                    <span className="absolute bottom-0.5 right-0.5 rounded bg-black/60 px-1 text-[10px] font-medium text-white">
-                      +{s.imageUrls.length - 1}
-                    </span>
-                  )}
-                </span>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{s.name}</p>
-                {s.description && (
-                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{s.description}</p>
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLightbox({ images: s.imageUrls, index: 0 });
+                      }
+                    }}
+                    className="relative block size-16 shrink-0 cursor-zoom-in overflow-hidden rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {/* URL firmada lista para mostrar (la provee el back, ~15 min). */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.imageUrls[0]} alt="" className="size-full object-cover" />
+                    {s.imageUrls.length > 1 && (
+                      <span className="absolute bottom-0.5 right-0.5 rounded bg-black/60 px-1 text-[10px] font-medium text-white">
+                        +{s.imageUrls.length - 1}
+                      </span>
+                    )}
+                  </span>
                 )}
-                <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock3 className="size-3.5" />
-                  {formatDuration(s.durationMinutes)}
-                  {proCount > 1 && (
-                    <>
-                      <span className="mx-0.5">·</span>
-                      <Users className="size-3.5" />
-                      {proCount} profesionales
-                    </>
+                <div className="min-w-0 flex-1">
+                  {s.description && (
+                    <p className="line-clamp-2 text-xs text-muted-foreground">{s.description}</p>
                   )}
-                </p>
-                {summary && (
-                  <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
-                    <Info className="size-3" />
-                    {summary}
+                  <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock3 className="size-3.5" />
+                    {formatDuration(s.durationMinutes)}
+                    {proCount > 1 && (
+                      <>
+                        <span className="mx-0.5">·</span>
+                        <Users className="size-3.5" />
+                        {proCount} profesionales
+                      </>
+                    )}
                   </p>
-                )}
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="font-display font-semibold tabular-nums">{formatMoney(s.priceCents)}</p>
-                <ArrowRight className="ml-auto mt-1 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
+                  {summary && (
+                    <p className="mt-1.5 inline-flex items-center gap-1 text-xs text-accent">
+                      <Info className="size-3" />
+                      {summary}
+                    </p>
+                  )}
+                </div>
+                <ArrowRight className="mt-0.5 size-4 shrink-0 self-center text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-accent" />
               </div>
             </button>
           );
