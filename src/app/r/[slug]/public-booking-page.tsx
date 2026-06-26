@@ -6,6 +6,7 @@ import {
   Clock3,
   Check,
   ChevronLeft,
+  ChevronRight,
   CalendarX2,
   CalendarCheck2,
   Info,
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import {
@@ -388,6 +390,9 @@ function ServiceStep({
 }) {
   const { data, isLoading, isError, refetch } = usePublicServices(slug);
 
+  // Galería ampliada: imágenes del servicio en el que se hizo click, con índice activo.
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -440,7 +445,25 @@ function ServiceStep({
               className="group flex w-full items-center gap-4 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-accent focus-visible:border-accent"
             >
               {s.imageUrls.length > 0 && (
-                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                // Span (no <button>) para no anidar interactivos dentro del botón del servicio.
+                // stopPropagation evita que ver la imagen dispare la selección del servicio.
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver imágenes de ${s.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightbox({ images: s.imageUrls, index: 0 });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLightbox({ images: s.imageUrls, index: 0 });
+                    }
+                  }}
+                  className="relative block size-16 shrink-0 cursor-zoom-in overflow-hidden rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   {/* URL firmada lista para mostrar (la provee el back, ~15 min). */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={s.imageUrls[0]} alt="" className="size-full object-cover" />
@@ -449,7 +472,7 @@ function ServiceStep({
                       +{s.imageUrls.length - 1}
                     </span>
                   )}
-                </div>
+                </span>
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{s.name}</p>
@@ -482,7 +505,86 @@ function ServiceStep({
           );
         })}
       </div>
+
+      {lightbox && (
+        <ImageLightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onIndexChange={(index) => setLightbox((lb) => (lb ? { ...lb, index } : lb))}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </div>
+  );
+}
+
+/* ---------- Galería de imágenes ampliada ---------- */
+function ImageLightbox({
+  images,
+  index,
+  onIndexChange,
+  onClose,
+}: {
+  images: string[];
+  index: number;
+  onIndexChange: (index: number) => void;
+  onClose: () => void;
+}) {
+  const count = images.length;
+  const go = (dir: number) => onIndexChange((index + dir + count) % count);
+
+  // Flechas del teclado para navegar entre imágenes (Escape ya lo maneja el Dialog).
+  useEffect(() => {
+    if (count <= 1) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") go(-1);
+      else if (e.key === "ArrowRight") go(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, count]);
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        sheet={false}
+        className="max-w-2xl border-none bg-transparent p-0 shadow-none"
+      >
+        <DialogTitle className="sr-only">Imágenes del servicio</DialogTitle>
+        <div className="relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[index]}
+            alt=""
+            className="max-h-[80vh] w-full rounded-2xl bg-black/40 object-contain"
+          />
+          {count > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => go(-1)}
+                aria-label="Imagen anterior"
+                className="absolute left-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => go(1)}
+                aria-label="Imagen siguiente"
+                className="absolute right-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white transition-colors hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white tabular-nums">
+                {index + 1} / {count}
+              </div>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
