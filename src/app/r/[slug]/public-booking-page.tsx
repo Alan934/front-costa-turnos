@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
   Clock3,
@@ -632,6 +633,7 @@ function ConfirmStep({
   onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
 }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -699,6 +701,13 @@ function ConfirmStep({
     ? "Cualquier profesional disponible"
     : professional.displayName + (professional.address ? ` · ${professional.address}` : "");
 
+  // Turno confirmado en la app (no redirige a MP): invalidamos la lista del dashboard del
+  // cliente para que, al entrar a /mis-turnos, vea el turno recién sacado sin tener que reloguear.
+  function onBooked(provisional: boolean, proName?: string) {
+    queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
+    onConfirmed(provisional, proName);
+  }
+
   function submit(option: PayOption) {
     const base = {
       fullName: fullName.trim(),
@@ -714,7 +723,7 @@ function ConfirmStep({
         { ...base, method: option.flow === "transfer" ? "transfer" : "cash" },
         {
           // En cash/transfer el back devuelve el turno creado (con professionalDisplayName si fue "cualquiera").
-          onSuccess: (res) => onConfirmed(false, res.appointment?.professionalDisplayName),
+          onSuccess: (res) => onBooked(false, res.appointment?.professionalDisplayName),
         },
       );
     } else if (option.paymentOption) {
@@ -725,7 +734,7 @@ function ConfirmStep({
           onSuccess: (res) => {
             // En MP el turno se crea al acreditar el pago (appointment llega null): redirigimos al checkout.
             if (env.mockingEnabled) {
-              onConfirmed(false, res.appointment?.professionalDisplayName);
+              onBooked(false, res.appointment?.professionalDisplayName);
               return;
             }
             if (res.mpInitPoint) {
@@ -742,7 +751,7 @@ function ConfirmStep({
           const proName = isAny
             ? (appt as { professionalDisplayName?: string } & typeof appt).professionalDisplayName
             : undefined;
-          onConfirmed(!!appt?.isProvisional, proName);
+          onBooked(!!appt?.isProvisional, proName);
         },
       });
     }
