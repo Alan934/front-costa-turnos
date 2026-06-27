@@ -207,6 +207,7 @@ function BrandingSection({
   const initial = professional.publicPageSettings as PublicPageBranding;
   const [bio, setBio] = useState(initial.bio ?? "");
   const [phone, setPhone] = useState(initial.phone ?? "");
+  const [email, setEmail] = useState(initial.email ?? "");
   const [saved, setSaved] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -214,12 +215,13 @@ function BrandingSection({
   useEffect(() => {
     setBio(initial.bio ?? "");
     setPhone(initial.phone ?? "");
-  }, [initial.bio, initial.phone]);
+    setEmail(initial.email ?? "");
+  }, [initial.bio, initial.phone, initial.email]);
 
   function save() {
     setSaveError(null);
     update.mutate(
-      { publicPageSettings: { ...initial, bio, phone } },
+      { publicPageSettings: { ...initial, bio, phone, email } },
       {
         onSuccess: () => {
           setSaved(true);
@@ -285,6 +287,18 @@ function BrandingSection({
         <div>
           <Label htmlFor="br-phone">Teléfono / WhatsApp</Label>
           <Input id="br-phone" className="mt-1.5" value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
+        </div>
+        <div>
+          <Label htmlFor="br-email">Email de contacto</Label>
+          <Input
+            id="br-email"
+            type="email"
+            className="mt-1.5"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            inputMode="email"
+            placeholder="contacto@tunegocio.com"
+          />
         </div>
         <div>
           <Button size="sm" onClick={save} disabled={update.isPending}>

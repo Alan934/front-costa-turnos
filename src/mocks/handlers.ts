@@ -515,6 +515,9 @@ function buildMyAppointments() {
           address: "Belgrano 245, Costa de Araujo, Mendoza",
           cancellationWindowHours: professional.cancellationWindowHours,
           rescheduleWindowHours: professional.rescheduleWindowHours,
+          // Contacto opt-in (publicPageSettings); el cliente lo ve cuando ya no puede cancelar/reprogramar online.
+          phone: "+54 9 261 555-2000",
+          email: "contacto@costapeluqueria.com",
         },
       };
     })

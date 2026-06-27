@@ -37,6 +37,8 @@ export interface PublicPageBranding {
   address?: string;
   /** Teléfono de contacto (WhatsApp). */
   phone?: string;
+  /** Email de contacto del negocio (opt-in, se muestra al cliente para contactar). */
+  email?: string;
 }
 
 /** Staff tal como se expone públicamente (sin datos sensibles). */

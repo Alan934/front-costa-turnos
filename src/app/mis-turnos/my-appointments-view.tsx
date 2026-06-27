@@ -12,6 +12,8 @@ import {
   Eye,
   Ban,
   ArrowDownUp,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -288,6 +290,49 @@ function Section({
   );
 }
 
+/**
+ * Links de contacto del negocio (WhatsApp / email) para cuando el cliente ya no puede cancelar o
+ * reprogramar online y tiene que escribirle al negocio. Solo se muestran los que el profesional
+ * cargó en `publicPageSettings` (vienen en `MyAppointmentBusinessDto.phone/email`, nullable).
+ */
+function BusinessContactLinks({ appt }: { appt: MyAppointmentDto }) {
+  const phoneDigits = appt.business.phone?.replace(/[^\d]/g, "") ?? "";
+  const email = appt.business.email?.trim() ?? "";
+  if (!phoneDigits && !email) return null;
+
+  // Mensaje prellenado para el WhatsApp, con el contexto del turno.
+  const waText = encodeURIComponent(
+    `Hola, te escribo por mi turno de ${titleCaseName(appt.serviceName)} en ` +
+      `${titleCaseName(appt.business.name)} el ${formatDateLong(appt.startAt)} a las ` +
+      `${formatTime(appt.startAt)}.`,
+  );
+
+  const linkClass =
+    "inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent";
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {phoneDigits && (
+        <a
+          href={`https://wa.me/${phoneDigits}?text=${waText}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClass}
+        >
+          <MessageCircle className="size-3.5 text-accent" />
+          WhatsApp
+        </a>
+      )}
+      {email && (
+        <a href={`mailto:${email}`} className={linkClass}>
+          <Mail className="size-3.5 text-accent" />
+          Email
+        </a>
+      )}
+    </div>
+  );
+}
+
 function AppointmentCard({
   appt,
   past,
@@ -388,13 +433,16 @@ function AppointmentCard({
         </div>
       )}
       {active && !(canCancel && canReschedule) && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          {!canCancel && !canReschedule
-            ? `La cancelación cierra ${appt.business.cancellationWindowHours} h antes y la reprogramación ${appt.business.rescheduleWindowHours} h antes del turno. Si necesitás, contactá al negocio.`
-            : !canCancel
-              ? `La cancelación online cierra ${appt.business.cancellationWindowHours} h antes del turno. Si necesitás, contactá al negocio.`
-              : `La reprogramación online cierra ${appt.business.rescheduleWindowHours} h antes del turno. Si necesitás, contactá al negocio.`}
-        </p>
+        <div className="mt-2 space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {!canCancel && !canReschedule
+              ? `La cancelación cierra ${appt.business.cancellationWindowHours} h antes y la reprogramación ${appt.business.rescheduleWindowHours} h antes del turno. Si necesitás, contactá al negocio.`
+              : !canCancel
+                ? `La cancelación online cierra ${appt.business.cancellationWindowHours} h antes del turno. Si necesitás, contactá al negocio.`
+                : `La reprogramación online cierra ${appt.business.rescheduleWindowHours} h antes del turno. Si necesitás, contactá al negocio.`}
+          </p>
+          <BusinessContactLinks appt={appt} />
+        </div>
       )}
 
       {/* Confirmación de cancelación */}
