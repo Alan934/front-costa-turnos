@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
   description:
     "Reservá turnos online, sin papel ni vueltas por WhatsApp. Costa Turnos: gestión de turnos para peluquerías, consultorios, talleres y cualquier servicio con turnos.",
-  metadataBase: new URL("https://costaturnos.com.ar"),
+  metadataBase: new URL("https://costaturnos.com"),
 };
 
 export const viewport: Viewport = {

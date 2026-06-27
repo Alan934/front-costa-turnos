@@ -314,7 +314,7 @@ export default function HomePage() {
 
       {/* ---- Footer ---- */}
       <footer className="flex flex-col items-center justify-between gap-3 border-t border-border py-8 text-sm text-muted-foreground sm:flex-row">
-        <p>© {new Date().getFullYear()} Costa Turnos · costaturnos.com.ar</p>
+        <p>© {new Date().getFullYear()} Costa Turnos · costaturnos.com</p>
         <p className="flex items-center gap-1.5">
           <MapPin className="size-4 text-accent" />
           Hecho en Costa de Araujo, Mendoza

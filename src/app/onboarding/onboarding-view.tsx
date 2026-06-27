@@ -181,7 +181,7 @@ function BusinessStep({ onDone }: { onDone: () => void }) {
           <Label htmlFor="slug">Tu enlace público</Label>
           <div className="mt-1.5 flex items-center rounded-lg border border-input bg-card pl-3 focus-within:ring-2 focus-within:ring-ring">
             <Link2 className="size-4 shrink-0 text-muted-foreground" />
-            <span className="select-none pl-2 text-sm text-muted-foreground">costaturnos.com.ar/r/</span>
+            <span className="select-none pl-2 text-sm text-muted-foreground">costaturnos.com/r/</span>
             <input
               id="slug"
               value={slug}
