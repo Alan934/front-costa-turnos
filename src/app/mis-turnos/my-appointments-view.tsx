@@ -8,7 +8,6 @@ import {
   LogOut,
   CalendarPlus,
   CalendarClock,
-  CalendarX2,
   Eye,
   Ban,
 } from "lucide-react";
@@ -33,17 +32,14 @@ import {
   useCancelMyAppointment,
   useRescheduleMyAppointment,
 } from "@/lib/api/me-appointments";
-import { usePublicProfessionalSlots } from "@/lib/api/public-booking";
+import {
+  usePublicProfessionalSlots,
+  usePublicProfessionalDayAvailability,
+} from "@/lib/api/public-booking";
 import { getApiErrorMessage } from "@/lib/api/error-message";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
-import {
-  formatDateLong,
-  formatTime,
-  formatDayChip,
-  isSameDay,
-  titleCaseName,
-} from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { formatDateLong, formatTime, titleCaseName } from "@/lib/format";
+import { DaySlotPicker } from "@/components/booking/day-slot-picker";
 import type { MyAppointmentDto } from "@/lib/api/generated/model/myAppointmentDto";
 
 const TERMINAL: AppointmentStatus[] = [
@@ -346,9 +342,16 @@ function RescheduleDialog({
     return { from: from.toISOString(), to: to.toISOString() };
   }, [days]);
 
-  // Solo pedimos slots mientras el diálogo está abierto.
+  // Solo pedimos slots/disponibilidad mientras el diálogo está abierto.
   const slotsParams = open ? { serviceId: appt.serviceId, from: range.from, to: range.to } : null;
   const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(
+    appt.business.slug,
+    appt.membershipId,
+    slotsParams,
+  );
+  // Disponibilidad por día (mismo origen que la página pública): colorea los días, marca cuántos
+  // turnos quedan y deshabilita los que el profesional no atiende ese servicio.
+  const { data: availability } = usePublicProfessionalDayAvailability(
     appt.business.slug,
     appt.membershipId,
     slotsParams,
@@ -363,11 +366,6 @@ function RescheduleDialog({
       setActiveDay(days[0]);
     }
   }, [open, days]);
-
-  // Excluimos el horario actual del turno: reprogramar al mismo instante no tiene sentido.
-  const daySlots = (slots ?? []).filter(
-    (s) => isSameDay(s.startAt, activeDay) && s.startAt !== appt.startAt,
-  );
 
   function pick(startAt: string) {
     setError(null);
@@ -400,65 +398,19 @@ function RescheduleDialog({
         </DialogHeader>
 
         <div className="p-6 pt-2">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {days.map((d) => {
-              const chip = formatDayChip(d);
-              const isActive = isSameDay(d, activeDay);
-              return (
-                <button
-                  key={d.toISOString()}
-                  type="button"
-                  onClick={() => setActiveDay(d)}
-                  className={cn(
-                    "flex shrink-0 flex-col items-center rounded-xl border px-3.5 py-2.5 transition-colors",
-                    isActive
-                      ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted-foreground hover:border-accent/50",
-                  )}
-                >
-                  <span className="text-[11px] uppercase">{chip.weekday}</span>
-                  <span className="font-display text-base font-semibold tabular-nums">
-                    {chip.day}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4">
-            {isLoading && (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 rounded-lg" />
-                ))}
-              </div>
-            )}
-            {isError && (
-              <ErrorState message="No pudimos cargar los horarios." onRetry={() => refetch()} />
-            )}
-            {!isLoading && !isError && daySlots.length === 0 && (
-              <EmptyState
-                icon={<CalendarX2 className="size-5" />}
-                title="Sin horarios este día"
-                message="Probá con otra fecha de la lista."
-              />
-            )}
-            {!isLoading && !isError && daySlots.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {daySlots.map((slot) => (
-                  <button
-                    key={slot.startAt}
-                    type="button"
-                    onClick={() => pick(slot.startAt)}
-                    disabled={reschedule.isPending}
-                    className="rounded-lg border border-border py-2.5 font-display text-sm font-medium tabular-nums transition-colors hover:border-accent hover:bg-accent/10 hover:text-accent focus-visible:border-accent disabled:opacity-50"
-                  >
-                    {formatTime(slot.startAt)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <DaySlotPicker
+            days={days}
+            slots={slots}
+            availability={availability}
+            activeDay={activeDay}
+            onActiveDayChange={setActiveDay}
+            onPickSlot={(slot) => pick(slot.startAt)}
+            isLoading={isLoading}
+            isError={isError}
+            onRetry={() => refetch()}
+            excludeStartAt={appt.startAt}
+            pickDisabled={reschedule.isPending}
+          />
 
           {reschedule.isPending && (
             <p className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground">
