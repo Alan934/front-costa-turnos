@@ -93,12 +93,15 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
         ? verifiedRaw
         : Boolean(verifiedRaw); // p.ej. emailVerifiedAt (fecha) => verificado
 
+  const personId = raw.personId != null ? String(raw.personId) : null;
+
   return {
     id: String(raw.id ?? raw.sub ?? ""),
     email: String(raw.email ?? ""),
     fullName: String(raw.fullName ?? raw.name ?? ""),
     roles,
     professionalId,
+    personId,
     comercioIds,
     emailVerified,
   };

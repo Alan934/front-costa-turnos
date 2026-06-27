@@ -148,6 +148,12 @@ export interface MeResponse {
   roles: AccountRole[];
   /** Si es profesional (trabajador), su tenant. */
   professionalId?: string | null;
+  /**
+   * Persona canónica de la cuenta (la más antigua). El back la expone en `/auth/me` para que el
+   * front pueda excluir al propio profesional de su cartera sin cruzar por email. `null` si el
+   * back no la informa.
+   */
+  personId?: string | null;
   /** Comercios que administra como comercial (+ su comercio-de-uno). */
   comercioIds?: string[];
   /** Si el back lo informa: true/false. `undefined` = no sabemos (no mostramos aviso). */

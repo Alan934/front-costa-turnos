@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorState, EmptyState } from "@/components/state-views";
+import { useAuth } from "@/components/auth-provider";
 import { useClients, useCreateClient } from "@/lib/api/clients";
 import { formatDateShort } from "@/lib/format";
 import type { EnrichedClient } from "@/mocks/contract-extensions";
@@ -23,9 +24,19 @@ import type { EnrichedClient } from "@/mocks/contract-extensions";
 export function ClientsList() {
   const [q, setQ] = useState("");
   const [creating, setCreating] = useState(false);
+  const { user } = useAuth();
   const { data, isLoading, isError, refetch } = useClients(q);
 
-  const clients = (data ?? []).filter((c) => c.status === "active");
+  // El back puede listar al propio profesional como cliente (su persona quedó vinculada como
+  // professional_client). El back ya lo excluye por account_id, pero filtramos también del lado
+  // del front por las dudas: por personId (la persona canónica que expone /auth/me) y, como
+  // respaldo si el back todavía no lo informa, por email de cuenta.
+  const selfPersonId = user?.personId ?? null;
+  const selfEmail = user?.email?.trim().toLowerCase();
+  const isSelf = (c: EnrichedClient) =>
+    (selfPersonId != null && c.personId === selfPersonId) ||
+    (!!selfEmail && c.email?.trim().toLowerCase() === selfEmail);
+  const clients = (data ?? []).filter((c) => c.status === "active" && !isSelf(c));
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-6 sm:px-8">
