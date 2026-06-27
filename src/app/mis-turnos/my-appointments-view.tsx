@@ -8,8 +8,10 @@ import {
   LogOut,
   CalendarPlus,
   CalendarClock,
+  CalendarX2,
   Eye,
   Ban,
+  ArrowDownUp,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/error-message";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { formatDateLong, formatTime, titleCaseName } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { DaySlotPicker } from "@/components/booking/day-slot-picker";
 import type { MyAppointmentDto } from "@/lib/api/generated/model/myAppointmentDto";
 
@@ -48,21 +51,55 @@ const TERMINAL: AppointmentStatus[] = [
   AppointmentStatus.cancelled,
 ];
 
+/** Un turno es "próximo" si no está en estado terminal y su inicio no pasó todavía. */
+function isUpcomingAppt(a: MyAppointmentDto): boolean {
+  return !TERMINAL.includes(a.status) && +new Date(a.startAt) >= Date.now();
+}
+
+/** Cómo ordena el cliente sus turnos por fecha. Por defecto, del más próximo al más lejano. */
+type SortDir = "soonest" | "farthest";
+/** Filtro por estado temporal del turno. */
+type TimeFilter = "all" | "upcoming" | "past";
+/** Cómo se agrupan las tarjetas: por fecha (Próximos/Anteriores) o por negocio. */
+type GroupMode = "time" | "business";
+
 export function MyAppointmentsView() {
   const { user, logout } = useAuth();
   const { data, isLoading, isError, isFetching, refetch } = useMyAppointments();
 
+  const [sortDir, setSortDir] = useState<SortDir>("soonest");
+  const [filter, setFilter] = useState<TimeFilter>("all");
+  const [group, setGroup] = useState<GroupMode>("time");
+
   const { upcoming, past } = useMemo(() => {
-    const now = Date.now();
     const list = data ?? [];
-    const upcoming = list.filter(
-      (a) => !TERMINAL.includes(a.status) && +new Date(a.startAt) >= now,
-    );
-    const past = list.filter(
-      (a) => TERMINAL.includes(a.status) || +new Date(a.startAt) < now,
-    );
+    const startAsc = (a: MyAppointmentDto, b: MyAppointmentDto) =>
+      +new Date(a.startAt) - +new Date(b.startAt);
+    const upcoming = list.filter(isUpcomingAppt);
+    const past = list.filter((a) => !isUpcomingAppt(a));
+    // "soonest" (default): próximos del más cercano al más lejano; anteriores del más reciente al
+    // más viejo. "farthest" invierte ambos.
+    upcoming.sort((a, b) => (sortDir === "soonest" ? startAsc(a, b) : -startAsc(a, b)));
+    past.sort((a, b) => (sortDir === "soonest" ? -startAsc(a, b) : startAsc(a, b)));
     return { upcoming, past };
-  }, [data]);
+  }, [data, sortDir]);
+
+  // Agrupado por negocio: respeta el filtro y el orden ya aplicados a upcoming/past.
+  const businessGroups = useMemo(() => {
+    const items =
+      filter === "upcoming" ? upcoming : filter === "past" ? past : [...upcoming, ...past];
+    const map = new Map<string, { name: string; items: MyAppointmentDto[] }>();
+    for (const a of items) {
+      const key = a.business.slug || a.business.name;
+      const g = map.get(key) ?? { name: a.business.name, items: [] };
+      g.items.push(a);
+      map.set(key, g);
+    }
+    return Array.from(map.values());
+  }, [upcoming, past, filter]);
+
+  const showUpcoming = filter !== "past";
+  const showPast = filter !== "upcoming";
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl px-4 pb-16 sm:px-6">
@@ -102,37 +139,131 @@ export function MyAppointmentsView() {
       )}
 
       {data && (
-        <>
-          {data.length === 0 ? (
-            <EmptyState
-              className="mt-8"
-              icon={<CalendarPlus className="size-5" />}
-              title="Todavía no tenés turnos"
-              message="Cuando reserves en un negocio, lo vas a ver acá."
-            />
-          ) : (
-            <div className="mt-6 space-y-8">
-              <Section title="Próximos" count={upcoming.length}>
-                {upcoming.length === 0 ? (
-                  <EmptyState title="Sin turnos próximos" message="¡Reservá tu próxima visita!" />
+        data.length === 0 ? (
+          <EmptyState
+            className="mt-8"
+            icon={<CalendarPlus className="size-5" />}
+            title="Todavía no tenés turnos"
+            message="Cuando reserves en un negocio, lo vas a ver acá."
+          />
+        ) : (
+          <>
+            {/* Controles: filtro por estado, orden por fecha y agrupación */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Segmented<TimeFilter>
+                options={[
+                  { v: "all", label: "Todos" },
+                  { v: "upcoming", label: "Próximos" },
+                  { v: "past", label: "Anteriores" },
+                ]}
+                value={filter}
+                onChange={setFilter}
+              />
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSortDir((d) => (d === "soonest" ? "farthest" : "soonest"))}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  title="Cambiar el orden por fecha"
+                >
+                  <ArrowDownUp className="size-3.5" />
+                  {sortDir === "soonest" ? "Más próximos primero" : "Más lejanos primero"}
+                </button>
+                <Segmented<GroupMode>
+                  options={[
+                    { v: "time", label: "Por fecha" },
+                    { v: "business", label: "Por negocio" },
+                  ]}
+                  value={group}
+                  onChange={setGroup}
+                />
+              </div>
+            </div>
+
+            {group === "time" ? (
+              <div className="mt-6 space-y-8">
+                {showUpcoming && (
+                  <Section title="Próximos" count={upcoming.length}>
+                    {upcoming.length === 0 ? (
+                      <EmptyState title="Sin turnos próximos" message="¡Reservá tu próxima visita!" />
+                    ) : (
+                      upcoming.map((a) => (
+                        <AppointmentCard key={a.id} appt={a} onChanged={refetch} />
+                      ))
+                    )}
+                  </Section>
+                )}
+                {showPast && (past.length > 0 || filter === "past") && (
+                  <Section title="Anteriores" count={past.length}>
+                    {past.length === 0 ? (
+                      <EmptyState title="Sin turnos anteriores" message="Acá vas a ver tu historial." />
+                    ) : (
+                      past.map((a) => (
+                        <AppointmentCard key={a.id} appt={a} past onChanged={refetch} />
+                      ))
+                    )}
+                  </Section>
+                )}
+              </div>
+            ) : (
+              <div className="mt-6 space-y-8">
+                {businessGroups.length === 0 ? (
+                  <EmptyState
+                    icon={<CalendarX2 className="size-5" />}
+                    title="Sin turnos para mostrar"
+                    message="Probá con otro filtro."
+                  />
                 ) : (
-                  upcoming.map((a) => (
-                    <AppointmentCard key={a.id} appt={a} onChanged={refetch} />
+                  businessGroups.map((g) => (
+                    <Section key={g.name} title={titleCaseName(g.name)} count={g.items.length}>
+                      {g.items.map((a) => (
+                        <AppointmentCard
+                          key={a.id}
+                          appt={a}
+                          past={!isUpcomingAppt(a)}
+                          onChanged={refetch}
+                        />
+                      ))}
+                    </Section>
                   ))
                 )}
-              </Section>
-
-              {past.length > 0 && (
-                <Section title="Anteriores" count={past.length}>
-                  {past.map((a) => (
-                    <AppointmentCard key={a.id} appt={a} past onChanged={refetch} />
-                  ))}
-                </Section>
-              )}
-            </div>
-          )}
-        </>
+              </div>
+            )}
+          </>
+        )
       )}
+    </div>
+  );
+}
+
+/** Grupo de pills de selección única (filtro / agrupación). Estilo segmented. */
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { v: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="inline-flex items-center rounded-full bg-muted p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onChange(o.v)}
+          aria-pressed={value === o.v ? "true" : "false"}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            value === o.v
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

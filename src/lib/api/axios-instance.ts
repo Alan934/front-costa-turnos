@@ -141,9 +141,16 @@ export function setOnSessionExpired(cb: (() => void) | null) {
 }
 
 axiosInstance.interceptors.request.use((config) => {
+  config.headers = config.headers ?? {};
   if (accessToken) {
-    config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  // El navegador cachea los GET de la API y sirve datos viejos a un refetch en caliente
+  // (por eso "Actualizar" no traía turnos nuevos pero un F5 sí): forzamos revalidación.
+  const method = (config.method ?? "get").toLowerCase();
+  if (method === "get") {
+    config.headers["Cache-Control"] = "no-cache";
+    config.headers["Pragma"] = "no-cache";
   }
   return config;
 });
