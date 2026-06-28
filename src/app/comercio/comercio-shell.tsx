@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
+import { LogoutConfirm } from "@/components/logout-confirm";
 import { Avatar } from "@/components/avatar";
 
 /**
@@ -12,7 +13,7 @@ import { Avatar } from "@/components/avatar";
  * una sola pantalla de gestión, sin agenda ni suscripción propia.
  */
 export function ComercioShell({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const name = user?.fullName?.trim() || user?.email || "Mi cuenta";
 
   return (
@@ -26,15 +27,16 @@ export function ComercioShell({ children }: { children: ReactNode }) {
               <span className="max-w-[12rem] truncate text-sm text-muted-foreground">{name}</span>
             </div>
             <ThemeToggle />
-            <button
-              type="button"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-              onClick={() => logout()}
-              className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <LogOut className="size-4" />
-            </button>
+            <LogoutConfirm>
+              <button
+                type="button"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="size-4" />
+              </button>
+            </LogoutConfirm>
           </div>
         </div>
       </header>

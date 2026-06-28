@@ -31,6 +31,7 @@ import { ErrorState, EmptyState } from "@/components/state-views";
 import { RefreshButton } from "@/components/refresh-button";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { useAuth } from "@/components/auth-provider";
+import { LogoutConfirm } from "@/components/logout-confirm";
 import {
   useMyAppointments,
   useCancelMyAppointment,
@@ -66,7 +67,7 @@ type TimeFilter = "all" | "upcoming" | "past";
 type GroupMode = "time" | "business";
 
 export function MyAppointmentsView() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { data, isLoading, isError, isFetching, refetch } = useMyAppointments();
 
   const [sortDir, setSortDir] = useState<SortDir>("soonest");
@@ -111,10 +112,12 @@ export function MyAppointmentsView() {
         <div className="flex items-center gap-1.5">
           <RefreshButton fetching={isFetching} onClick={() => refetch()} />
           <ThemeToggle />
-          <Button variant="ghost" size="sm" onClick={() => logout()}>
-            <LogOut className="size-4" />
-            <span className="hidden sm:inline">Salir</span>
-          </Button>
+          <LogoutConfirm>
+            <Button variant="ghost" size="sm">
+              <LogOut className="size-4" />
+              <span className="hidden sm:inline">Salir</span>
+            </Button>
+          </LogoutConfirm>
         </div>
       </header>
 

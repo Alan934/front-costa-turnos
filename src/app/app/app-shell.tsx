@@ -10,6 +10,7 @@ import { SubscriptionBanner } from "@/components/subscription-banner";
 import { VerifyEmailBanner } from "@/components/verify-email-banner";
 import { SetupChecklist } from "@/components/setup-checklist";
 import { useAuth } from "@/components/auth-provider";
+import { LogoutConfirm } from "@/components/logout-confirm";
 import { useActiveComercio } from "@/components/comercio-context";
 import { Avatar } from "@/components/avatar";
 import { useProfessional } from "@/lib/api/professional";
@@ -159,7 +160,7 @@ function NavList({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function SidebarFooter() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const pro = useProfessional();
   const name = user?.fullName?.trim() || user?.email || "Mi cuenta";
   const business = pro.data?.businessName ?? "";
@@ -176,15 +177,16 @@ function SidebarFooter() {
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <ThemeToggle />
-        <button
-          type="button"
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-          onClick={() => logout()}
-          className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-        </button>
+        <LogoutConfirm>
+          <button
+            type="button"
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+            className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="size-4" />
+          </button>
+        </LogoutConfirm>
       </div>
     </div>
   );

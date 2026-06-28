@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Building2, BarChart3, ShieldCheck, Menu, X, LogOut, Users, Store } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/components/auth-provider";
+import { LogoutConfirm } from "@/components/logout-confirm";
 import { cn } from "@/lib/utils";
 
 const ADMIN_NAV = [
@@ -119,7 +120,7 @@ function NavList({ onNavigate }: { onNavigate: () => void }) {
 }
 
 function Footer() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   return (
     <div className="flex items-center justify-between border-t border-border px-5 py-4">
       <div className="min-w-0">
@@ -128,14 +129,15 @@ function Footer() {
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <button
-          type="button"
-          aria-label="Salir"
-          onClick={() => logout()}
-          className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <LogOut className="size-4" />
-        </button>
+        <LogoutConfirm>
+          <button
+            type="button"
+            aria-label="Salir"
+            className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="size-4" />
+          </button>
+        </LogoutConfirm>
       </div>
     </div>
   );
