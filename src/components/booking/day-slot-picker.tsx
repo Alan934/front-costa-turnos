@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { CalendarX2, Sunrise, Sun, Moon } from "lucide-react";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { CalendarX2, Footprints, Sunrise, Sun, Moon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import {
@@ -34,6 +34,7 @@ export type DayKind =
   | "block"
   | "holiday"
   | "vacation"
+  | "walk_in"
   | "closed";
 
 /** ¿En este estado el cliente puede elegir el día? */
@@ -90,6 +91,12 @@ const DAY_KIND_STYLE: Record<DayKind, { chip: string; dot: string; label: string
     dot: "bg-cal-vacation-foreground",
     label: "Vacaciones",
   },
+  // Por orden de llegada: no se reserva horario, se va y se espera turno en la sala.
+  walk_in: {
+    chip: "border-accent/30 bg-accent/10 text-accent",
+    dot: "bg-accent",
+    label: "Orden de llegada",
+  },
   closed: {
     chip: "bg-off border-cal-closed-foreground/20 bg-cal-closed/60 text-cal-closed-foreground",
     dot: "bg-cal-closed-foreground",
@@ -142,6 +149,11 @@ interface DaySlotPickerProps {
   excludeStartAt?: string;
   /** Deshabilita los botones de slot mientras hay una mutación en curso. */
   pickDisabled?: boolean;
+  /**
+   * Acción para los tramos/días por orden de llegada (típicamente "Anotarme en la fila"). Se
+   * muestra donde se explica que ese día no hay turnos.
+   */
+  walkInAction?: ReactNode;
 }
 
 /**
@@ -162,6 +174,7 @@ export function DaySlotPicker({
   onRetry,
   excludeStartAt,
   pickDisabled,
+  walkInAction,
 }: DaySlotPickerProps) {
   const availByDate = useMemo(() => {
     const map = new Map<string, DayAvailabilityDto>();
@@ -184,6 +197,9 @@ export function DaySlotPicker({
             break;
           case DayAvailabilityStatus.closed:
             kind = "closed";
+            break;
+          case DayAvailabilityStatus.walk_in:
+            kind = "walk_in";
             break;
           case DayAvailabilityStatus.time_off:
             kind = timeOffKind(a.timeOffType, a.reason);
@@ -208,6 +224,7 @@ export function DaySlotPicker({
       "available",
       "almost",
       "full",
+      "walk_in",
       "block",
       "holiday",
       "vacation",
@@ -245,6 +262,8 @@ export function DaySlotPicker({
           const chip = formatDayChip(d);
           const active = isSameDay(d, activeDay);
           const bookable = isBookableKind(kind);
+          // Un día por orden de llegada no tiene turnos, pero se puede tocar para ver cómo anotarse.
+          const selectable = bookable || kind === "walk_in";
           const style = DAY_KIND_STYLE[kind];
           const subLabel =
             kind === "available"
@@ -253,7 +272,9 @@ export function DaySlotPicker({
                 ? `${free} libre${free === 1 ? "" : "s"}`
                 : kind === "block"
                   ? a?.reason?.trim() || style.label
-                  : style.label;
+                  : kind === "walk_in"
+                    ? "Por llegada" // la etiqueta completa no entra en el chip
+                    : style.label;
           // En días reservables informamos la ocupación exacta (dato del back) como tooltip.
           const occupancyTitle = bookable && total > 0 ? `Quedan ${free} de ${total} turnos` : null;
           const ariaLabel =
@@ -263,14 +284,14 @@ export function DaySlotPicker({
             <button
               key={d.toISOString()}
               type="button"
-              onClick={() => bookable && onActiveDayChange(d)}
-              disabled={!bookable}
+              onClick={() => selectable && onActiveDayChange(d)}
+              disabled={!selectable}
               aria-label={ariaLabel}
               title={occupancyTitle ?? (kind === "block" && a?.reason ? a.reason : style.label)}
               className={cn(
                 "relative flex shrink-0 flex-col items-center rounded-xl border px-3.5 py-2.5 transition-colors",
                 style.chip,
-                !bookable && "cursor-not-allowed",
+                !selectable && "cursor-not-allowed",
                 active && "ring-2 ring-accent ring-offset-2 ring-offset-background",
               )}
             >
@@ -313,6 +334,23 @@ export function DaySlotPicker({
           daySlots.length === 0 &&
           (() => {
             const kind = activeInfo?.kind;
+            // Día por orden de llegada: no hay turnos pero SÍ se puede ir. Se explica y se ofrece
+            // anotarse, en vez de mostrar un "No atiende" que sería falso.
+            if (kind === "walk_in") {
+              const wins = activeInfo?.a?.walkInWindows ?? [];
+              return (
+                <EmptyState
+                  icon={<Footprints className="size-5" />}
+                  title="Este día se atiende por orden de llegada"
+                  message={
+                    wins.length > 0
+                      ? `No hace falta pedir turno: ${wins.map((w) => `de ${w.startTime} a ${w.endTime}`).join(" y ")} se atiende en orden de llegada.`
+                      : "No hace falta pedir turno: se atiende en orden de llegada."
+                  }
+                  action={walkInAction}
+                />
+              );
+            }
             const blocked = kind != null && !isBookableKind(kind);
             const title = blocked
               ? kind === "block"
@@ -329,6 +367,19 @@ export function DaySlotPicker({
               <EmptyState icon={<CalendarX2 className="size-5" />} title={title} message={message} />
             );
           })()}
+        {!isLoading &&
+          !isError &&
+          daySlots.length > 0 &&
+          (activeInfo?.a?.walkInWindows?.length ?? 0) > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-accent/30 bg-accent/5 px-3.5 py-3 text-xs">
+              <Footprints className="size-4 shrink-0 text-accent" />
+              <span className="min-w-0 flex-1 text-muted-foreground">
+                {activeInfo?.a?.walkInWindows.map((w) => `${w.startTime}–${w.endTime}`).join(" y ")}:
+                se atiende por orden de llegada, sin turno.
+              </span>
+              {walkInAction}
+            </div>
+          )}
         {!isLoading && !isError && daySlots.length > 0 && (
           <div className="space-y-5">
             {TIME_BANDS.map((band) => {

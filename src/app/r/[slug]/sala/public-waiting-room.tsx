@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Users, Coffee, Pause, Power, Hand, Tv, ChevronRight, BellRing, Hourglass } from "lucide-react";
+import {
+  Users,
+  Coffee,
+  Pause,
+  Power,
+  Hand,
+  Tv,
+  ChevronRight,
+  BellRing,
+  Hourglass,
+  Footprints,
+  CalendarClock,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +23,7 @@ import { useComercioPublicPage } from "@/lib/api/public-booking";
 import { usePublicWaitingRoom } from "@/lib/realtime/use-waiting-room";
 import { WaitingRoomStatus } from "@/lib/api/generated/model/waitingRoomStatus";
 import { titleCaseName } from "@/lib/format";
+import { describeWindow, formatWalkInWindows } from "@/lib/attendance";
 import { cn } from "@/lib/utils";
 import { SelfCheckInDialog } from "./self-check-in-dialog";
 import type { WaitingRoomDto } from "@/lib/api/generated/model/waitingRoomDto";
@@ -127,6 +140,7 @@ function RoomView({
         <p className="font-display text-lg font-semibold">{titleCaseName(room.staffName)}</p>
       )}
       <RoomStatusBanner room={room} />
+      <AttendanceBanner room={room} tv={tv} />
 
       <NowServing room={room} tv={tv} />
       <Calling room={room} tv={tv} />
@@ -185,7 +199,9 @@ function RoomView({
         </ol>
       </div>
 
-      {room.selfCheckInEnabled && room.status !== WaitingRoomStatus.closed && !tv && (
+      {/* `selfCheckInOpen` ya descuenta: self check-in apagado, sala cerrada y fuera de las franjas
+          por orden de llegada. */}
+      {room.selfCheckInOpen && !tv && (
         <Button size="lg" className="mt-6 w-full" onClick={() => setCheckingIn(true)}>
           <Hand className="size-5" />
           Anotarme en la fila
@@ -270,6 +286,46 @@ function Calling({ room, tv }: { room: WaitingRoomDto; tv: boolean }) {
           </p>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Cómo se atiende hoy: por orden de llegada (y hasta cuándo) o con turno (y cuándo vuelve la
+ * próxima franja por llegada). Evita que alguien llegue a una hora en que hoy no se atiende así.
+ */
+function AttendanceBanner({ room, tv }: { room: WaitingRoomDto; tv: boolean }) {
+  const a = room.attendance;
+  if (!a.hasSchedule) return null;
+  const today = new Date().getDay();
+  const todayText = a.todayWindows.map((w) => `${w.startTime}–${w.endTime}`).join(" y ");
+
+  let Icon = Footprints;
+  let title: string;
+  let detail: string | null = null;
+  if (a.walkInOnly && a.windows.length === 0) {
+    title = "Atención por orden de llegada";
+    detail = "No hace falta turno: anotate y esperá tu número.";
+  } else if (a.openNow) {
+    title = "Ahora se atiende por orden de llegada";
+    detail = todayText ? `Hoy: ${todayText}` : null;
+  } else {
+    Icon = CalendarClock;
+    title = a.walkInOnly ? "Ahora no estamos atendiendo" : "Ahora se atiende solo con turno";
+    detail = a.nextWindow
+      ? `Orden de llegada: ${describeWindow(a.nextWindow, today)}`
+      : formatWalkInWindows(a.windows).join(" · ");
+  }
+
+  return (
+    <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3">
+      <Icon className={cn("mt-0.5 shrink-0 text-accent", tv ? "size-6" : "size-4")} />
+      <div>
+        <p className={cn("font-medium", tv ? "text-2xl" : "text-sm")}>{title}</p>
+        {detail && (
+          <p className={cn("text-muted-foreground", tv ? "text-xl" : "text-sm")}>{detail}</p>
+        )}
+      </div>
     </div>
   );
 }

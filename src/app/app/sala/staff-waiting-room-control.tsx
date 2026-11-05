@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Check,
   UserX,
@@ -24,6 +25,7 @@ import {
   SkipForward,
   Hourglass,
   Wallet,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -52,6 +54,7 @@ import {
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useWaitingRoom, type ConnectionState } from "@/lib/realtime/use-waiting-room";
 import { WaitingRoomStatus } from "@/lib/api/generated/model/waitingRoomStatus";
+import { formatWalkInWindows } from "@/lib/attendance";
 import { formatTime, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AddToQueueDialog } from "./add-to-queue-dialog";
@@ -240,6 +243,8 @@ function RoomBoard({
         <RoomStatusBar room={room} comercioId={comercioId} onChanged={() => invalidate()} />
       )}
 
+      <AttendanceInfo room={room} />
+
       {showQr && publicUrl && (
         <QrCard
           className="mb-4"
@@ -426,6 +431,41 @@ function RoomBoard({
           onClose={() => setCharging(null)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Resumen de cuándo se atiende por orden de llegada y acceso a configurarlo en Horarios. Si no hay
+ * franjas por llegada, lo deja a mano igual: es donde se elige "todo el día", "solo estas horas"
+ * o "siempre".
+ */
+function AttendanceInfo({ room }: { room: WaitingRoomDto }) {
+  const a = room.attendance;
+  const lines = formatWalkInWindows(a.windows);
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border px-4 py-2.5 text-xs text-muted-foreground">
+      <CalendarClock className="size-4 shrink-0 text-accent" />
+      <span className="min-w-0 flex-1">
+        {a.walkInOnly ? (
+          <>
+            <span className="font-medium text-foreground">Siempre por orden de llegada.</span>{" "}
+            {lines.length > 0 ? lines.join(" · ") : "Sin horario: abierto todo el tiempo."}
+          </>
+        ) : a.hasSchedule ? (
+          <>
+            <span className="font-medium text-foreground">
+              {a.openNow ? "Ahora: por orden de llegada." : "Ahora: con turno."}
+            </span>{" "}
+            Por llegada: {lines.join(" · ")}
+          </>
+        ) : (
+          "Atendés con turno. Podés definir días u horas por orden de llegada."
+        )}
+      </span>
+      <Link href="/app/horarios" className="font-medium text-accent hover:underline">
+        Horarios
+      </Link>
     </div>
   );
 }

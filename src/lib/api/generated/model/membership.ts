@@ -22,6 +22,7 @@ export interface Membership {
   minBookingHours: number;
   maxBookingDays: number;
   allowProvisionalBookings: boolean;
+  walkInOnly: boolean;
   waitingRoomEnabled: boolean;
   waitingRoomSelfCheckIn: boolean;
   waitingRoomStatus: WaitingRoomStatus;

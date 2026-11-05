@@ -19,6 +19,8 @@ export interface UpdateMembershipDto {
   maxBookingDays?: number;
   /** Si es true, un turno reservado sin seña (cuando el servicio admite pago) queda provisional y puede ser desplazado por otro cliente que pague la seña. false (default) = el turno sin seña queda firme. */
   allowProvisionalBookings?: boolean;
+  /** Atiende SIEMPRE por orden de llegada: no ofrece turnos con horario. Reversible: al apagarlo, cada franja de trabajo vuelve a su modo (con turno / por orden de llegada). */
+  walkInOnly?: boolean;
   /** Publica la sala de espera de esta agenda en /r/:slug/sala (la pantalla del QR del local). */
   waitingRoomEnabled?: boolean;
   /** Permite que el cliente se anote solo escaneando el QR. Entra como pendiente hasta que el profesional lo acepta. */

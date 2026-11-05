@@ -29,6 +29,7 @@ import {
   MEMBERSHIP_ID,
 } from "./seed";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
+import { AttendanceMode } from "@/lib/api/generated/model/attendanceMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
@@ -364,6 +365,7 @@ function dayAvailabilityFromRequest(request: Request, staffId: string): DayAvail
     out.push({
       date,
       status,
+      walkInWindows: [],
       reason,
       timeOffType,
       freeSlots: free,
@@ -899,6 +901,7 @@ export const handlers: RequestHandler[] = [
       startTime: String(body.startTime ?? "09:00"),
       endTime: String(body.endTime ?? "18:00"),
       kind: (body.kind as ScheduleRuleKind) ?? ScheduleRuleKind.work,
+      attendanceMode: (body.attendanceMode as AttendanceMode) ?? AttendanceMode.appointment,
       serviceIds: Array.isArray(body.serviceIds) ? (body.serviceIds as string[]) : [],
     };
     scheduleRules.push(rule);

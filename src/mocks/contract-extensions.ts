@@ -158,6 +158,8 @@ export interface MembershipWithComercio {
    * cliente que pague la seña. false (default) = el turno sin seña queda firme. Por comercio.
    */
   allowProvisionalBookings?: boolean;
+  /** Atiende SIEMPRE por orden de llegada (sin turnos). Reversible: pisa el modo de cada franja. */
+  walkInOnly?: boolean;
   /** Publica la sala de espera de esta agenda en `/r/:slug/sala` (el QR del local). */
   waitingRoomEnabled?: boolean;
   /** Permite que el cliente se anote solo con el QR (entra pendiente de aprobación). */

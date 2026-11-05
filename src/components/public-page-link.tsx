@@ -5,7 +5,7 @@ import { Link2, ExternalLink, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /** Host público donde se sirve la página de reservas del profesional. */
-export const PUBLIC_HOST = "costaturnos.com.ar";
+export const PUBLIC_HOST = "www.costaturnos.com";
 
 /**
  * Tarjeta con el link a la página pública del profesional, con acciones de

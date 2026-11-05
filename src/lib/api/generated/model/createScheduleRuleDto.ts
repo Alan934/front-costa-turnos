@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { CreateScheduleRuleDtoKind } from './createScheduleRuleDtoKind';
+import type { AttendanceMode } from './attendanceMode';
 
 export interface CreateScheduleRuleDto {
   /** 0=domingo ... 6=sabado */
@@ -13,5 +14,7 @@ export interface CreateScheduleRuleDto {
   startTime: string;
   endTime: string;
   kind?: CreateScheduleRuleDtoKind;
+  /** Solo franjas de trabajo. appointment (default) = con turno; walk_in = por orden de llegada. */
+  attendanceMode?: AttendanceMode;
   serviceIds?: string[];
 }

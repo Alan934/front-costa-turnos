@@ -5,6 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { WalkInWindowDto } from './walkInWindowDto';
 import type { Service } from './service';
 
 export interface PublicProfessionalDetailDto {
@@ -29,6 +30,10 @@ export interface PublicProfessionalDetailDto {
   phone?: string | null;
   /** Si es true, una reserva sin seña con este profesional queda provisional (desplazable por quien pague la seña). El front lo usa para mostrar/ocultar el aviso pre-reserva. false = el turno sin seña queda firme. */
   allowProvisionalBookings: boolean;
+  /** Atiende SIEMPRE por orden de llegada: no hay turnos con horario. El front reemplaza la reserva por "Anotarse en la sala de espera". */
+  walkInOnly: boolean;
+  /** Franjas de la semana que se atienden por orden de llegada (vacío si no hay). Se muestran como "Sáb 09:00–13:00 por orden de llegada". */
+  walkInSchedule: WalkInWindowDto[];
   timezone: string;
   /** Servicios activos del profesional en este comercio. */
   services: Service[];

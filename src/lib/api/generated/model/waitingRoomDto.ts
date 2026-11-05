@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { WaitingRoomStatus } from './waitingRoomStatus';
+import type { WalkInStatusDto } from './walkInStatusDto';
 import type { WaitingRoomDtoNowServing } from './waitingRoomDtoNowServing';
 import type { WaitingItemDto } from './waitingItemDto';
 
@@ -18,6 +19,10 @@ export interface WaitingRoomDto {
   note?: string | null;
   /** El cliente puede anotarse solo escaneando el QR. */
   selfCheckInEnabled: boolean;
+  /** Se puede anotar AHORA: self check-in habilitado, sala no cerrada y, si el profesional define franjas por orden de llegada, dentro de una de ellas. Es lo que decide si se muestra el botón "Anotarme". */
+  selfCheckInOpen: boolean;
+  /** Cuándo atiende por orden de llegada (franjas de hoy, próxima franja, etc.). */
+  attendance: WalkInStatusDto;
   /** @nullable */
   nowServing?: WaitingRoomDtoNowServing;
   /** Cola en orden de atención. */

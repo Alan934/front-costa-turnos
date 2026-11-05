@@ -197,6 +197,8 @@ export function buildComercioPublicPage(): ComercioPublicPageDto & { mpConnected
         displayName: professional.businessName,
         address: DEMO_ADDRESS,
         allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
       },
     ],
   };
@@ -212,6 +214,8 @@ export function buildProfessionalDetail(): PublicProfessionalDetailDto {
     bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
     phone: "+54 9 261 555-0245",
     allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
     timezone: professional.timezone,
     services: services.filter((s) => s.isActive),
   };
@@ -262,6 +266,8 @@ export function buildPublicServices(): PublicServiceDto[] {
           displayName: professional.businessName,
           address: DEMO_ADDRESS,
           allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
         },
       ],
     }));
@@ -502,6 +508,15 @@ export function buildWaitingRoom(staffId: string): WaitingRoomDto {
     status: WaitingRoomStatus.open,
     note: null,
     selfCheckInEnabled: true,
+    selfCheckInOpen: true,
+    attendance: {
+      walkInOnly: false,
+      hasSchedule: false,
+      openNow: true,
+      todayWindows: [],
+      nextWindow: null,
+      windows: [],
+    },
     nowServing: serving ? toItem(serving, 0) : null,
     queue: queue.map((a, i) => toItem(a, i + 1)),
     pending: pending.map((a, i) => toItem(a, i + 1)),
@@ -700,6 +715,7 @@ export const scheduleRules: ScheduleRule[] = (() => {
         startTime: "09:00",
         endTime: day === 6 ? "13:00" : "18:00",
         kind: ScheduleRuleKind.work,
+        attendanceMode: "appointment",
         // serviceIds vacío = la regla aplica a todos los servicios de la membresía.
         serviceIds: [],
       });
@@ -715,6 +731,7 @@ export const scheduleRules: ScheduleRule[] = (() => {
           startTime: "13:00",
           endTime: "14:00",
           kind: ScheduleRuleKind.break,
+          attendanceMode: "appointment",
           serviceIds: [],
         });
       }
