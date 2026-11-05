@@ -25,12 +25,10 @@ import { PaymentType } from "@/lib/api/generated/model/paymentType";
 import { PaymentMethod } from "@/lib/api/generated/model/paymentMethod";
 import { PaymentStatus } from "@/lib/api/generated/model/paymentStatus";
 import { SubscriptionPaymentStatus } from "@/lib/api/generated/model/subscriptionPaymentStatus";
-import type {
-  WaitingRoom,
-  WaitingItem,
-  MeResponse,
-  EnrichedClient,
-} from "./contract-extensions";
+import type { MeResponse, EnrichedClient } from "./contract-extensions";
+import type { WaitingRoomDto } from "@/lib/api/generated/model/waitingRoomDto";
+import type { WaitingItemDto } from "@/lib/api/generated/model/waitingItemDto";
+import { WaitingRoomStatus } from "@/lib/api/generated/model/waitingRoomStatus";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicProfessionalDetailDto } from "@/lib/api/generated/model/publicProfessionalDetailDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
@@ -38,6 +36,15 @@ import type { ServicePricing } from "@/lib/api/generated/model/servicePricing";
 
 const now = new Date();
 const iso = (d: Date) => d.toISOString();
+
+/** Campos de la sala de espera que el contrato exige en todo turno (los mocks no los usan). */
+const queueDefaults = {
+  isPriority: false,
+  callCount: 0,
+  awayCount: 0,
+} as const;
+
+
 const at = (hours: number, minutes = 0, dayOffset = 0) => {
   const d = new Date(now);
   d.setDate(d.getDate() + dayOffset);
@@ -190,6 +197,8 @@ export function buildComercioPublicPage(): ComercioPublicPageDto & { mpConnected
         displayName: professional.businessName,
         address: DEMO_ADDRESS,
         allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
       },
     ],
   };
@@ -205,6 +214,8 @@ export function buildProfessionalDetail(): PublicProfessionalDetailDto {
     bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
     phone: "+54 9 261 555-0245",
     allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
     timezone: professional.timezone,
     services: services.filter((s) => s.isActive),
   };
@@ -255,6 +266,8 @@ export function buildPublicServices(): PublicServiceDto[] {
           displayName: professional.businessName,
           address: DEMO_ADDRESS,
           allowProvisionalBookings: false,
+    walkInOnly: false,
+    walkInSchedule: [],
         },
       ],
     }));
@@ -325,6 +338,7 @@ export const appointments: Appointment[] = [
     isProvisional: false,
     actualStartAt: iso(at(10, 5)),
     createdVia: CreatedVia.client_self,
+    ...queueDefaults,
   },
   {
     id: "apt_2",
@@ -341,6 +355,7 @@ export const appointments: Appointment[] = [
     status: AppointmentStatus.confirmed,
     isProvisional: false,
     createdVia: CreatedVia.client_self,
+    ...queueDefaults,
   },
   {
     id: "apt_3",
@@ -357,6 +372,7 @@ export const appointments: Appointment[] = [
     status: AppointmentStatus.requested,
     isProvisional: true,
     createdVia: CreatedVia.client_self,
+    ...queueDefaults,
   },
   // Turno futuro de Sofía DENTRO de la ventana de reprogramación (now + 3 h, ventana 8 h):
   // en /mis-turnos el botón "Reprogramar" aparece deshabilitado.
@@ -375,6 +391,7 @@ export const appointments: Appointment[] = [
     status: AppointmentStatus.confirmed,
     isProvisional: false,
     createdVia: CreatedVia.client_self,
+    ...queueDefaults,
   },
   // Turno futuro de Sofía FUERA de la ventana (pasado mañana): "Reprogramar" habilitado.
   {
@@ -392,6 +409,7 @@ export const appointments: Appointment[] = [
     status: AppointmentStatus.confirmed,
     isProvisional: false,
     createdVia: CreatedVia.client_self,
+    ...queueDefaults,
   },
 ];
 
@@ -439,6 +457,7 @@ export const appointments: Appointment[] = [
           isProvisional:
             status === AppointmentStatus.requested && (svc.allowDeposit || svc.allowFullPayment),
           createdVia: n % 2 === 0 ? CreatedVia.client_self : CreatedVia.professional,
+          ...queueDefaults,
         });
         n++;
       }
@@ -447,7 +466,7 @@ export const appointments: Appointment[] = [
 })();
 
 
-export function buildWaitingRoom(staffId: string): WaitingRoom {
+export function buildWaitingRoom(staffId: string): WaitingRoomDto {
   const staffMember = staff.find((s) => s.id === staffId);
   const activeStatuses: AppointmentStatus[] = [
     AppointmentStatus.requested,
@@ -459,9 +478,11 @@ export function buildWaitingRoom(staffId: string): WaitingRoom {
     .sort((a, b) => +new Date(a.startAt) - +new Date(b.startAt));
 
   const serving = rows.find((a) => a.status === AppointmentStatus.in_progress) ?? null;
-  const queue = rows.filter((a) => a.status !== AppointmentStatus.in_progress);
+  const queue = rows.filter((a) => a.status === AppointmentStatus.confirmed);
+  // Los `requested` representan a quienes se anotaron con el QR y esperan aprobación.
+  const pending = rows.filter((a) => a.status === AppointmentStatus.requested);
 
-  const toItem = (a: Appointment, idx: number): WaitingItem => ({
+  const toItem = (a: Appointment, idx: number): WaitingItemDto => ({
     appointmentId: a.id,
     displayName: personFirstNames[a.personId] ?? "Cliente",
     ticketNumber: idx + 1,
@@ -470,14 +491,35 @@ export function buildWaitingRoom(staffId: string): WaitingRoom {
     status: a.status,
     serviceName: services.find((s) => s.id === a.serviceId)?.name ?? "Servicio",
     startAt: a.startAt,
-    isProvisional: a.isProvisional,
+    checkedInAt: a.startAt,
+    isWalkIn: a.createdVia === CreatedVia.walk_in,
+    isProvisional: a.isProvisional ?? false,
+    isPriority: false,
+    calledAt: null,
+    callCount: 0,
+    awayUntil: null,
+    etaLearned: false,
   });
 
   return {
     staffId,
     staffName: staffMember?.displayName ?? "Staff",
+    membershipId: "mem_1",
+    status: WaitingRoomStatus.open,
+    note: null,
+    selfCheckInEnabled: true,
+    selfCheckInOpen: true,
+    attendance: {
+      walkInOnly: false,
+      hasSchedule: false,
+      openNow: true,
+      todayWindows: [],
+      nextWindow: null,
+      windows: [],
+    },
     nowServing: serving ? toItem(serving, 0) : null,
     queue: queue.map((a, i) => toItem(a, i + 1)),
+    pending: pending.map((a, i) => toItem(a, i + 1)),
     updatedAt: iso(new Date()),
   };
 }
@@ -673,6 +715,7 @@ export const scheduleRules: ScheduleRule[] = (() => {
         startTime: "09:00",
         endTime: day === 6 ? "13:00" : "18:00",
         kind: ScheduleRuleKind.work,
+        attendanceMode: "appointment",
         // serviceIds vacío = la regla aplica a todos los servicios de la membresía.
         serviceIds: [],
       });
@@ -688,6 +731,7 @@ export const scheduleRules: ScheduleRule[] = (() => {
           startTime: "13:00",
           endTime: "14:00",
           kind: ScheduleRuleKind.break,
+          attendanceMode: "appointment",
           serviceIds: [],
         });
       }

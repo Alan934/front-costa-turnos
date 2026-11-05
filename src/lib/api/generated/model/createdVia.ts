@@ -13,4 +13,5 @@ export type CreatedVia = typeof CreatedVia[keyof typeof CreatedVia];
 export const CreatedVia = {
   client_self: 'client_self',
   professional: 'professional',
+  walk_in: 'walk_in',
 } as const;

@@ -7,6 +7,7 @@
  */
 import type { DayAvailabilityStatus } from './dayAvailabilityStatus';
 import type { DayAvailabilityDtoTimeOffType } from './dayAvailabilityDtoTimeOffType';
+import type { TimeWindowDto } from './timeWindowDto';
 
 export interface DayAvailabilityDto {
   /** Fecha (YYYY-MM-DD) en la zona del comercio. */
@@ -30,4 +31,6 @@ export interface DayAvailabilityDto {
   occupancyRatio: number;
   /** true si hay al menos un slot libre (status=available). */
   bookable: boolean;
+  /** Franjas de ese día que se atienden por orden de llegada (vacío si no hay). */
+  walkInWindows: TimeWindowDto[];
 }

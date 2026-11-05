@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, CalendarOff, Coffee, Briefcase, Building2, Pencil } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  CalendarOff,
+  Coffee,
+  Briefcase,
+  Building2,
+  Pencil,
+  Footprints,
+  CalendarClock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { useActiveComercio } from "@/components/comercio-context";
+import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
 import { useComercioServices } from "@/lib/api/catalog";
 import {
   useComercioSchedule,
@@ -28,6 +39,7 @@ import {
   useDeleteComercioTimeOff,
 } from "@/lib/api/availability-comercio";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
+import { AttendanceMode } from "@/lib/api/generated/model/attendanceMode";
 import { formatDateTime, formatDateLong, titleCaseName, TIME_ZONE } from "@/lib/format";
 import { formatInTimeZone } from "date-fns-tz";
 import { cn } from "@/lib/utils";
@@ -71,9 +83,14 @@ function ComercioSchedule({ comercioId }: { comercioId: string }) {
   const timeOff = useComercioTimeOff(comercioId);
   // Servicios del comercio: para elegir a cuáles aplica cada franja y mostrarlo en los chips.
   const services = (useComercioServices(comercioId).data ?? []).filter((s) => s.isActive);
+  const memberships = useMyMemberships();
+  const walkInOnly =
+    (memberships.data ?? []).find((m) => m.comercioId === comercioId)?.walkInOnly ?? false;
 
   return (
     <div className="mt-6 space-y-8">
+      <AttendanceModeCard comercioId={comercioId} walkInOnly={walkInOnly} />
+
       {/* Jornada semanal */}
       <section>
         <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">
@@ -92,6 +109,7 @@ function ComercioSchedule({ comercioId }: { comercioId: string }) {
                 day={day}
                 rules={(schedule.data ?? []).filter((r) => r.dayOfWeek === day)}
                 services={services}
+                walkInOnly={walkInOnly}
               />
             ))}
           </div>
@@ -115,11 +133,14 @@ function DayRow({
   day,
   rules,
   services,
+  walkInOnly,
 }: {
   comercioId: string;
   day: number;
   rules: ScheduleRule[];
   services: Service[];
+  /** La membresía atiende siempre por orden de llegada: pisa el modo de cada franja. */
+  walkInOnly: boolean;
 }) {
   const create = useCreateComercioScheduleRule(comercioId);
   const update = useUpdateComercioScheduleRule(comercioId);
@@ -132,6 +153,15 @@ function DayRow({
     del.mutate(id);
   }
 
+  // Atajo: pasar TODAS las franjas de trabajo del día de una vez a "por orden de llegada" (o de
+  // vuelta a turnos). Es lo que más se pide: "los sábados atiendo todo el día por llegada".
+  const allWalkIn = works.length > 0 && works.every((r) => r.attendanceMode === AttendanceMode.walk_in);
+  function setDayMode(mode: AttendanceMode) {
+    for (const r of works) {
+      if (r.attendanceMode !== mode) update.mutate({ id: r.id, data: { attendanceMode: mode } });
+    }
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card p-3.5">
       <div className="flex items-center justify-between">
@@ -139,7 +169,23 @@ function DayRow({
         {rules.length === 0 ? (
           <span className="text-xs text-muted-foreground">Cerrado</span>
         ) : (
-          <div className="flex gap-1">
+          <div className="flex flex-wrap justify-end gap-1">
+            {works.length > 0 && !walkInOnly && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={update.isPending}
+                onClick={() => setDayMode(allWalkIn ? AttendanceMode.appointment : AttendanceMode.walk_in)}
+                title={
+                  allWalkIn
+                    ? "Volver a atender este día con turnos"
+                    : "Atender todo este día por orden de llegada"
+                }
+              >
+                {allWalkIn ? <CalendarClock className="size-3.5" /> : <Footprints className="size-3.5" />}
+                {allWalkIn ? "Pasar a turnos" : "Todo el día por llegada"}
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -183,6 +229,7 @@ function DayRow({
                 key={r.id}
                 rule={r}
                 services={services}
+                walkInOnly={walkInOnly}
                 onEdit={() => setDialog({ rule: r, kind: r.kind })}
                 onRemove={() => remove(r.id)}
               />
@@ -196,18 +243,19 @@ function DayRow({
           kind={dialog.kind}
           services={services}
           rule={dialog.rule}
+          walkInOnly={walkInOnly}
           pending={create.isPending || update.isPending}
           onClose={() => setDialog(null)}
-          onSubmit={(startTime, endTime, serviceIds) => {
+          onSubmit={(startTime, endTime, serviceIds, attendanceMode) => {
             const editing = dialog.rule;
             if (editing) {
               update.mutate(
-                { id: editing.id, data: { startTime, endTime, serviceIds } },
+                { id: editing.id, data: { startTime, endTime, serviceIds, attendanceMode } },
                 { onSuccess: () => setDialog(null) },
               );
             } else {
               create.mutate(
-                { dayOfWeek: day, startTime, endTime, kind: dialog.kind, serviceIds },
+                { dayOfWeek: day, startTime, endTime, kind: dialog.kind, serviceIds, attendanceMode },
                 { onSuccess: () => setDialog(null) },
               );
             }
@@ -222,15 +270,19 @@ function DayRow({
 function RuleChip({
   rule,
   services,
+  walkInOnly,
   onEdit,
   onRemove,
 }: {
   rule: ScheduleRule;
   services: Service[];
+  walkInOnly: boolean;
   onEdit?: () => void;
   onRemove: () => void;
 }) {
   const isWork = rule.kind === ScheduleRuleKind.work;
+  // Por orden de llegada: la propia franja, o toda la membresía ("siempre por orden de llegada").
+  const byArrival = isWork && (walkInOnly || rule.attendanceMode === AttendanceMode.walk_in);
   // serviceIds vacío = aplica a todos. Si trae ids, mostramos los nombres (los que conocemos).
   const targeted = rule.serviceIds.length > 0;
   const names = targeted
@@ -253,13 +305,22 @@ function RuleChip({
     <span
       className={cn(
         "inline-flex w-fit items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs",
-        isWork
+        byArrival
+          ? "border-accent/40 bg-accent/10 text-accent"
+          : isWork
           ? "border-status-done-foreground/30 bg-status-done text-status-done-foreground"
           : "border-status-waiting-foreground/30 bg-status-waiting text-status-waiting-foreground",
       )}
     >
-      {isWork ? <Briefcase className="size-3" /> : <Coffee className="size-3" />}
+      {byArrival ? (
+        <Footprints className="size-3" />
+      ) : isWork ? (
+        <Briefcase className="size-3" />
+      ) : (
+        <Coffee className="size-3" />
+      )}
       {rule.startTime}–{rule.endTime}
+      {byArrival && <span className="font-medium">· por orden de llegada</span>}
       {scopeLabel && <span className="opacity-80">· {scopeLabel}</span>}
       {onEdit && (
         <button
@@ -294,6 +355,7 @@ function RuleDialog({
   kind,
   services,
   rule,
+  walkInOnly,
   pending,
   onClose,
   onSubmit,
@@ -301,11 +363,17 @@ function RuleDialog({
   day: number;
   kind: ScheduleRuleKind;
   services: Service[];
+  walkInOnly: boolean;
   /** Si viene, editamos esa regla (precargada); si no, creamos una nueva del `kind` dado. */
   rule?: ScheduleRule;
   pending: boolean;
   onClose: () => void;
-  onSubmit: (startTime: string, endTime: string, serviceIds: string[]) => void;
+  onSubmit: (
+    startTime: string,
+    endTime: string,
+    serviceIds: string[],
+    attendanceMode: AttendanceMode,
+  ) => void;
 }) {
   const editing = !!rule;
   const isBreak = kind === ScheduleRuleKind.break;
@@ -318,6 +386,8 @@ function RuleDialog({
     rule && rule.serviceIds.length > 0 ? "some" : "all",
   );
   const [selected, setSelected] = useState<string[]>(rule?.serviceIds ?? []);
+  // Solo las franjas de trabajo tienen modo; un descanso siempre es "con turno" (se ignora).
+  const [mode, setMode] = useState<AttendanceMode>(rule?.attendanceMode ?? AttendanceMode.appointment);
 
   function toggle(id: string) {
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -327,7 +397,7 @@ function RuleDialog({
   const canSubmit = validRange && (scope === "all" || selected.length > 0) && !pending;
 
   function submit() {
-    onSubmit(start, end, scope === "all" ? [] : selected);
+    onSubmit(start, end, scope === "all" ? [] : selected, isBreak ? AttendanceMode.appointment : mode);
   }
 
   return (
@@ -360,6 +430,32 @@ function RuleDialog({
             <p className="text-xs text-destructive">La hora de fin debe ser posterior a la de inicio.</p>
           )}
 
+          {!isBreak && (
+            <div>
+              <Label>¿Cómo se atiende en esta franja?</Label>
+              <div className="mt-1.5 space-y-2">
+                <ScopeOption
+                  checked={mode === AttendanceMode.appointment}
+                  onSelect={() => setMode(AttendanceMode.appointment)}
+                  title="Con turno"
+                  hint="El cliente reserva un horario y vos ves la agenda."
+                />
+                <ScopeOption
+                  checked={mode === AttendanceMode.walk_in}
+                  onSelect={() => setMode(AttendanceMode.walk_in)}
+                  title="Por orden de llegada"
+                  hint="Sin turnos: la gente se anota en la sala de espera (QR) y la atendés en orden."
+                />
+              </div>
+              {walkInOnly && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Tenés activado &quot;Atiendo siempre por orden de llegada&quot;: esta franja se atiende así
+                  igualmente. Si lo apagás, vuelve al modo que elijas acá.
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <Label>{isBreak ? "¿A qué servicios afecta?" : "¿A qué servicios aplica?"}</Label>
             <div className="mt-1.5 space-y-2">
@@ -380,7 +476,9 @@ function RuleDialog({
                 hint={
                   isBreak
                     ? "Solo se bloquean los servicios que elijas en ese rango."
-                    : "Elegí en qué servicios se puede reservar en esta franja."
+                    : mode === AttendanceMode.walk_in
+                      ? "Elegí qué servicios se atienden por orden de llegada en esta franja."
+                      : "Elegí en qué servicios se puede reservar en esta franja."
                 }
                 disabled={services.length === 0}
               />
@@ -418,6 +516,52 @@ function RuleDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * "Atiendo siempre por orden de llegada": interruptor de toda la agenda del comercio. No reescribe
+ * las franjas: al apagarlo, cada una vuelve al modo que tenía (con turno / por orden de llegada).
+ */
+function AttendanceModeCard({
+  comercioId,
+  walkInOnly,
+}: {
+  comercioId: string;
+  walkInOnly: boolean;
+}) {
+  const update = useUpdateMyMembership(comercioId);
+  return (
+    <section className="rounded-xl border border-border bg-card p-4">
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          className="mt-1 size-4 accent-[var(--color-accent)]"
+          checked={walkInOnly}
+          disabled={update.isPending}
+          onChange={(e) => update.mutate({ walkInOnly: e.target.checked })}
+        />
+        <span>
+          <span className="flex items-center gap-1.5 text-sm font-medium">
+            <Footprints className="size-4 text-accent" />
+            Atiendo siempre por orden de llegada
+          </span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            No se ofrecen turnos con horario: el cliente se anota en la sala de espera. Tus franjas
+            definen cuándo estás atendiendo. Si no cargás ninguna, se considera abierto siempre.
+          </span>
+        </span>
+      </label>
+      {!walkInOnly && (
+        <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+          ¿Solo algunos días u horas? Elegí el modo de cada franja abajo, o usá &quot;Todo el día por
+          llegada&quot; en el día que corresponda.
+        </p>
+      )}
+      {update.isError && (
+        <p className="mt-2 text-xs text-destructive">No pudimos guardar el cambio. Probá de nuevo.</p>
+      )}
+    </section>
   );
 }
 

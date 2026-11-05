@@ -19,7 +19,6 @@ export interface ServiceCombinationRuleWithService extends ServiceCombinationRul
   targetService?: Service;
 }
 import type { DepositMode } from "@/lib/api/generated/model/depositMode";
-import type { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import type { Professional } from "@/lib/api/generated/model/professional";
 import type { Subscription } from "@/lib/api/generated/model/subscription";
 
@@ -69,35 +68,10 @@ export interface Slot {
   staffId: string;
 }
 
-/** Una persona en la sala de espera. Nunca exponer nombre completo en pantalla pública. */
-export interface WaitingItem {
-  appointmentId: string;
-  /** Nombre de pila o número de turno para la pantalla pública. */
-  displayName: string;
-  /** Número de turno del día (para mostrar grande en la tablet del local). */
-  ticketNumber: number;
-  position: number;
-  etaMinutes: number;
-  status: AppointmentStatus;
-  serviceName: string;
-  startAt: string;
-  /**
-   * Turno sin seña que quedó provisional (solo cuando la membresía tiene
-   * `allowProvisionalBookings`). NO se infiere del estado: el back lo computa.
-   */
-  isProvisional?: boolean;
-}
-
-/** Respuesta de `GET /appointments/waiting-room/{staffId}` (API-GAPS §1). */
-export interface WaitingRoom {
-  staffId: string;
-  staffName: string;
-  /** Turno que se está atendiendo ahora (si hay). */
-  nowServing: WaitingItem | null;
-  /** Cola en orden. */
-  queue: WaitingItem[];
-  updatedAt: string;
-}
+/**
+ * La sala de espera dejó de ser un tipo provisional: el backend la tipa y orval
+ * la genera (`WaitingRoomDto`, `WaitingItemDto`, `MyWaitingSpotDto`). Usar esos.
+ */
 
 /** Respuesta de `POST /payments/{id}/mp-preference` (API-GAPS §1). */
 export interface MpPreference {
@@ -184,6 +158,16 @@ export interface MembershipWithComercio {
    * cliente que pague la seña. false (default) = el turno sin seña queda firme. Por comercio.
    */
   allowProvisionalBookings?: boolean;
+  /** Atiende SIEMPRE por orden de llegada (sin turnos). Reversible: pisa el modo de cada franja. */
+  walkInOnly?: boolean;
+  /** Publica la sala de espera de esta agenda en `/r/:slug/sala` (el QR del local). */
+  waitingRoomEnabled?: boolean;
+  /** Permite que el cliente se anote solo con el QR (entra pendiente de aprobación). */
+  waitingRoomSelfCheckIn?: boolean;
+  /** Estado que ve el cliente en la pantalla pública. */
+  waitingRoomStatus?: "open" | "paused" | "closed";
+  /** Aclaración libre para la pantalla pública ("vuelvo 15:30"). */
+  waitingRoomNote?: string | null;
   comercio?: {
     id: string;
     name: string;
@@ -240,12 +224,6 @@ export interface AdminMetrics {
   mrrByMonth: { label: string; cents: number }[];
   /** Altas vs bajas por mes. */
   growthByMonth: { label: string; altas: number; bajas: number }[];
-}
-
-/** Eventos de Socket.IO para la sala de espera (API-GAPS §4). */
-export interface WaitingRoomUpdateEvent {
-  staffId: string;
-  room: WaitingRoom;
 }
 
 /**

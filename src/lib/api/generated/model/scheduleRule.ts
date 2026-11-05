@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { ScheduleRuleKind } from './scheduleRuleKind';
+import type { AttendanceMode } from './attendanceMode';
 
 export interface ScheduleRule {
   id: string;
@@ -19,5 +20,6 @@ export interface ScheduleRule {
   startTime: string;
   endTime: string;
   kind: ScheduleRuleKind;
+  attendanceMode: AttendanceMode;
   serviceIds: string[];
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock } from "lucide-react";
+import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock, LogIn, Wallet } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
+import { ChargeDialog } from "@/components/charge-dialog";
 import {
   useAppointmentsConfirm,
   useAppointmentsStart,
   useAppointmentsComplete,
   useAppointmentsNoShow,
+  useAppointmentsCheckIn,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
@@ -52,12 +54,14 @@ export function AppointmentDetail({
   const start = useAppointmentsStart();
   const complete = useAppointmentsComplete();
   const noShow = useAppointmentsNoShow();
+  const checkIn = useAppointmentsCheckIn();
   const cancel = useCancelAppointment();
   const busy =
     confirm.isPending ||
     start.isPending ||
     complete.isPending ||
     noShow.isPending ||
+    checkIn.isPending ||
     cancel.isPending;
 
   const id = appointment.id;
@@ -77,6 +81,7 @@ export function AppointmentDetail({
       (p.status === "pending" || p.status === "deferred"),
   );
   const [askCash, setAskCash] = useState(false);
+  const [charging, setCharging] = useState(false);
 
   function completeAppointment(cashOutcome?: CashOutcome, note?: string) {
     complete.mutate(
@@ -102,7 +107,8 @@ export function AppointmentDetail({
     status === AppointmentStatus.cancelled;
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
+    <>
+    <Dialog open onOpenChange={(o) => !o && !charging && onClose()}>
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -146,6 +152,29 @@ export function AppointmentDetail({
             <Button className="w-full" onClick={() => run(confirm)} disabled={busy}>
               {confirm.isPending ? <Spinner /> : <Check className="size-4" />}
               Confirmar turno
+            </Button>
+          )}
+          {/* Llegada: mete el turno en la sala de espera con su número. Sin esto
+              el cliente no figura en la fila ni puede ver cuántos tiene delante. */}
+          {appointment.status === AppointmentStatus.confirmed && !appointment.checkedInAt && (
+            <Button className="w-full" onClick={() => run(checkIn)} disabled={busy}>
+              {checkIn.isPending ? <Spinner /> : <LogIn className="size-4" />}
+              Llegó (entra a la sala)
+            </Button>
+          )}
+          {appointment.checkedInAt && (
+            <p className="text-center text-xs text-muted-foreground">
+              En la sala de espera
+              {appointment.ticketNumber ? ` · turno #${appointment.ticketNumber}` : ""}
+            </p>
+          )}
+          {/* Cobro: QR de Mercado Pago, "ya pagó" o pagaré. Disponible mientras lo atienden y
+              después, por si en el momento no se pudo cobrar. */}
+          {(appointment.status === AppointmentStatus.in_progress ||
+            appointment.status === AppointmentStatus.done) && (
+            <Button variant="outline" className="w-full" onClick={() => setCharging(true)}>
+              <Wallet className="size-4" />
+              Cobrar
             </Button>
           )}
           {(appointment.status === AppointmentStatus.confirmed ||
@@ -211,6 +240,17 @@ export function AppointmentDetail({
         </div>
       </DialogContent>
     </Dialog>
+    {charging && (
+      <ChargeDialog
+        appointmentId={appointment.id}
+        clientName={person.name}
+        onClose={() => {
+          setCharging(false);
+          onChanged();
+        }}
+      />
+    )}
+    </>
   );
 }
 

@@ -24,4 +24,9 @@ export interface MyAppointmentDto {
   priceCents: number;
   staffName: string;
   business: MyAppointmentBusinessDto;
+  /**
+   * Token del link personal de la sala de espera (/sala/t/{token}). Existe solo desde que la persona hizo check-in de llegada; null = todavía no está en la fila.
+   * @nullable
+   */
+  publicToken?: string | null;
 }

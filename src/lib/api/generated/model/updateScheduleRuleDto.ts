@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { UpdateScheduleRuleDtoKind } from './updateScheduleRuleDtoKind';
+import type { AttendanceMode } from './attendanceMode';
 
 export interface UpdateScheduleRuleDto {
   /** 0=domingo ... 6=sabado */
@@ -13,6 +14,7 @@ export interface UpdateScheduleRuleDto {
   startTime?: string;
   endTime?: string;
   kind?: UpdateScheduleRuleDtoKind;
+  attendanceMode?: AttendanceMode;
   /** Reemplaza el mapeo de servicios. Vacío = todos. Omitido = sin cambios. */
   serviceIds?: string[];
 }

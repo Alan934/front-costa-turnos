@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
@@ -13,8 +14,11 @@ import {
   Info,
   ArrowRight,
   Users,
+  Footprints,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatWalkInWindows } from "@/lib/attendance";
+import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -109,6 +113,12 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
   const [sel, setSel] = useState<Selection>({ service: null, professional: null, slot: null });
   const [confirmed, setConfirmed] = useState<ConfirmedState | null>(null);
 
+  // Profesionales que atienden (todo o en parte) por orden de llegada.
+  const professionals = page.professionals ?? [];
+  const walkInOnlyIds = new Set(professionals.filter((p) => p.walkInOnly).map((p) => p.membershipId));
+  // Si TODOS atienden solo por llegada no hay nada que reservar: la página pasa a explicar cómo anotarse.
+  const nobodyTakesBookings = professionals.length > 0 && walkInOnlyIds.size === professionals.length;
+
   // Si el servicio tiene un único profesional asignado, se omite el paso de selección.
   const singlePro = !sel.service || sel.service.professionals.length <= 1;
 
@@ -158,9 +168,19 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
     );
   }
 
+  if (nobodyTakesBookings) {
+    return (
+      <div>
+        <ComercioHeader page={page} />
+        <AttendanceNotice slug={slug} professionals={professionals} className="mt-4" />
+      </div>
+    );
+  }
+
   return (
     <div>
       <ComercioHeader page={page} />
+      <AttendanceNotice slug={slug} professionals={professionals} className="mt-4" />
       <Stepper step={step} singlePro={singlePro} />
 
       <div className="mt-6">
@@ -187,6 +207,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             service={sel.service}
             professional={sel.professional}
             onPick={pickSlot}
+            walkInHref={walkInHref(slug, sel.professional, professionals)}
+            walkInOnlyIds={walkInOnlyIds}
           />
         )}
 
@@ -203,6 +225,84 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           />
         )}
       </div>
+    </div>
+  );
+}
+
+/* ---------- Orden de llegada ---------- */
+
+/** Link a la sala de espera. Con varios profesionales se abre ya posicionada en el elegido. */
+function walkInHref(
+  slug: string,
+  professional: ProfessionalChoice,
+  professionals: PublicProfessionalDto[],
+): string {
+  const base = `/r/${slug}/sala`;
+  if (professional === "any" || professionals.length <= 1) return base;
+  return `${base}?pro=${professional.membershipId}`;
+}
+
+function WalkInButton({ href }: { href: string }) {
+  return (
+    <Button size="sm" asChild>
+      <Link href={href}>
+        <Footprints className="size-4" />
+        Ver la fila y anotarme
+      </Link>
+    </Button>
+  );
+}
+
+/**
+ * Aviso de que (algún día/horario) se atiende por orden de llegada, con los horarios y un
+ * acceso directo a la sala de espera. No aparece si nadie atiende así.
+ */
+function AttendanceNotice({
+  slug,
+  professionals,
+  className,
+}: {
+  slug: string;
+  professionals: PublicProfessionalDto[];
+  className?: string;
+}) {
+  const withWalkIn = professionals.filter((p) => p.walkInOnly || p.walkInSchedule.length > 0);
+  if (withWalkIn.length === 0) return null;
+  const several = professionals.length > 1;
+
+  return (
+    <div className={cn("space-y-2.5", className)}>
+      {withWalkIn.map((p) => {
+        const lines = formatWalkInWindows(p.walkInSchedule);
+        return (
+          <div
+            key={p.membershipId}
+            className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-2xl border border-accent/30 bg-accent/5 p-4"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/15 text-accent">
+              <Footprints className="size-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">
+                {several ? `${p.displayName}: ` : ""}
+                {p.walkInOnly
+                  ? several
+                    ? "atención por orden de llegada, sin turno"
+                    : "Atención por orden de llegada, sin turno"
+                  : several
+                    ? "algunos horarios se atienden por orden de llegada"
+                    : "Algunos horarios se atienden por orden de llegada"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {lines.length > 0
+                  ? lines.join(" · ")
+                  : "En el horario de atención del local. No hace falta pedir turno."}
+              </p>
+            </div>
+            <WalkInButton href={`/r/${slug}/sala${several ? `?pro=${p.membershipId}` : ""}`} />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -549,11 +649,16 @@ function SlotStep({
   service,
   professional,
   onPick,
+  walkInHref,
+  walkInOnlyIds,
 }: {
   slug: string;
   service: PublicServiceDto;
   professional: ProfessionalChoice;
   onPick: (s: Slot) => void;
+  /** Link a la sala de espera de ese profesional (para tramos/días por orden de llegada). */
+  walkInHref: string;
+  walkInOnlyIds: Set<string>;
 }) {
   const isAny = professional === "any";
   const membershipId = isAny ? null : professional.membershipId;
@@ -592,6 +697,18 @@ function SlotStep({
 
   const proLabel = isAny ? "cualquier profesional" : `con ${professional.displayName}`;
 
+  // Este profesional no da turnos con horario: no tiene sentido mostrar un calendario.
+  if (!isAny && walkInOnlyIds.has(professional.membershipId)) {
+    return (
+      <EmptyState
+        icon={<Footprints className="size-5" />}
+        title={`${professional.displayName} atiende por orden de llegada`}
+        message="No hace falta pedir turno: te anotás en la fila y te atienden en orden."
+        action={<WalkInButton href={walkInHref} />}
+      />
+    );
+  }
+
   return (
     <div>
       <h2 className="font-display text-lg font-semibold">Elegí día y hora</h2>
@@ -610,6 +727,7 @@ function SlotStep({
           isLoading={isLoading}
           isError={isError}
           onRetry={() => refetch()}
+          walkInAction={<WalkInButton href={walkInHref} />}
         />
       </div>
     </div>

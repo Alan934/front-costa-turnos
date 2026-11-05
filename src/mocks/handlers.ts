@@ -29,6 +29,7 @@ import {
   MEMBERSHIP_ID,
 } from "./seed";
 import { DepositMode } from "@/lib/api/generated/model/depositMode";
+import { AttendanceMode } from "@/lib/api/generated/model/attendanceMode";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { DayAvailabilityStatus } from "@/lib/api/generated/model/dayAvailabilityStatus";
 import type { DayAvailabilityDto } from "@/lib/api/generated/model/dayAvailabilityDto";
@@ -50,6 +51,7 @@ const VERSION_NEUTRAL = [
   /^\/auth(\/|$)/,
   /^\/health(\/|$)/,
   /^\/r(\/|$)/,
+  /^\/sala(\/|$)/,
   /^\/payments\/mp\/oauth/,
 ];
 
@@ -284,6 +286,9 @@ function createBooking(
     status: AppointmentStatus.requested,
     isProvisional: provisional,
     createdVia: "client_self" as const,
+    isPriority: false,
+    callCount: 0,
+    awayCount: 0,
   };
   appointments.push(appointment);
   return appointment;
@@ -360,6 +365,7 @@ function dayAvailabilityFromRequest(request: Request, staffId: string): DayAvail
     out.push({
       date,
       status,
+      walkInWindows: [],
       reason,
       timeOffType,
       freeSlots: free,
@@ -690,6 +696,39 @@ export const handlers: RequestHandler[] = [
     HttpResponse.json(buildWaitingRoom(String(params.staffId))),
   ),
 
+  // Pantalla pública del local (QR): la misma sala, sin los pendientes de aprobación.
+  http.get(url("/r/:slug/professionals/:membershipId/sala"), () => {
+    const room = buildWaitingRoom(staff[0]?.id ?? "");
+    return HttpResponse.json({ ...room, pending: [] });
+  }),
+  http.get(url("/r/:slug/sala"), () => {
+    const room = buildWaitingRoom(staff[0]?.id ?? "");
+    return HttpResponse.json({ ...room, pending: [] });
+  }),
+
+  // Self check-in: devolvemos un token fijo para poder abrir /sala/t/:token en mocks.
+  http.post(url("/r/:slug/professionals/:membershipId/sala/check-in"), () =>
+    HttpResponse.json({ token: "mock-token", ticketNumber: 99, needsApproval: true }, { status: 201 }),
+  ),
+
+  // Mi lugar en la fila: tomamos al primero de la cola como "yo".
+  http.get(url("/sala/t/:token"), () => {
+    const room = buildWaitingRoom(staff[0]?.id ?? "");
+    const me = room.queue[0] ?? room.nowServing ?? null;
+    return HttpResponse.json({ me, room: { ...room, pending: [] }, finished: !me });
+  }),
+
+  // Walk-in: crea el turno ya presente y en atención pendiente.
+  http.post(url("/appointments/walk-in"), () =>
+    HttpResponse.json(appointments[0], { status: 201 }),
+  ),
+  http.post(url("/appointments/:id/check-in"), ({ params }) =>
+    HttpResponse.json(appointments.find((a) => a.id === String(params.id)) ?? appointments[0]),
+  ),
+  http.post(url("/appointments/:id/undo-check-in"), ({ params }) =>
+    HttpResponse.json(appointments.find((a) => a.id === String(params.id)) ?? appointments[0]),
+  ),
+
   // Transiciones de estado del turno (mutan el estado en memoria).
   http.post(url("/appointments/:id/start"), ({ params }) =>
     transition(String(params.id), AppointmentStatus.in_progress, { actualStart: true }),
@@ -862,6 +901,7 @@ export const handlers: RequestHandler[] = [
       startTime: String(body.startTime ?? "09:00"),
       endTime: String(body.endTime ?? "18:00"),
       kind: (body.kind as ScheduleRuleKind) ?? ScheduleRuleKind.work,
+      attendanceMode: (body.attendanceMode as AttendanceMode) ?? AttendanceMode.appointment,
       serviceIds: Array.isArray(body.serviceIds) ? (body.serviceIds as string[]) : [],
     };
     scheduleRules.push(rule);

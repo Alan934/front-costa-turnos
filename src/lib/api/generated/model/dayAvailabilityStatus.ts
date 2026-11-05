@@ -15,4 +15,5 @@ export const DayAvailabilityStatus = {
   closed: 'closed',
   time_off: 'time_off',
   full: 'full',
+  walk_in: 'walk_in',
 } as const;

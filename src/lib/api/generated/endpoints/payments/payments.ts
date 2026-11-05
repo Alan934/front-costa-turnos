@@ -25,10 +25,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ChargePaymentDto,
+  ChargeQrDto,
+  ChargeSummaryDto,
   CreatePreferenceDto,
   DeferPaymentDto,
+  MarkChargePaidDto,
   Payment,
-  PaymentsWebhookBody
+  PaymentAuditEntryDto,
+  PaymentsWebhookBody,
+  RevertPaymentDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -259,6 +265,451 @@ export const usePaymentsMarkDeferred = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Base sin IVA + lo que pagaría el cliente por Mercado Pago (con IVA). Se consulta cada pocos segundos mientras el cliente escanea el QR para ver cuándo se acredita.
+ * @summary Cuánto vale el turno, cuánto se cobró y cuánto falta
+ */
+export const paymentsChargeSummary = (
+    appointmentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ChargeSummaryDto>(
+      {url: `/v1/payments/appointment/${appointmentId}/charge`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPaymentsChargeSummaryQueryKey = (appointmentId?: string,) => {
+    return [
+    `/v1/payments/appointment/${appointmentId}/charge`
+    ] as const;
+    }
+
+    
+export const getPaymentsChargeSummaryQueryOptions = <TData = Awaited<ReturnType<typeof paymentsChargeSummary>>, TError = ErrorType<void>>(appointmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsChargeSummaryQueryKey(appointmentId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsChargeSummary>>> = ({ signal }) => paymentsChargeSummary(appointmentId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(appointmentId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsChargeSummaryQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsChargeSummary>>>
+export type PaymentsChargeSummaryQueryError = ErrorType<void>
+
+
+export function usePaymentsChargeSummary<TData = Awaited<ReturnType<typeof paymentsChargeSummary>>, TError = ErrorType<void>>(
+ appointmentId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsChargeSummary>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsChargeSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsChargeSummary<TData = Awaited<ReturnType<typeof paymentsChargeSummary>>, TError = ErrorType<void>>(
+ appointmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsChargeSummary>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsChargeSummary>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsChargeSummary<TData = Awaited<ReturnType<typeof paymentsChargeSummary>>, TError = ErrorType<void>>(
+ appointmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Cuánto vale el turno, cuánto se cobró y cuánto falta
+ */
+
+export function usePaymentsChargeSummary<TData = Awaited<ReturnType<typeof paymentsChargeSummary>>, TError = ErrorType<void>>(
+ appointmentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsChargeSummary>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsChargeSummaryQueryOptions(appointmentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Devuelve el initPoint con el monto exacto que falta. El cliente lo escanea y paga; el webhook marca el pago.
+ * @summary QR de cobro por Mercado Pago a la cuenta del profesional
+ */
+export const paymentsChargeQr = (
+    appointmentId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ChargeQrDto>(
+      {url: `/v1/payments/appointment/${appointmentId}/charge/qr`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsChargeQrMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeQr>>, TError,{appointmentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeQr>>, TError,{appointmentId: string}, TContext> => {
+
+const mutationKey = ['paymentsChargeQr'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsChargeQr>>, {appointmentId: string}> = (props) => {
+          const {appointmentId} = props ?? {};
+
+          return  paymentsChargeQr(appointmentId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsChargeQrMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsChargeQr>>>
+    
+    export type PaymentsChargeQrMutationError = ErrorType<void>
+
+    /**
+ * @summary QR de cobro por Mercado Pago a la cuenta del profesional
+ */
+export const usePaymentsChargeQr = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeQr>>, TError,{appointmentId: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsChargeQr>>,
+        TError,
+        {appointmentId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsChargeQrMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Idempotente: si ya no falta nada no crea otro pago.
+ * @summary El cliente ya pagó (efectivo, transferencia o pagó antes)
+ */
+export const paymentsChargePaid = (
+    appointmentId: string,
+    markChargePaidDto: BodyType<MarkChargePaidDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ChargeSummaryDto>(
+      {url: `/v1/payments/appointment/${appointmentId}/charge/paid`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: markChargePaidDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsChargePaidMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargePaid>>, TError,{appointmentId: string;data: BodyType<MarkChargePaidDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsChargePaid>>, TError,{appointmentId: string;data: BodyType<MarkChargePaidDto>}, TContext> => {
+
+const mutationKey = ['paymentsChargePaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsChargePaid>>, {appointmentId: string;data: BodyType<MarkChargePaidDto>}> = (props) => {
+          const {appointmentId,data} = props ?? {};
+
+          return  paymentsChargePaid(appointmentId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsChargePaidMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsChargePaid>>>
+    export type PaymentsChargePaidMutationBody = BodyType<MarkChargePaidDto>
+    export type PaymentsChargePaidMutationError = ErrorType<unknown>
+
+    /**
+ * @summary El cliente ya pagó (efectivo, transferencia o pagó antes)
+ */
+export const usePaymentsChargePaid = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargePaid>>, TError,{appointmentId: string;data: BodyType<MarkChargePaidDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsChargePaid>>,
+        TError,
+        {appointmentId: string;data: BodyType<MarkChargePaidDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsChargePaidMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Pagaré: el cliente quedó debiendo lo que falta
+ */
+export const paymentsChargeDeferred = (
+    appointmentId: string,
+    deferPaymentDto: BodyType<DeferPaymentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ChargeSummaryDto>(
+      {url: `/v1/payments/appointment/${appointmentId}/charge/deferred`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: deferPaymentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsChargeDeferredMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeDeferred>>, TError,{appointmentId: string;data: BodyType<DeferPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeDeferred>>, TError,{appointmentId: string;data: BodyType<DeferPaymentDto>}, TContext> => {
+
+const mutationKey = ['paymentsChargeDeferred'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsChargeDeferred>>, {appointmentId: string;data: BodyType<DeferPaymentDto>}> = (props) => {
+          const {appointmentId,data} = props ?? {};
+
+          return  paymentsChargeDeferred(appointmentId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsChargeDeferredMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsChargeDeferred>>>
+    export type PaymentsChargeDeferredMutationBody = BodyType<DeferPaymentDto>
+    export type PaymentsChargeDeferredMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Pagaré: el cliente quedó debiendo lo que falta
+ */
+export const usePaymentsChargeDeferred = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsChargeDeferred>>, TError,{appointmentId: string;data: BodyType<DeferPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsChargeDeferred>>,
+        TError,
+        {appointmentId: string;data: BodyType<DeferPaymentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsChargeDeferredMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Solo cobros manuales (efectivo/transferencia). Vuelve a pendiente de cobro. Exige un motivo y queda registrado con quién y cuándo. Mercado Pago no se deshace desde acá.
+ * @summary Deshacer un cobro marcado como pagado (me equivoqué)
+ */
+export const paymentsRevert = (
+    id: string,
+    revertPaymentDto: BodyType<RevertPaymentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ChargePaymentDto>(
+      {url: `/v1/payments/${id}/revert`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: revertPaymentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsRevertMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsRevert>>, TError,{id: string;data: BodyType<RevertPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsRevert>>, TError,{id: string;data: BodyType<RevertPaymentDto>}, TContext> => {
+
+const mutationKey = ['paymentsRevert'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsRevert>>, {id: string;data: BodyType<RevertPaymentDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paymentsRevert(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsRevertMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsRevert>>>
+    export type PaymentsRevertMutationBody = BodyType<RevertPaymentDto>
+    export type PaymentsRevertMutationError = ErrorType<void>
+
+    /**
+ * @summary Deshacer un cobro marcado como pagado (me equivoqué)
+ */
+export const usePaymentsRevert = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsRevert>>, TError,{id: string;data: BodyType<RevertPaymentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsRevert>>,
+        TError,
+        {id: string;data: BodyType<RevertPaymentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsRevertMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Historial de un pago: quién hizo qué y cuándo
+ */
+export const paymentsAudit = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PaymentAuditEntryDto[]>(
+      {url: `/v1/payments/${id}/audit`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPaymentsAuditQueryKey = (id?: string,) => {
+    return [
+    `/v1/payments/${id}/audit`
+    ] as const;
+    }
+
+    
+export const getPaymentsAuditQueryOptions = <TData = Awaited<ReturnType<typeof paymentsAudit>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsAuditQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsAudit>>> = ({ signal }) => paymentsAudit(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsAuditQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsAudit>>>
+export type PaymentsAuditQueryError = ErrorType<unknown>
+
+
+export function usePaymentsAudit<TData = Awaited<ReturnType<typeof paymentsAudit>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsAudit>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsAudit<TData = Awaited<ReturnType<typeof paymentsAudit>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsAudit>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsAudit<TData = Awaited<ReturnType<typeof paymentsAudit>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Historial de un pago: quién hizo qué y cuándo
+ */
+
+export function usePaymentsAudit<TData = Awaited<ReturnType<typeof paymentsAudit>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsAudit>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsAuditQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Crear preferencia de pago de MercadoPago
  */
 export const paymentsCreatePreference = (

@@ -26,9 +26,12 @@ import type {
 
 import type {
   Appointment,
+  AwayDto,
   BookWithDepositResultDto,
   ComercioPublicPageDto,
   DayAvailabilityDto,
+  LeaveResultDto,
+  MyWaitingSpotDto,
   PublicBookDto,
   PublicBookWithDepositDto,
   PublicBookingDayAvailabilityFlatParams,
@@ -38,7 +41,11 @@ import type {
   PublicBookingSlotsFlatParams,
   PublicBookingSlotsParams,
   PublicProfessionalDetailDto,
-  PublicServiceDto
+  PublicServiceDto,
+  PushSubscriptionDto,
+  SelfCheckInDto,
+  SelfCheckInResultDto,
+  WaitingRoomDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -1134,6 +1141,329 @@ export const usePublicBookingBookWithDeposit = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * @summary Sala de espera pública de un profesional del comercio
+ */
+export const publicBookingWaitingRoom = (
+    slug: string,
+    membershipId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<WaitingRoomDto>(
+      {url: `/r/${slug}/professionals/${membershipId}/sala`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingWaitingRoomQueryKey = (slug?: string,
+    membershipId?: string,) => {
+    return [
+    `/r/${slug}/professionals/${membershipId}/sala`
+    ] as const;
+    }
+
+    
+export const getPublicBookingWaitingRoomQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError = ErrorType<void>>(slug: string,
+    membershipId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingWaitingRoomQueryKey(slug,membershipId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingWaitingRoom>>> = ({ signal }) => publicBookingWaitingRoom(slug,membershipId, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug && membershipId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingWaitingRoomQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingWaitingRoom>>>
+export type PublicBookingWaitingRoomQueryError = ErrorType<void>
+
+
+export function usePublicBookingWaitingRoom<TData = Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingWaitingRoom>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingWaitingRoom>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingWaitingRoom<TData = Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingWaitingRoom>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingWaitingRoom>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingWaitingRoom<TData = Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Sala de espera pública de un profesional del comercio
+ */
+
+export function usePublicBookingWaitingRoom<TData = Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError = ErrorType<void>>(
+ slug: string,
+    membershipId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingWaitingRoomQueryOptions(slug,membershipId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Crea la entrada en estado pendiente: el profesional la acepta desde su panel. Devuelve el token del link personal (/sala/t/{token}) con el que el cliente sigue su lugar en la fila.
+ * @summary Anotarse en la sala de espera escaneando el QR
+ */
+export const publicBookingSelfCheckIn = (
+    slug: string,
+    membershipId: string,
+    selfCheckInDto: BodyType<SelfCheckInDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SelfCheckInResultDto>(
+      {url: `/r/${slug}/professionals/${membershipId}/sala/check-in`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: selfCheckInDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPublicBookingSelfCheckInMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckIn>>, TError,{slug: string;membershipId: string;data: BodyType<SelfCheckInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckIn>>, TError,{slug: string;membershipId: string;data: BodyType<SelfCheckInDto>}, TContext> => {
+
+const mutationKey = ['publicBookingSelfCheckIn'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicBookingSelfCheckIn>>, {slug: string;membershipId: string;data: BodyType<SelfCheckInDto>}> = (props) => {
+          const {slug,membershipId,data} = props ?? {};
+
+          return  publicBookingSelfCheckIn(slug,membershipId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublicBookingSelfCheckInMutationResult = NonNullable<Awaited<ReturnType<typeof publicBookingSelfCheckIn>>>
+    export type PublicBookingSelfCheckInMutationBody = BodyType<SelfCheckInDto>
+    export type PublicBookingSelfCheckInMutationError = ErrorType<void>
+
+    /**
+ * @summary Anotarse en la sala de espera escaneando el QR
+ */
+export const usePublicBookingSelfCheckIn = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckIn>>, TError,{slug: string;membershipId: string;data: BodyType<SelfCheckInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publicBookingSelfCheckIn>>,
+        TError,
+        {slug: string;membershipId: string;data: BodyType<SelfCheckInDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPublicBookingSelfCheckInMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Sala de espera (comercio-de-uno): auto-resuelve el único profesional
+ */
+export const publicBookingWaitingRoomFlat = (
+    slug: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<WaitingRoomDto>(
+      {url: `/r/${slug}/sala`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getPublicBookingWaitingRoomFlatQueryKey = (slug?: string,) => {
+    return [
+    `/r/${slug}/sala`
+    ] as const;
+    }
+
+    
+export const getPublicBookingWaitingRoomFlatQueryOptions = <TData = Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError = ErrorType<void>>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicBookingWaitingRoomFlatQueryKey(slug);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>> = ({ signal }) => publicBookingWaitingRoomFlat(slug, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(slug), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicBookingWaitingRoomFlatQueryResult = NonNullable<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>>
+export type PublicBookingWaitingRoomFlatQueryError = ErrorType<void>
+
+
+export function usePublicBookingWaitingRoomFlat<TData = Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError = ErrorType<void>>(
+ slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingWaitingRoomFlat<TData = Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>,
+          TError,
+          Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicBookingWaitingRoomFlat<TData = Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Sala de espera (comercio-de-uno): auto-resuelve el único profesional
+ */
+
+export function usePublicBookingWaitingRoomFlat<TData = Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError = ErrorType<void>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicBookingWaitingRoomFlat>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicBookingWaitingRoomFlatQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Anotarse (comercio-de-uno): auto-resuelve el único profesional
+ */
+export const publicBookingSelfCheckInFlat = (
+    slug: string,
+    selfCheckInDto: BodyType<SelfCheckInDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SelfCheckInResultDto>(
+      {url: `/r/${slug}/sala/check-in`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: selfCheckInDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPublicBookingSelfCheckInFlatMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>, TError,{slug: string;data: BodyType<SelfCheckInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>, TError,{slug: string;data: BodyType<SelfCheckInDto>}, TContext> => {
+
+const mutationKey = ['publicBookingSelfCheckInFlat'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>, {slug: string;data: BodyType<SelfCheckInDto>}> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  publicBookingSelfCheckInFlat(slug,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublicBookingSelfCheckInFlatMutationResult = NonNullable<Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>>
+    export type PublicBookingSelfCheckInFlatMutationBody = BodyType<SelfCheckInDto>
+    export type PublicBookingSelfCheckInFlatMutationError = ErrorType<void>
+
+    /**
+ * @summary Anotarse (comercio-de-uno): auto-resuelve el único profesional
+ */
+export const usePublicBookingSelfCheckInFlat = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>, TError,{slug: string;data: BodyType<SelfCheckInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publicBookingSelfCheckInFlat>>,
+        TError,
+        {slug: string;data: BodyType<SelfCheckInDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPublicBookingSelfCheckInFlatMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @deprecated
  * @summary Slots (comercio-de-uno): auto-resuelve el único profesional
  */
@@ -1468,6 +1798,417 @@ export const usePublicBookingBookWithDepositFlat = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getPublicBookingBookWithDepositFlatMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Mi lugar en la fila (link personal con token)
+ */
+export const waitingSpotSpot = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyWaitingSpotDto>(
+      {url: `/sala/t/${token}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getWaitingSpotSpotQueryKey = (token?: string,) => {
+    return [
+    `/sala/t/${token}`
+    ] as const;
+    }
+
+    
+export const getWaitingSpotSpotQueryOptions = <TData = Awaited<ReturnType<typeof waitingSpotSpot>>, TError = ErrorType<void>>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getWaitingSpotSpotQueryKey(token);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof waitingSpotSpot>>> = ({ signal }) => waitingSpotSpot(token, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type WaitingSpotSpotQueryResult = NonNullable<Awaited<ReturnType<typeof waitingSpotSpot>>>
+export type WaitingSpotSpotQueryError = ErrorType<void>
+
+
+export function useWaitingSpotSpot<TData = Awaited<ReturnType<typeof waitingSpotSpot>>, TError = ErrorType<void>>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof waitingSpotSpot>>,
+          TError,
+          Awaited<ReturnType<typeof waitingSpotSpot>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWaitingSpotSpot<TData = Awaited<ReturnType<typeof waitingSpotSpot>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof waitingSpotSpot>>,
+          TError,
+          Awaited<ReturnType<typeof waitingSpotSpot>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useWaitingSpotSpot<TData = Awaited<ReturnType<typeof waitingSpotSpot>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mi lugar en la fila (link personal con token)
+ */
+
+export function useWaitingSpotSpot<TData = Awaited<ReturnType<typeof waitingSpotSpot>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof waitingSpotSpot>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getWaitingSpotSpotQueryOptions(token,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Si llegó sin turno, el turno se anula. Si tenía un turno agendado, solo sale de la fila y el turno se conserva (keptAppointment=true).
+ * @summary Ya no voy: salir de la fila
+ */
+export const waitingSpotLeave = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<LeaveResultDto>(
+      {url: `/sala/t/${token}/leave`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitingSpotLeaveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotLeave>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitingSpotLeave>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['waitingSpotLeave'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitingSpotLeave>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  waitingSpotLeave(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitingSpotLeaveMutationResult = NonNullable<Awaited<ReturnType<typeof waitingSpotLeave>>>
+    
+    export type WaitingSpotLeaveMutationError = ErrorType<void>
+
+    /**
+ * @summary Ya no voy: salir de la fila
+ */
+export const useWaitingSpotLeave = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotLeave>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitingSpotLeave>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitingSpotLeaveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Hasta 15 minutos, máximo 2 veces por día. Mientras tanto se lo saltea.
+ * @summary Me voy y vuelvo: ausentarse un rato sin perder el lugar
+ */
+export const waitingSpotAway = (
+    token: string,
+    awayDto: BodyType<AwayDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/sala/t/${token}/away`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: awayDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitingSpotAwayMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotAway>>, TError,{token: string;data: BodyType<AwayDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitingSpotAway>>, TError,{token: string;data: BodyType<AwayDto>}, TContext> => {
+
+const mutationKey = ['waitingSpotAway'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitingSpotAway>>, {token: string;data: BodyType<AwayDto>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  waitingSpotAway(token,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitingSpotAwayMutationResult = NonNullable<Awaited<ReturnType<typeof waitingSpotAway>>>
+    export type WaitingSpotAwayMutationBody = BodyType<AwayDto>
+    export type WaitingSpotAwayMutationError = ErrorType<void>
+
+    /**
+ * @summary Me voy y vuelvo: ausentarse un rato sin perder el lugar
+ */
+export const useWaitingSpotAway = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotAway>>, TError,{token: string;data: BodyType<AwayDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitingSpotAway>>,
+        TError,
+        {token: string;data: BodyType<AwayDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitingSpotAwayMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Ya volví: termina la ausencia antes de tiempo
+ */
+export const waitingSpotBack = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/sala/t/${token}/back`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitingSpotBackMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotBack>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitingSpotBack>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['waitingSpotBack'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitingSpotBack>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  waitingSpotBack(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitingSpotBackMutationResult = NonNullable<Awaited<ReturnType<typeof waitingSpotBack>>>
+    
+    export type WaitingSpotBackMutationError = ErrorType<void>
+
+    /**
+ * @summary Ya volví: termina la ausencia antes de tiempo
+ */
+export const useWaitingSpotBack = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotBack>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitingSpotBack>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitingSpotBackMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Suscribe este navegador a los avisos de este turno.
+ * @summary Avisarme por notificación push cuando me toque
+ */
+export const waitingSpotSubscribePush = (
+    token: string,
+    pushSubscriptionDto: BodyType<PushSubscriptionDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/sala/t/${token}/push`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: pushSubscriptionDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitingSpotSubscribePushMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotSubscribePush>>, TError,{token: string;data: BodyType<PushSubscriptionDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitingSpotSubscribePush>>, TError,{token: string;data: BodyType<PushSubscriptionDto>}, TContext> => {
+
+const mutationKey = ['waitingSpotSubscribePush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitingSpotSubscribePush>>, {token: string;data: BodyType<PushSubscriptionDto>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  waitingSpotSubscribePush(token,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitingSpotSubscribePushMutationResult = NonNullable<Awaited<ReturnType<typeof waitingSpotSubscribePush>>>
+    export type WaitingSpotSubscribePushMutationBody = BodyType<PushSubscriptionDto>
+    export type WaitingSpotSubscribePushMutationError = ErrorType<void>
+
+    /**
+ * @summary Avisarme por notificación push cuando me toque
+ */
+export const useWaitingSpotSubscribePush = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotSubscribePush>>, TError,{token: string;data: BodyType<PushSubscriptionDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitingSpotSubscribePush>>,
+        TError,
+        {token: string;data: BodyType<PushSubscriptionDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitingSpotSubscribePushMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Dejar de recibir avisos push de este turno
+ */
+export const waitingSpotUnsubscribePush = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/sala/t/${token}/push/unsubscribe`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getWaitingSpotUnsubscribePushMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['waitingSpotUnsubscribePush'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  waitingSpotUnsubscribePush(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WaitingSpotUnsubscribePushMutationResult = NonNullable<Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>>
+    
+    export type WaitingSpotUnsubscribePushMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Dejar de recibir avisos push de este turno
+ */
+export const useWaitingSpotUnsubscribePush = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof waitingSpotUnsubscribePush>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getWaitingSpotUnsubscribePushMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
