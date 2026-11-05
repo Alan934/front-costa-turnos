@@ -27,11 +27,18 @@ import type {
 import type {
   Appointment,
   AppointmentsListParams,
+  AppointmentsWaitingRoomParams,
+  AppointmentsWaitingRoomStatsParams,
   BookAppointmentDto,
   BookWithDepositDto,
   BookWithDepositResultDto,
   CancelAppointmentDto,
-  CompleteAppointmentDto
+  CompleteAppointmentDto,
+  CreateWalkInDto,
+  MoveInQueueDto,
+  SetPriorityDto,
+  WaitingRoomDto,
+  WaitingRoomStatsDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -264,16 +271,19 @@ export const useAppointmentsBookWithDeposit = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * La cola son solo los presentes (con check-in de llegada), en orden de atención, con posición y ETA. `pending` son los self check-in esperando aprobación del profesional.
  * @summary Obtener la sala de espera de un staff
  */
 export const appointmentsWaitingRoom = (
     staffId: string,
+    params?: AppointmentsWaitingRoomParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
-      return customInstance<void>(
-      {url: `/v1/appointments/waiting-room/${staffId}`, method: 'GET', signal
+      return customInstance<WaitingRoomDto>(
+      {url: `/v1/appointments/waiting-room/${staffId}`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -281,23 +291,25 @@ export const appointmentsWaitingRoom = (
 
 
 
-export const getAppointmentsWaitingRoomQueryKey = (staffId?: string,) => {
+export const getAppointmentsWaitingRoomQueryKey = (staffId?: string,
+    params?: AppointmentsWaitingRoomParams,) => {
     return [
-    `/v1/appointments/waiting-room/${staffId}`
+    `/v1/appointments/waiting-room/${staffId}`, ...(params ? [params]: [])
     ] as const;
     }
 
     
-export const getAppointmentsWaitingRoomQueryOptions = <TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAppointmentsWaitingRoomQueryOptions = <TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(staffId: string,
+    params?: AppointmentsWaitingRoomParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAppointmentsWaitingRoomQueryKey(staffId);
+  const queryKey =  queryOptions?.queryKey ?? getAppointmentsWaitingRoomQueryKey(staffId,params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointmentsWaitingRoom>>> = ({ signal }) => appointmentsWaitingRoom(staffId, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointmentsWaitingRoom>>> = ({ signal }) => appointmentsWaitingRoom(staffId,params, requestOptions, signal);
 
       
 
@@ -311,7 +323,8 @@ export type AppointmentsWaitingRoomQueryError = ErrorType<void>
 
 
 export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(
- staffId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>> & Pick<
+ staffId: string,
+    params: undefined |  AppointmentsWaitingRoomParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof appointmentsWaitingRoom>>,
           TError,
@@ -321,7 +334,8 @@ export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof app
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>> & Pick<
+ staffId: string,
+    params?: AppointmentsWaitingRoomParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof appointmentsWaitingRoom>>,
           TError,
@@ -331,7 +345,8 @@ export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof app
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ staffId: string,
+    params?: AppointmentsWaitingRoomParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -339,11 +354,12 @@ export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof app
  */
 
 export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError = ErrorType<void>>(
- staffId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ staffId: string,
+    params?: AppointmentsWaitingRoomParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoom>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getAppointmentsWaitingRoomQueryOptions(staffId,options)
+  const queryOptions = getAppointmentsWaitingRoomQueryOptions(staffId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -356,6 +372,553 @@ export function useAppointmentsWaitingRoom<TData = Awaited<ReturnType<typeof app
 
 
 /**
+ * Espera promedio/máxima, duración real de las atenciones, horas pico de llegada y servicios más pedidos. Las horas van en la zona horaria del profesional.
+ * @summary Estadísticas de la sala de los últimos N días
+ */
+export const appointmentsWaitingRoomStats = (
+    staffId: string,
+    params?: AppointmentsWaitingRoomStatsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<WaitingRoomStatsDto>(
+      {url: `/v1/appointments/waiting-room/${staffId}/stats`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getAppointmentsWaitingRoomStatsQueryKey = (staffId?: string,
+    params?: AppointmentsWaitingRoomStatsParams,) => {
+    return [
+    `/v1/appointments/waiting-room/${staffId}/stats`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getAppointmentsWaitingRoomStatsQueryOptions = <TData = Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError = ErrorType<void>>(staffId: string,
+    params?: AppointmentsWaitingRoomStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAppointmentsWaitingRoomStatsQueryKey(staffId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>> = ({ signal }) => appointmentsWaitingRoomStats(staffId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(staffId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AppointmentsWaitingRoomStatsQueryResult = NonNullable<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>>
+export type AppointmentsWaitingRoomStatsQueryError = ErrorType<void>
+
+
+export function useAppointmentsWaitingRoomStats<TData = Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError = ErrorType<void>>(
+ staffId: string,
+    params: undefined |  AppointmentsWaitingRoomStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsWaitingRoomStats<TData = Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError = ErrorType<void>>(
+ staffId: string,
+    params?: AppointmentsWaitingRoomStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsWaitingRoomStats<TData = Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError = ErrorType<void>>(
+ staffId: string,
+    params?: AppointmentsWaitingRoomStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Estadísticas de la sala de los últimos N días
+ */
+
+export function useAppointmentsWaitingRoomStats<TData = Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError = ErrorType<void>>(
+ staffId: string,
+    params?: AppointmentsWaitingRoomStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsWaitingRoomStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAppointmentsWaitingRoomStatsQueryOptions(staffId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * Crea el turno en el momento (createdVia=walk_in, startAt=ahora) ya presente en la sala. Aceptá un personId de la cartera o fullName (+ teléfono) para dar de alta a alguien nuevo.
+ * @summary Agregar a la cola un cliente que llegó sin turno
+ */
+export const appointmentsWalkIn = (
+    createWalkInDto: BodyType<CreateWalkInDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/walk-in`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createWalkInDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsWalkInMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsWalkIn>>, TError,{data: BodyType<CreateWalkInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsWalkIn>>, TError,{data: BodyType<CreateWalkInDto>}, TContext> => {
+
+const mutationKey = ['appointmentsWalkIn'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsWalkIn>>, {data: BodyType<CreateWalkInDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  appointmentsWalkIn(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsWalkInMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsWalkIn>>>
+    export type AppointmentsWalkInMutationBody = BodyType<CreateWalkInDto>
+    export type AppointmentsWalkInMutationError = ErrorType<void>
+
+    /**
+ * @summary Agregar a la cola un cliente que llegó sin turno
+ */
+export const useAppointmentsWalkIn = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsWalkIn>>, TError,{data: BodyType<CreateWalkInDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsWalkIn>>,
+        TError,
+        {data: BodyType<CreateWalkInDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsWalkInMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Le asigna número de turno del día. Idempotente: no cambia el número si ya llegó.
+ * @summary Marcar que el cliente llegó (entra a la sala de espera)
+ */
+export const appointmentsCheckIn = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/check-in`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsCheckInMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsCheckIn>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsCheckIn>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsCheckIn'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsCheckIn>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsCheckIn(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsCheckInMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsCheckIn>>>
+    
+    export type AppointmentsCheckInMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar que el cliente llegó (entra a la sala de espera)
+ */
+export const useAppointmentsCheckIn = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsCheckIn>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsCheckIn>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsCheckInMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Le llega un push con vibración y su pantalla pasa a "¡Es tu turno!". Se puede repetir si no responde.
+ * @summary Llamar a alguien de la fila ("pasá, te toca")
+ */
+export const appointmentsCall = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/call`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsCallMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsCall>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsCall>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsCall'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsCall>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsCall(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsCallMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsCall>>>
+    
+    export type AppointmentsCallMutationError = ErrorType<void>
+
+    /**
+ * @summary Llamar a alguien de la fila ("pasá, te toca")
+ */
+export const useAppointmentsCall = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsCall>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsCall>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsCallMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Alternativa a marcarlo como que no vino. Conserva su número de turno.
+ * @summary Mandar al final de la fila (no respondió)
+ */
+export const appointmentsSendToBack = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/send-to-back`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsSendToBackMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsSendToBack'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsSendToBack>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsSendToBack(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsSendToBackMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsSendToBack>>>
+    
+    export type AppointmentsSendToBackMutationError = ErrorType<void>
+
+    /**
+ * @summary Mandar al final de la fila (no respondió)
+ */
+export const useAppointmentsSendToBack = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsSendToBack>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsSendToBackMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Subir o bajar un lugar en la fila
+ */
+export const appointmentsMove = (
+    id: string,
+    moveInQueueDto: BodyType<MoveInQueueDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/move`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moveInQueueDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsMoveMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsMove>>, TError,{id: string;data: BodyType<MoveInQueueDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsMove>>, TError,{id: string;data: BodyType<MoveInQueueDto>}, TContext> => {
+
+const mutationKey = ['appointmentsMove'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsMove>>, {id: string;data: BodyType<MoveInQueueDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsMove(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsMoveMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsMove>>>
+    export type AppointmentsMoveMutationBody = BodyType<MoveInQueueDto>
+    export type AppointmentsMoveMutationError = ErrorType<void>
+
+    /**
+ * @summary Subir o bajar un lugar en la fila
+ */
+export const useAppointmentsMove = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsMove>>, TError,{id: string;data: BodyType<MoveInQueueDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsMove>>,
+        TError,
+        {id: string;data: BodyType<MoveInQueueDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsMoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Marcar/desmarcar como urgente (pasa al frente de la fila)
+ */
+export const appointmentsPriority = (
+    id: string,
+    setPriorityDto: BodyType<SetPriorityDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/priority`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: setPriorityDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsPriorityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsPriority>>, TError,{id: string;data: BodyType<SetPriorityDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsPriority>>, TError,{id: string;data: BodyType<SetPriorityDto>}, TContext> => {
+
+const mutationKey = ['appointmentsPriority'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsPriority>>, {id: string;data: BodyType<SetPriorityDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsPriority(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsPriorityMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsPriority>>>
+    export type AppointmentsPriorityMutationBody = BodyType<SetPriorityDto>
+    export type AppointmentsPriorityMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar/desmarcar como urgente (pasa al frente de la fila)
+ */
+export const useAppointmentsPriority = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsPriority>>, TError,{id: string;data: BodyType<SetPriorityDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsPriority>>,
+        TError,
+        {id: string;data: BodyType<SetPriorityDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsPriorityMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Deshacer el check-in (sale de la cola, el turno se conserva)
+ */
+export const appointmentsUndoCheckIn = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/undo-check-in`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsUndoCheckInMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsUndoCheckIn>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsUndoCheckIn>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsUndoCheckIn'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsUndoCheckIn>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsUndoCheckIn(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsUndoCheckInMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsUndoCheckIn>>>
+    
+    export type AppointmentsUndoCheckInMutationError = ErrorType<void>
+
+    /**
+ * @summary Deshacer el check-in (sale de la cola, el turno se conserva)
+ */
+export const useAppointmentsUndoCheckIn = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsUndoCheckIn>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsUndoCheckIn>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsUndoCheckInMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Obtener un turno por id
  */
 export const appointmentsGet = (

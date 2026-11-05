@@ -20,6 +20,8 @@ import type { Slot, ServiceCombinationRuleWithService } from "@/mocks/contract-e
 import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { BookWithDepositResultDto } from "@/lib/api/generated/model/bookWithDepositResultDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
+import type { SelfCheckInDto } from "@/lib/api/generated/model/selfCheckInDto";
+import type { SelfCheckInResultDto } from "@/lib/api/generated/model/selfCheckInResultDto";
 
 /** Página del comercio: datos + lista de profesionales (`/r/:slug`). */
 export function useComercioPublicPage(slug: string) {
@@ -237,5 +239,21 @@ export function usePublicCombinationRules(
         signal,
       }),
     enabled: !!slug && !!membershipId && !!serviceId,
+  });
+}
+
+/**
+ * Self check-in: el cliente se anota en la sala de espera escaneando el QR del
+ * local. Devuelve el token de su link personal (/sala/t/:token). Si el visitante
+ * está logueado, el interceptor manda su token y el back lo vincula a su cuenta.
+ */
+export function useSelfCheckIn(slug: string, membershipId: string) {
+  return useMutation({
+    mutationFn: (data: SelfCheckInDto) =>
+      customInstance<SelfCheckInResultDto>({
+        url: `/r/${slug}/professionals/${membershipId}/sala/check-in`,
+        method: "POST",
+        data,
+      }),
   });
 }

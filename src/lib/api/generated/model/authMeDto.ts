@@ -17,6 +17,8 @@ export interface AuthMeDto {
   isPlatformAdmin: boolean;
   /** professional (trabajador) */
   professionalId?: string;
+  /** persona (identidad de cliente) de la cuenta; null si aún no tiene */
+  personId?: string;
   staffId?: string;
   /** comercios que administra como comercial (+ su comercio-de-uno) */
   comercioIds?: string[];

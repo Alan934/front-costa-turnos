@@ -412,12 +412,16 @@ function AppointmentCard({
             <CalendarClock className="size-4" />
             Reprogramar
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/sala/${appt.id}`}>
-              <Eye className="size-4" />
-              Ver sala
-            </Link>
-          </Button>
+          {/* El link a la sala existe solo desde que el local marcó tu llegada:
+              antes de eso no estás en la fila y no hay nada que mirar. */}
+          {appt.publicToken && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/sala/t/${appt.publicToken}`}>
+                <Eye className="size-4" />
+                Ver mi lugar
+              </Link>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

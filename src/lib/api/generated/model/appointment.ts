@@ -29,6 +29,23 @@ export interface Appointment {
   cancellationReason?: AppointmentCancellationReason;
   /** @nullable */
   actualStartAt?: string | null;
+  /** @nullable */
+  checkedInAt?: string | null;
+  /** @nullable */
+  ticketNumber?: number | null;
+  /** @nullable */
+  queueRank?: number | null;
+  isPriority: boolean;
+  /** @nullable */
+  calledAt?: string | null;
+  callCount: number;
+  /** @nullable */
+  awayUntil?: string | null;
+  awayCount: number;
+  /** @nullable */
+  completedAt?: string | null;
+  /** @nullable */
+  publicToken?: string | null;
   createdVia: CreatedVia;
   /** Nombre del cliente del turno */
   personName?: string;

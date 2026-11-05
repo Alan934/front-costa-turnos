@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { MembershipStatus } from './membershipStatus';
+import type { WaitingRoomStatus } from './waitingRoomStatus';
 
 export interface Membership {
   id: string;
@@ -21,4 +22,9 @@ export interface Membership {
   minBookingHours: number;
   maxBookingDays: number;
   allowProvisionalBookings: boolean;
+  waitingRoomEnabled: boolean;
+  waitingRoomSelfCheckIn: boolean;
+  waitingRoomStatus: WaitingRoomStatus;
+  /** @nullable */
+  waitingRoomNote?: string | null;
 }

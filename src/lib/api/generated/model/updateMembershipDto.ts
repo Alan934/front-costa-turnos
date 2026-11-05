@@ -5,6 +5,7 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { WaitingRoomStatus } from './waitingRoomStatus';
 
 export interface UpdateMembershipDto {
   /**
@@ -18,4 +19,15 @@ export interface UpdateMembershipDto {
   maxBookingDays?: number;
   /** Si es true, un turno reservado sin seña (cuando el servicio admite pago) queda provisional y puede ser desplazado por otro cliente que pague la seña. false (default) = el turno sin seña queda firme. */
   allowProvisionalBookings?: boolean;
+  /** Publica la sala de espera de esta agenda en /r/:slug/sala (la pantalla del QR del local). */
+  waitingRoomEnabled?: boolean;
+  /** Permite que el cliente se anote solo escaneando el QR. Entra como pendiente hasta que el profesional lo acepta. */
+  waitingRoomSelfCheckIn?: boolean;
+  /** Estado que ve el cliente en la pantalla pública: open | paused | closed. */
+  waitingRoomStatus?: WaitingRoomStatus;
+  /**
+   * Aclaración libre para la pantalla pública ("vuelvo 15:30"). null/"" = sin nota.
+   * @nullable
+   */
+  waitingRoomNote?: string | null;
 }
