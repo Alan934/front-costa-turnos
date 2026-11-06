@@ -13,6 +13,7 @@ import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
 import { useAuthRequestClaimCode } from "@/lib/api/generated/endpoints/auth/auth";
 import { homeForUser } from "@/lib/auth-routing";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { ReactNode } from "react";
@@ -36,8 +37,7 @@ export function LoginRegister() {
   const searchParams = useSearchParams();
   const { login, register, registerProfessional, registerComercial } = useAuth();
 
-  const rawNext = searchParams.get("next");
-  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+  const next = safeNextPath(searchParams.get("next"));
 
   // Pre-carga desde una invitación a comercio: email fijo + (opcional) alta de profesional.
   const invitedEmail = searchParams.get("email") ?? "";

@@ -126,6 +126,20 @@ export function initProactiveRefresh() {
   else armProactiveTimer(expiresAt);
 }
 
+/** Relee los tokens de localStorage (los pudo haber renovado otra pestaña). */
+function syncTokensFromStorage() {
+  if (typeof window === "undefined") return;
+  accessToken = localStorage.getItem(TOKEN_KEY);
+  refreshToken = localStorage.getItem(REFRESH_KEY);
+}
+
+// Mantiene sincronizadas las pestañas: si otra renueva o cierra sesión, esta se entera.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === TOKEN_KEY || e.key === REFRESH_KEY || e.key === null) syncTokensFromStorage();
+  });
+}
+
 export function getAccessToken() {
   return accessToken;
 }
@@ -169,6 +183,9 @@ let refreshing: Promise<string | null> | null = null;
  * recursión: si el propio refresh diera 401, no debe intentar refrescarse a sí mismo.
  */
 async function runRefresh(): Promise<string | null> {
+  // El back ROTA el refresh token en cada uso (y revoca la sesión si se reusa uno viejo). Otra
+  // pestaña pudo haberlo renovado: se usa siempre el último guardado, no el de esta memoria.
+  syncTokensFromStorage();
   if (!refreshToken) return null;
   try {
     const res = await axios.post<{
