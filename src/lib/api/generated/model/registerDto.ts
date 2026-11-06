@@ -11,4 +11,6 @@ export interface RegisterDto {
   /** @minLength 8 */
   password: string;
   fullName: string;
+  /** Código de 6 dígitos enviado por email. Solo si el email ya tiene una cuenta pendiente de activar. */
+  verificationCode?: string;
 }
