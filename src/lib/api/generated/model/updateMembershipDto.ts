@@ -25,6 +25,8 @@ export interface UpdateMembershipDto {
   waitingRoomEnabled?: boolean;
   /** Permite que el cliente se anote solo escaneando el QR. Entra como pendiente hasta que el profesional lo acepta. */
   waitingRoomSelfCheckIn?: boolean;
+  /** Al anotarse por el QR el cliente elige el servicio. Apagado (default): solo se anota y el profesional completa el servicio al atenderlo (con un único servicio se asigna solo). */
+  waitingRoomAskService?: boolean;
   /** Estado que ve el cliente en la pantalla pública: open | paused | closed. */
   waitingRoomStatus?: WaitingRoomStatus;
   /**

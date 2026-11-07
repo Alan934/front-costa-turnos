@@ -28,14 +28,20 @@ import { cn } from "@/lib/utils";
  * El cliente se anota en la fila desde su celular. Si ya tiene sesión, el nombre
  * viene precargado y el back cuelga la entrada de su cuenta: es un tap y listo.
  * Al confirmar, se va a su link personal, donde ve su número y cuántos le faltan.
+ *
+ * El servicio solo se pregunta si el profesional lo pidió (`askService`) y ofrece más de uno:
+ * por defecto el cliente solo deja nombre y teléfono, y el profesional completa el servicio al
+ * atenderlo. Con un único servicio no hay nada que elegir (el back lo asigna).
  */
 export function SelfCheckInDialog({
   slug,
   membershipId,
+  askService,
   onClose,
 }: {
   slug: string;
   membershipId: string;
+  askService: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -57,13 +63,25 @@ export function SelfCheckInDialog({
     : {};
 
   // Con varios servicios NO se preselecciona ninguno: con el primero ya marcado es muy fácil
-  // anotarse en uno que no era. Si hay uno solo, no hay nada que elegir.
-  const chosen = serviceId || (services.length === 1 ? services[0].id : "");
-  const canSubmit = !!chosen && fullName.trim().length > 0 && phone.trim().length > 0;
+  // anotarse en uno que no era.
+  const showPicker = askService && services.length > 1;
+  const chosen = showPicker ? serviceId : "";
+  // Si hay que elegir, esperar a saber cuántos servicios hay: antes de cargar no sabemos si el
+  // selector va a aparecer, y anotarse "sin servicio" cuando se pidió elegir da error.
+  const ready = !askService || (!detail.isLoading && services.length > 0);
+  const canSubmit =
+    ready &&
+    (!showPicker || !!chosen) &&
+    fullName.trim().length > 0 &&
+    phone.trim().length > 0;
 
   function submit() {
     checkIn.mutate(
-      { serviceId: chosen, fullName: fullName.trim(), phone: phone.trim() },
+      {
+        ...(chosen ? { serviceId: chosen } : {}),
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+      },
       { onSuccess: (res) => router.push(`/sala/t/${res.token}`) },
     );
   }
@@ -84,38 +102,48 @@ export function SelfCheckInDialog({
         {/* px-6 como el header (sin esto el contenido quedaba pegado a los bordes); el pb suma el
             área segura de abajo para que los botones no queden bajo la barra de gestos. */}
         <div className="space-y-5 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <div>
-            <Label>¿Qué venís a hacerte?{services.length > 1 && !chosen && <span className="ml-1 text-xs font-normal text-muted-foreground">(elegí uno)</span>}</Label>
-            {detail.isLoading ? (
-              <p className="mt-1.5 text-sm text-muted-foreground">Cargando servicios…</p>
-            ) : services.length === 0 ? (
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                No hay servicios disponibles en este momento.
-              </p>
-            ) : (
-              <ul className="mt-1.5 grid gap-1.5">
-                {services.map((s) => (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => setServiceId(s.id)}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
-                        s.id === chosen
-                          ? "border-accent bg-accent/10"
-                          : "border-border hover:border-accent/50",
-                      )}
-                    >
-                      <span className="min-w-0 flex-1 truncate">{titleCaseName(s.name)}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDuration(s.durationMinutes)}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {askService && (
+            <div>
+              <Label>
+                ¿Qué venís a hacerte?
+                {showPicker && !chosen && (
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">(elegí uno)</span>
+                )}
+              </Label>
+              {detail.isLoading ? (
+                <p className="mt-1.5 text-sm text-muted-foreground">Cargando servicios…</p>
+              ) : services.length === 0 ? (
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  No hay servicios disponibles en este momento.
+                </p>
+              ) : showPicker ? (
+                <ul className="mt-1.5 grid gap-1.5">
+                  {services.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => setServiceId(s.id)}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                          s.id === chosen
+                            ? "border-accent bg-accent/10"
+                            : "border-border hover:border-accent/50",
+                        )}
+                      >
+                        <span className="min-w-0 flex-1 truncate">{titleCaseName(s.name)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDuration(s.durationMinutes)}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                // Un único servicio: no hay nada que elegir, solo se informa.
+                <p className="mt-1.5 text-sm">{titleCaseName(services[0].name)}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="checkin-name">Tu nombre</Label>

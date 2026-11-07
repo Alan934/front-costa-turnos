@@ -20,7 +20,8 @@ export interface Appointment {
   membershipId: string;
   staffId: string;
   personId: string;
-  serviceId: string;
+  /** @nullable */
+  serviceId?: string | null;
   startAt: string;
   endAt: string;
   status: AppointmentStatus;

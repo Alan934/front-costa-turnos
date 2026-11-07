@@ -722,6 +722,13 @@ export const handlers: RequestHandler[] = [
   http.post(url("/appointments/walk-in"), () =>
     HttpResponse.json(appointments[0], { status: 201 }),
   ),
+  // Asignar servicio a una entrada de sala que se anotó sin elegir.
+  http.post(url("/appointments/:id/service"), async ({ params, request }) => {
+    const body = (await request.json()) as { serviceId?: string };
+    const appt = appointments.find((a) => a.id === String(params.id));
+    if (appt && body.serviceId) appt.serviceId = body.serviceId;
+    return HttpResponse.json(appt ?? appointments[0], { status: 201 });
+  }),
   http.post(url("/appointments/:id/check-in"), ({ params }) =>
     HttpResponse.json(appointments.find((a) => a.id === String(params.id)) ?? appointments[0]),
   ),
@@ -993,7 +1000,7 @@ export const handlers: RequestHandler[] = [
       .map((a) => ({
         appointmentId: a.id,
         personName: "Cliente",
-        serviceName: svcName(a.serviceId),
+        serviceName: a.serviceId ? svcName(a.serviceId) : "Sin servicio",
         startAt: a.startAt,
         endAt: a.endAt,
         status: a.status,
@@ -1011,7 +1018,7 @@ export const handlers: RequestHandler[] = [
         paymentId: p.id,
         appointmentId: apptId ?? null,
         personName: "Cliente",
-        serviceName: appt ? svcName(appt.serviceId) : "Servicio",
+        serviceName: appt?.serviceId ? svcName(appt.serviceId) : "Sin servicio",
         amountCents: p.amountCents,
         status: p.status,
         appointmentStartAt: appt?.startAt ?? null,

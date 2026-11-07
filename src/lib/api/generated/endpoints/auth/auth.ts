@@ -28,6 +28,7 @@ import type {
   AuthMeDto,
   AuthTokensDto,
   ClaimAccountDto,
+  GoogleExchangeDto,
   LoginDto,
   RefreshDto,
   RegisterComercialDto,
@@ -707,6 +708,70 @@ export function useAuthGoogleCallback<TData = Awaited<ReturnType<typeof authGoog
 
 
 /**
+ * @summary Canjear el código del login con Google por tokens
+ */
+export const authGoogleExchange = (
+    googleExchangeDto: BodyType<GoogleExchangeDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AuthTokensDto>(
+      {url: `/auth/google/exchange`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: googleExchangeDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAuthGoogleExchangeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authGoogleExchange>>, TError,{data: BodyType<GoogleExchangeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authGoogleExchange>>, TError,{data: BodyType<GoogleExchangeDto>}, TContext> => {
+
+const mutationKey = ['authGoogleExchange'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authGoogleExchange>>, {data: BodyType<GoogleExchangeDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authGoogleExchange(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthGoogleExchangeMutationResult = NonNullable<Awaited<ReturnType<typeof authGoogleExchange>>>
+    export type AuthGoogleExchangeMutationBody = BodyType<GoogleExchangeDto>
+    export type AuthGoogleExchangeMutationError = ErrorType<void>
+
+    /**
+ * @summary Canjear el código del login con Google por tokens
+ */
+export const useAuthGoogleExchange = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authGoogleExchange>>, TError,{data: BodyType<GoogleExchangeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authGoogleExchange>>,
+        TError,
+        {data: BodyType<GoogleExchangeDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthGoogleExchangeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Solicitar codigo para reclamar cuenta
  */
 export const authRequestClaimCode = (

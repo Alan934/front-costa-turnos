@@ -16,6 +16,6 @@ export interface RegisterComercialDto {
   slug: string;
   address?: string;
   timezone?: string;
-  /** Código de 6 dígitos enviado por email. Solo si el email ya tiene una cuenta pendiente de activar. */
+  /** Código de 6 dígitos enviado por email. Obligatorio solo si el email ya tiene una cuenta pendiente de activar (creada por un tercero): prueba que el email es del que se registra. */
   verificationCode?: string;
 }

@@ -29,6 +29,7 @@ import type {
   AppointmentsListParams,
   AppointmentsWaitingRoomParams,
   AppointmentsWaitingRoomStatsParams,
+  AssignServiceDto,
   BookAppointmentDto,
   BookWithDepositDto,
   BookWithDepositResultDto,
@@ -723,6 +724,72 @@ export const useAppointmentsSendToBack = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAppointmentsSendToBackMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Para quien se anotó sin elegir servicio (o para corregirlo): el profesional lo completa al atenderlo o cobrarlo. Solo entradas de sala (walk-in); el servicio debe ser uno activo suyo.
+ * @summary Asignar el servicio a una entrada de la sala
+ */
+export const appointmentsAssignService = (
+    id: string,
+    assignServiceDto: BodyType<AssignServiceDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/service`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: assignServiceDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsAssignServiceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsAssignService>>, TError,{id: string;data: BodyType<AssignServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsAssignService>>, TError,{id: string;data: BodyType<AssignServiceDto>}, TContext> => {
+
+const mutationKey = ['appointmentsAssignService'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsAssignService>>, {id: string;data: BodyType<AssignServiceDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsAssignService(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsAssignServiceMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsAssignService>>>
+    export type AppointmentsAssignServiceMutationBody = BodyType<AssignServiceDto>
+    export type AppointmentsAssignServiceMutationError = ErrorType<void>
+
+    /**
+ * @summary Asignar el servicio a una entrada de la sala
+ */
+export const useAppointmentsAssignService = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsAssignService>>, TError,{id: string;data: BodyType<AssignServiceDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsAssignService>>,
+        TError,
+        {id: string;data: BodyType<AssignServiceDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsAssignServiceMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

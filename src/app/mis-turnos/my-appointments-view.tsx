@@ -529,7 +529,11 @@ function RescheduleDialog({
   }, [days]);
 
   // Solo pedimos slots/disponibilidad mientras el diálogo está abierto.
-  const slotsParams = open ? { serviceId: appt.serviceId, from: range.from, to: range.to } : null;
+  // (Sin servicio no hay qué consultar: es una entrada de sala que el profesional todavía no completó.)
+  const slotsParams =
+    open && appt.serviceId
+      ? { serviceId: appt.serviceId, from: range.from, to: range.to }
+      : null;
   const { data: slots, isLoading, isError, refetch } = usePublicProfessionalSlots(
     appt.business.slug,
     appt.membershipId,

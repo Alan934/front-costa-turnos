@@ -11,12 +11,12 @@ export interface RegisterProfessionalDto {
   /** @minLength 8 */
   password: string;
   fullName: string;
+  /** Código de 6 dígitos enviado por email. Obligatorio solo si el email ya tiene una cuenta pendiente de activar (creada por un tercero): prueba que el email es del que se registra. */
+  verificationCode?: string;
   /** nombre visible del profesional */
   businessName: string;
   /** slug único para su página propia */
   slug: string;
   timezone?: string;
   address?: string;
-  /** Código de 6 dígitos enviado por email. Solo si el email ya tiene una cuenta pendiente de activar. */
-  verificationCode?: string;
 }

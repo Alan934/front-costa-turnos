@@ -21,6 +21,8 @@ export interface WaitingRoomDto {
   selfCheckInEnabled: boolean;
   /** Se puede anotar AHORA: self check-in habilitado, sala no cerrada y, si el profesional define franjas por orden de llegada, dentro de una de ellas. Es lo que decide si se muestra el botón "Anotarme". */
   selfCheckInOpen: boolean;
+  /** Al anotarse, el cliente elige el servicio. false (default) = solo se anota; el profesional lo completa después (si ofrece un único servicio activo, se asigna solo). */
+  selfCheckInAskService: boolean;
   /** Cuándo atiende por orden de llegada (franjas de hoy, próxima franja, etc.). */
   attendance: WalkInStatusDto;
   /** @nullable */
