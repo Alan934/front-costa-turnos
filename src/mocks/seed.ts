@@ -489,7 +489,8 @@ export function buildWaitingRoom(staffId: string): WaitingRoomDto {
     position: idx,
     etaMinutes: idx * 30,
     status: a.status,
-    serviceName: services.find((s) => s.id === a.serviceId)?.name ?? "Servicio",
+    serviceId: a.serviceId ?? null,
+    serviceName: services.find((s) => s.id === a.serviceId)?.name ?? "Sin servicio",
     startAt: a.startAt,
     checkedInAt: a.startAt,
     isWalkIn: a.createdVia === CreatedVia.walk_in,
@@ -509,6 +510,7 @@ export function buildWaitingRoom(staffId: string): WaitingRoomDto {
     note: null,
     selfCheckInEnabled: true,
     selfCheckInOpen: true,
+    selfCheckInAskService: false,
     attendance: {
       walkInOnly: false,
       hasSchedule: false,

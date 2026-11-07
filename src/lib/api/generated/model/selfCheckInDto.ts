@@ -7,7 +7,8 @@
  */
 
 export interface SelfCheckInDto {
-  serviceId: string;
+  /** Requerido solo si la sala pide elegir servicio (`selfCheckInAskService`). */
+  serviceId?: string;
   fullName: string;
   /** Celular de 10 dígitos: característica + número, sin 0/15/+54. Ej: 2612465120 */
   phone: string;

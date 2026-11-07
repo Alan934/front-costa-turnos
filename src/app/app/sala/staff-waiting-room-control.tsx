@@ -26,6 +26,7 @@ import {
   Hourglass,
   Wallet,
   CalendarClock,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -33,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { QrCard } from "@/components/qr-card";
 import { ChargeDialog } from "@/components/charge-dialog";
+import { AssignServiceDialog } from "@/components/assign-service-dialog";
 import { PUBLIC_HOST } from "@/components/public-page-link";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
@@ -154,6 +156,13 @@ function RoomBoard({
   const [showQr, setShowQr] = useState(false);
   // Turno que se está cobrando (se abre solo al terminar una atención).
   const [charging, setCharging] = useState<{ id: string; name: string } | null>(null);
+  // Entrada a la que hay que ponerle servicio (se anotó sin elegir). `thenComplete`: venía de
+  // "Terminé y cobrar", así que al confirmar sigue con el cierre y el cobro.
+  const [assigning, setAssigning] = useState<{
+    id: string;
+    name: string;
+    thenComplete: boolean;
+  } | null>(null);
   const now = useNow();
 
   const servicesQuery = useServices();
@@ -257,7 +266,9 @@ function RoomBoard({
               ? [
                   "Abrí la cámara de tu celular y apuntá al código QR.",
                   "Tocá el aviso o el link que aparece en pantalla.",
-                  "Tocá «Anotarme en la fila», elegí qué venís a hacerte y poné tu nombre y teléfono.",
+                  room.selfCheckInAskService
+                    ? "Tocá «Anotarme en la fila», elegí qué venís a hacerte y poné tu nombre y teléfono."
+                    : "Tocá «Anotarme en la fila» y poné tu nombre y teléfono.",
                   "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
                   "Cuando te llamen, pasá. Podés dejar el celular a mano: la pantalla se actualiza sola.",
                 ]
@@ -332,12 +343,36 @@ function RoomBoard({
               </p>
               <p className="text-sm text-status-serving-foreground/80">
                 {titleCaseName(serving.serviceName)}
+                {!serving.serviceId && (
+                  <button
+                    type="button"
+                    className="ml-2 font-medium underline underline-offset-2"
+                    onClick={() =>
+                      setAssigning({
+                        id: serving.appointmentId,
+                        name: serving.displayName,
+                        thenComplete: false,
+                      })
+                    }
+                  >
+                    Elegir servicio
+                  </button>
+                )}
               </p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
-              onClick={() => doComplete(serving.appointmentId, serving.displayName)}
+              onClick={() =>
+                // Sin servicio no hay precio que cobrar: se pide justo antes de cerrar.
+                serving.serviceId
+                  ? doComplete(serving.appointmentId, serving.displayName)
+                  : setAssigning({
+                      id: serving.appointmentId,
+                      name: serving.displayName,
+                      thenComplete: true,
+                    })
+              }
               disabled={busy}
             >
               {complete.isPending ? <Spinner /> : <Check className="size-4" />}
@@ -421,6 +456,13 @@ function RoomBoard({
                   )
                 }
                 onRemove={() => undoCheckIn.mutate({ id: item.appointmentId }, done)}
+                onAssignService={() =>
+                  setAssigning({
+                    id: item.appointmentId,
+                    name: item.displayName,
+                    thenComplete: false,
+                  })
+                }
               />
             ))}
           </ol>
@@ -437,6 +479,21 @@ function RoomBoard({
           onAdded={() => {
             setAdding(false);
             invalidate();
+          }}
+        />
+      )}
+
+      {assigning && (
+        <AssignServiceDialog
+          appointmentId={assigning.id}
+          clientName={assigning.name}
+          services={services}
+          onClose={() => setAssigning(null)}
+          onAssigned={() => {
+            const { id, name, thenComplete } = assigning;
+            setAssigning(null);
+            invalidate();
+            if (thenComplete) doComplete(id, name);
           }}
         />
       )}
@@ -640,18 +697,39 @@ function RoomStatusBar({
         ))}
       </div>
 
-      <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-        <input
-          type="checkbox"
-          className="size-4 accent-[var(--accent)]"
-          checked={room.selfCheckInEnabled}
-          disabled={update.isPending}
-          onChange={(e) =>
-            update.mutate({ waitingRoomSelfCheckIn: e.target.checked }, { onSuccess: onChanged })
-          }
-        />
-        Dejar que se anoten con el QR
-      </label>
+      <div className="ml-auto flex flex-col gap-1.5">
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            className="size-4 accent-[var(--accent)]"
+            checked={room.selfCheckInEnabled}
+            disabled={update.isPending}
+            onChange={(e) =>
+              update.mutate({ waitingRoomSelfCheckIn: e.target.checked }, { onSuccess: onChanged })
+            }
+          />
+          Dejar que se anoten con el QR
+        </label>
+        {/* Por defecto el cliente solo se anota; el servicio lo completa el profesional. Aplica a
+            todos los clientes de este profesional. Sin el self check-in no hay nada que elegir. */}
+        {room.selfCheckInEnabled && (
+          <label
+            className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
+            title="Apagado: el cliente solo se anota y vos elegís el servicio al atenderlo. Con un único servicio se asigna solo."
+          >
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--accent)]"
+              checked={room.selfCheckInAskService}
+              disabled={update.isPending}
+              onChange={(e) =>
+                update.mutate({ waitingRoomAskService: e.target.checked }, { onSuccess: onChanged })
+              }
+            />
+            Que el cliente elija el servicio
+          </label>
+        )}
+      </div>
     </div>
   );
 }
@@ -667,6 +745,7 @@ function QueueRow({
   onMove,
   onPriority,
   onRemove,
+  onAssignService,
 }: {
   item: WaitingItemDto;
   isFirst: boolean;
@@ -678,6 +757,7 @@ function QueueRow({
   onMove: (direction: "up" | "down") => void;
   onPriority: () => void;
   onRemove: () => void;
+  onAssignService: () => void;
 }) {
   const away = !!item.awayUntil;
   return (
@@ -733,6 +813,18 @@ function QueueRow({
           <PlayCircle className="size-4" />
           Atender
         </Button>
+        {!item.serviceId && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onAssignService}
+            disabled={busy}
+            title="Todavía no eligió servicio: definilo para calcular precio y espera"
+          >
+            <Tag className="size-4" />
+            Elegir servicio
+          </Button>
+        )}
         <span className="mx-1 h-5 w-px bg-border" />
         <IconBtn label="Subir un lugar" onClick={() => onMove("up")} disabled={busy || isFirst}>
           <ArrowUp className="size-4" />

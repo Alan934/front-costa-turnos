@@ -7,6 +7,9 @@
  */
 
 export type FilesUploadParams = {
+/**
+ * Tipo de dueño (service, professional_logo, client_ficha…)
+ */
 ownerType: string;
 ownerId: string;
 };

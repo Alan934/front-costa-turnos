@@ -25,6 +25,7 @@ export interface Membership {
   walkInOnly: boolean;
   waitingRoomEnabled: boolean;
   waitingRoomSelfCheckIn: boolean;
+  waitingRoomAskService: boolean;
   waitingRoomStatus: WaitingRoomStatus;
   /** @nullable */
   waitingRoomNote?: string | null;

@@ -121,7 +121,7 @@ export function AppointmentDetail({
         </DialogHeader>
 
         <div className="space-y-3 px-6">
-          <Row label="Servicio" value={service?.name ?? "—"} />
+          <Row label="Servicio" value={service?.name ?? "Sin servicio"} />
           <Row label="Profesional" value={staffName} />
           <Row
             label="Cuándo"

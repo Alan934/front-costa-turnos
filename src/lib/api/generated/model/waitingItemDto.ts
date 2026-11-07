@@ -18,6 +18,12 @@ export interface WaitingItemDto {
   /** Minutos estimados hasta que le toque. */
   etaMinutes: number;
   status: AppointmentStatus;
+  /**
+   * Null = se anotó sin elegir servicio (el profesional lo asigna al atenderlo).
+   * @nullable
+   */
+  serviceId?: string | null;
+  /** "Sin servicio" si todavía no se asignó. */
   serviceName: string;
   startAt: string;
   /** @nullable */
