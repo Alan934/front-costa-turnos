@@ -251,6 +251,23 @@ function RoomBoard({
           url={publicUrl}
           title="Pantalla pública de la sala"
           hint="Imprimí este QR y colgalo en el local: quien lo escanee ve la fila en vivo y cuántos tiene delante."
+          printTitle="Sala de espera"
+          printSteps={
+            room.selfCheckInEnabled
+              ? [
+                  "Abrí la cámara de tu celular y apuntá al código QR.",
+                  "Tocá el aviso o el link que aparece en pantalla.",
+                  "Tocá «Anotarme en la fila», elegí qué venís a hacerte y poné tu nombre y teléfono.",
+                  "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
+                  "Cuando te llamen, pasá. Podés dejar el celular a mano: la pantalla se actualiza sola.",
+                ]
+              : [
+                  "Abrí la cámara de tu celular y apuntá al código QR.",
+                  "Tocá el aviso o el link que aparece en pantalla.",
+                  "Mirá quién está siendo atendido y cuántas personas esperan.",
+                  "Cuando sea tu turno, el local te va a llamar.",
+                ]
+          }
         />
       )}
 
