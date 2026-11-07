@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { LogoMark } from "@/components/logo";
 import { useAuth } from "@/components/auth-provider";
 import { homeForUser } from "@/lib/auth-routing";
-import { setAccessToken, setRefreshToken } from "@/lib/api/axios-instance";
+import { axiosInstance, setAuthTokens } from "@/lib/api/axios-instance";
 
 /**
- * Aterrizaje del login con Google. El backend redirige a
- * `/auth/callback?access_token=...&refresh_token=...`. Guardamos el token, refrescamos la
- * sesión y derivamos según el rol.
+ * Aterrizaje del login con Google. El backend redirige a `/auth/callback?code=...` con un
+ * código opaco de un solo uso (los tokens NO viajan en la URL: quedarían en el historial, en
+ * logs y en el Referer). Lo canjeamos por los tokens con POST /auth/google/exchange, refrescamos
+ * la sesión y derivamos según el rol.
  */
 export function AuthCallback() {
   const router = useRouter();
@@ -23,17 +24,21 @@ export function AuthCallback() {
     if (done.current) return;
     done.current = true;
 
-    const accessToken = params.get("access_token");
-    if (!accessToken) {
+    const code = params.get("code");
+    // Saca el código de la URL ya mismo (historial / barra de direcciones).
+    window.history.replaceState(null, "", window.location.pathname);
+    if (!code) {
       setFailed(true);
       return;
     }
-    setAccessToken(accessToken);
-    const refreshToken = params.get("refresh_token");
-    if (refreshToken) setRefreshToken(refreshToken);
-    refresh()
-      .then(() => {
-        // El routeo definitivo lo hace el efecto de abajo cuando `user` esté disponible.
+    axiosInstance
+      .post<{ accessToken: string; refreshToken?: string; expiresIn?: string }>(
+        "/auth/google/exchange",
+        { code },
+      )
+      .then((res) => {
+        setAuthTokens(res.data);
+        return refresh();
       })
       .catch(() => setFailed(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps

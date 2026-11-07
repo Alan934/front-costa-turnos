@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
+import { useAuthRequestClaimCode } from "@/lib/api/generated/endpoints/auth/auth";
 import { homeForUser } from "@/lib/auth-routing";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { ReactNode } from "react";
@@ -35,8 +37,7 @@ export function LoginRegister() {
   const searchParams = useSearchParams();
   const { login, register, registerProfessional, registerComercial } = useAuth();
 
-  const rawNext = searchParams.get("next");
-  const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+  const next = safeNextPath(searchParams.get("next"));
 
   // Pre-carga desde una invitación a comercio: email fijo + (opcional) alta de profesional.
   const invitedEmail = searchParams.get("email") ?? "";
@@ -58,6 +59,23 @@ export function LoginRegister() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [address, setAddress] = useState("");
   const [error, setError] = useState<ReactNode>(null);
+  // Si el email tiene una cuenta pendiente de activar (la creó un profesional), el back manda un
+  // código por mail y hay que ingresarlo para tomarla: prueba que el email es de quien se registra.
+  const [needsCode, setNeedsCode] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [info, setInfo] = useState<string | null>(null);
+  const requestClaimCode = useAuthRequestClaimCode();
+
+  function resendCode() {
+    setError(null);
+    requestClaimCode.mutate(
+      { data: { email } },
+      {
+        onSuccess: () => setInfo("Listo, te mandamos un código nuevo. Puede tardar un minuto."),
+        onError: () => setError("No pudimos reenviar el código. Probá de nuevo en un momento."),
+      },
+    );
+  }
   const [submitting, setSubmitting] = useState(false);
 
   // El nombre del negocio (pro o comercio) genera el slug automáticamente.
@@ -81,7 +99,9 @@ export function LoginRegister() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setSubmitting(true);
+    const code = needsCode && verificationCode.length === 6 ? verificationCode : undefined;
     try {
       if (tab === "registro" && regType === "profesional") {
         await registerProfessional({
@@ -92,6 +112,7 @@ export function LoginRegister() {
           slug,
           timezone: DEFAULT_TZ,
           address: address.trim() || undefined,
+          verificationCode: code,
         });
         router.replace(next ?? "/app");
         return;
@@ -104,23 +125,32 @@ export function LoginRegister() {
           slug,
           timezone: DEFAULT_TZ,
           address: address.trim() || undefined,
+          verificationCode: code,
         });
         router.replace(next ?? "/comercio");
         return;
       }
       if (tab === "registro") {
-        const user = await register({ email, password, fullName });
+        const user = await register({ email, password, fullName, verificationCode: code });
         router.replace(next ?? homeForUser(user));
         return;
       }
       const user = await login({ email, password });
       router.replace(next ?? homeForUser(user));
     } catch (err) {
-      const ax = err as AxiosError<{ message?: string }>;
+      const ax = err as AxiosError<{ message?: string; error?: string }>;
       const status = ax.response?.status;
       const message = ax.response?.data?.message ?? "";
       if (tab === "login") {
         setError("Email o contraseña incorrectos.");
+      } else if (status === 409 && ax.response?.data?.error === "claim_required") {
+        setNeedsCode(true);
+        setVerificationCode("");
+        setInfo(
+          "Ese email ya tiene una cuenta pendiente de activar. Te mandamos un código de 6 dígitos para confirmar que es tuyo: ingresalo abajo.",
+        );
+      } else if (needsCode && status === 400 && /codigo|código/i.test(message)) {
+        setError("El código es incorrecto o venció. Pedí uno nuevo y probá de nuevo.");
       } else if (status === 409 || (status === 400 && /existe|registrad|ya.*email|email.*ya/i.test(message))) {
         setError(<EmailExistsHelp />);
       } else {
@@ -339,6 +369,41 @@ export function LoginRegister() {
               </div>
             )}
           </>
+        )}
+
+        {needsCode && (
+          <div>
+            <Label htmlFor="verificationCode">Código que te enviamos por email</Label>
+            <Input
+              id="verificationCode"
+              className="mt-1.5 tracking-widest"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value.replace(/D/g, "").slice(0, 6))}
+              placeholder="123456"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              required
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              ¿No llegó?{" "}
+              <button
+                type="button"
+                onClick={resendCode}
+                disabled={requestClaimCode.isPending}
+                className="font-medium text-accent hover:underline disabled:opacity-60"
+              >
+                Reenviar código
+              </button>{" "}
+              (podés pedir uno nuevo cada minuto).
+            </p>
+          </div>
+        )}
+
+        {info && (
+          <div className="rounded-lg border border-accent/30 bg-accent/5 p-3 text-sm text-foreground">
+            {info}
+          </div>
         )}
 
         {error && (

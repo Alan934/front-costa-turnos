@@ -284,6 +284,21 @@
   }
 }
 
+/* Hoja imprimible del QR (components/qr-card.tsx). Fuera de @layer a propósito: tiene que
+   ganarle a las utilidades de Tailwind (`flex`, etc.) y a cualquier estilo de la pantalla.
+   En pantalla no existe; al imprimir con `body.printing-qr` es lo único que queda. */
+.qr-print-sheet {
+  display: none;
+}
+@media print {
+  body.printing-qr > *:not(.qr-print-sheet) {
+    display: none !important;
+  }
+  body.printing-qr > .qr-print-sheet {
+    display: flex !important;
+  }
+}
+
 @layer utilities {
   @keyframes rise-in {
     from { opacity: 0; transform: translateY(10px); }
