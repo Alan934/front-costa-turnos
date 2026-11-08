@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Users,
   Clock3,
@@ -11,6 +11,7 @@ import {
   Bell,
   BellRing,
   BellOff,
+  Volume2,
   Hand,
   DoorOpen,
   LogOut,
@@ -32,6 +33,13 @@ import {
   useUnsubscribeSpotPush,
 } from "@/lib/api/sala";
 import { pushSupport, subscribeBrowser, unsubscribeBrowser } from "@/lib/push";
+import {
+  armAttention,
+  beep,
+  isAttentionArmed,
+  startRinging,
+  stopRinging,
+} from "@/lib/attention";
 import { usePushPublicKey } from "@/lib/api/sala";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { formatTime, formatRelativeMinutes, titleCaseName } from "@/lib/format";
@@ -69,11 +77,44 @@ export function ClientWaitingSpot({ token }: { token: string }) {
     };
   }, [spot?.me]);
 
-  // Vibración al ser llamado (Android; iOS no la soporta, ahí avisa el push).
+  // Aviso dentro de la página, sin depender del permiso de notificaciones (que el cliente puede
+  // tener bloqueado): al ser llamado suena y vibra hasta que toque "Ya voy" (Android vibra; iOS
+  // no, ahí queda el sonido). El audio solo suena si antes tocó "Activar sonido".
   const calledAt = spot?.me?.calledAt ?? null;
+  const beingServed = spot?.me?.status === AppointmentStatus.in_progress;
+  const alerting = !!calledAt || beingServed;
+  const [silencedFor, setSilencedFor] = useState<string | null>(null);
+  const alertKey = alerting ? `${calledAt ?? "serving"}` : null;
+  const ringing = alertKey !== null && silencedFor !== alertKey;
+
   useEffect(() => {
-    if (calledAt && "vibrate" in navigator) navigator.vibrate([300, 150, 300, 150, 300]);
-  }, [calledAt]);
+    if (!ringing) return;
+    return startRinging();
+  }, [ringing]);
+
+  // Título parpadeante: se nota desde otra pestaña o con el celular apoyado.
+  useEffect(() => {
+    if (!ringing) return;
+    const original = document.title;
+    let on = false;
+    const t = setInterval(() => {
+      on = !on;
+      document.title = on ? "🔔 ¡PASÁ AHORA!" : "¡Te llaman!";
+    }, 1000);
+    return () => {
+      clearInterval(t);
+      document.title = original;
+    };
+  }, [ringing]);
+
+  // "Sos el siguiente": un aviso corto, una sola vez por cambio de posición.
+  const position = spot?.me?.position;
+  const isWaiting = !!spot?.me && !alerting && spot.me.status !== AppointmentStatus.requested;
+  const prevPosition = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (isWaiting && position === 0 && prevPosition.current !== 0) beep();
+    prevPosition.current = isWaiting ? position : undefined;
+  }, [isWaiting, position]);
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pb-10">
@@ -98,6 +139,20 @@ export function ClientWaitingSpot({ token }: { token: string }) {
       )}
 
       {isLoading && <SpotSkeleton />}
+
+      {ringing && (
+        <button
+          type="button"
+          onClick={() => {
+            stopRinging();
+            setSilencedFor(alertKey);
+          }}
+          className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 font-display text-lg font-semibold text-accent-foreground animate-pulse"
+        >
+          <BellRing className="size-5" />
+          ¡Te llaman! Tocá para silenciar
+        </button>
+      )}
 
       {!isLoading && !isError && spot && <SpotContent spot={spot} token={token} />}
     </div>
@@ -189,6 +244,7 @@ function SpotContent({ spot, token }: { spot: MyWaitingSpotDto; token: string })
       <DelayNotice minutes={room.delayMinutes} audience="client" className="mt-4" />
 
       <PushCard spot={spot} token={token} />
+      <SoundCard />
 
       <div className="mt-6">
         <p className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -268,7 +324,17 @@ function PushCard({ spot, token }: { spot: MyWaitingSpotDto; token: string }) {
   const [support, setSupport] = useState<ReturnType<typeof pushSupport>>("unsupported");
   const [failed, setFailed] = useState(false);
 
-  useEffect(() => setSupport(pushSupport()), []);
+  // Si desbloquea las notificaciones desde el candado, lo detectamos al volver a la pestaña.
+  useEffect(() => {
+    setSupport(pushSupport());
+    const recheck = () => setSupport(pushSupport());
+    document.addEventListener("visibilitychange", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      document.removeEventListener("visibilitychange", recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, []);
 
   if (!spot.pushEnabled || !publicKey.data?.enabled) return null;
 
@@ -297,16 +363,17 @@ function PushCard({ spot, token }: { spot: MyWaitingSpotDto; token: string }) {
   if (support === "unsupported") {
     return (
       <p className="mt-4 rounded-2xl bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
-        Tu navegador no permite avisos. Dejá esta pantalla abierta: se actualiza sola. En iPhone,
-        agregala a la pantalla de inicio para poder recibir avisos.
+        Tu navegador no permite avisos con la pantalla cerrada. Activá el sonido de acá abajo y
+        dejá esta pantalla abierta: te avisamos con sonido y vibración. En iPhone, agregala a la
+        pantalla de inicio para recibir avisos también con la pantalla cerrada.
       </p>
     );
   }
   if (support === "denied") {
     return (
       <p className="mt-4 rounded-2xl bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
-        Bloqueaste las notificaciones de este sitio. Podés habilitarlas desde el candado de la barra
-        de direcciones.
+        Las notificaciones de este sitio están bloqueadas. Podés habilitarlas desde el candado de la
+        barra de direcciones, o activar el sonido de acá abajo y dejar esta pantalla abierta.
       </p>
     );
   }
@@ -333,6 +400,49 @@ function PushCard({ spot, token }: { spot: MyWaitingSpotDto; token: string }) {
           No pudimos activar los avisos. Probá de nuevo.
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Alternativa a las notificaciones del navegador: sonido y vibración con la página abierta. No
+ * pide ningún permiso, así que sirve aunque las notificaciones estén bloqueadas. Hay que tocarlo
+ * una vez porque el navegador no deja sonar nada sin un toque previo.
+ */
+function SoundCard() {
+  const [armed, setArmed] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => setArmed(isAttentionArmed()), []);
+
+  if (armed) {
+    return (
+      <p className="mt-3 flex items-center gap-2 rounded-2xl bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
+        <Volume2 className="size-4 shrink-0 text-accent" />
+        Sonido activado: vas a escuchar un aviso cuando te llamen. Subí el volumen y no cierres esta
+        pestaña.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3">
+      <Button
+        className="w-full"
+        variant="outline"
+        onClick={async () => {
+          const ok = await armAttention();
+          setArmed(ok);
+          setFailed(!ok);
+        }}
+      >
+        <Volume2 className="size-4" />
+        Activar sonido y vibración
+      </Button>
+      <p className="mt-1.5 text-center text-xs text-muted-foreground">
+        {failed
+          ? "Tu navegador no dejó activar el sonido. Dejá la pantalla abierta y mirala de vez en cuando."
+          : "Suena y vibra cuando te llamen, sin pedir permisos. Dejá esta pantalla abierta."}
+      </p>
     </div>
   );
 }

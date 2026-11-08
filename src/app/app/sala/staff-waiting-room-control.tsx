@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -19,6 +19,8 @@ import {
   BellRing,
   Bell,
   BellOff,
+  Volume2,
+  MessageCircle,
   ArrowUp,
   ArrowDown,
   Siren,
@@ -42,6 +44,8 @@ import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
 import { useServices } from "@/lib/api/catalog";
 import { usePushPublicKey, useSubscribeProPush } from "@/lib/api/sala";
 import { currentEndpoint, pushSupport, subscribeBrowser } from "@/lib/push";
+import { armAttention, beep, isAttentionArmed } from "@/lib/attention";
+import { whatsAppLink } from "@/lib/whatsapp";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import {
   useAppointmentsStart,
@@ -54,6 +58,7 @@ import {
   useAppointmentsSendToBack,
   useAppointmentsMove,
   useAppointmentsPriority,
+  useAppointmentsGet,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useWaitingRoom, type ConnectionState } from "@/lib/realtime/use-waiting-room";
 import { WaitingRoomStatus } from "@/lib/api/generated/model/waitingRoomStatus";
@@ -165,6 +170,15 @@ function RoomBoard({
     thenComplete: boolean;
   } | null>(null);
   const now = useNow();
+
+  // Aviso sonoro cuando entra alguien nuevo por QR: sirve aunque las notificaciones del
+  // navegador estén bloqueadas (si el audio no se activó, simplemente no suena).
+  const pendingCount = room?.pending.length ?? 0;
+  const prevPending = useRef<number | null>(null);
+  useEffect(() => {
+    if (room && prevPending.current !== null && pendingCount > prevPending.current) beep();
+    prevPending.current = room ? pendingCount : null;
+  }, [room, pendingCount]);
 
   const servicesQuery = useServices();
   // El walk-in se crea en el comercio activo: solo sus servicios activos.
@@ -409,6 +423,7 @@ function RoomBoard({
           key={item.appointmentId}
           item={item}
           now={now}
+          staffName={room.staffName}
           busy={busy}
           canStart={!serving}
           onStart={() => start.mutate({ id: item.appointmentId }, done)}
@@ -450,6 +465,7 @@ function RoomBoard({
               <QueueRow
                 key={item.appointmentId}
                 item={item}
+                staffName={room.staffName}
                 isFirst={i === 0}
                 isLast={i === room.queue.length - 1}
                 busy={busy}
@@ -562,6 +578,7 @@ function AttendanceInfo({ room }: { room: WaitingRoomDto }) {
 function CalledPanel({
   item,
   now,
+  staffName,
   busy,
   canStart,
   onStart,
@@ -572,6 +589,7 @@ function CalledPanel({
 }: {
   item: WaitingItemDto;
   now: number;
+  staffName: string;
   busy: boolean;
   canStart: boolean;
   onStart: () => void;
@@ -638,7 +656,57 @@ function CalledPanel({
           No vino
         </Button>
       </div>
+      <div className="mt-2">
+        <WhatsAppNotify item={item} staffName={staffName} label="Avisarle por WhatsApp" />
+      </div>
     </div>
+  );
+}
+
+/**
+ * Avisarle al cliente por WhatsApp desde el celular del profesional: abre `wa.me` con el mensaje ya
+ * escrito y el profesional toca "Enviar" (el navegador no puede mandarlo solo). Sirve de respaldo
+ * cuando el cliente tiene las notificaciones bloqueadas o ya cerró la pantalla.
+ * El teléfono no viaja en la sala (es pública): se pide aparte, solo para quien se va a avisar. Es
+ * un <a> y no un botón con fetch al hacer clic, porque los navegadores bloquean abrir ventanas
+ * después de una espera.
+ */
+function WhatsAppNotify({
+  item,
+  staffName,
+  label = "Avisar por WhatsApp",
+}: {
+  item: WaitingItemDto;
+  staffName: string;
+  label?: string;
+}) {
+  const appt = useAppointmentsGet(item.appointmentId, { query: { staleTime: 60_000 } });
+  const phone = appt.data?.personPhone;
+  if (!phone) return null; // sin teléfono cargado no hay a quién escribirle
+
+  const name = titleCaseName(item.displayName);
+  const staff = titleCaseName(staffName);
+  const link = appt.data?.publicToken
+    ? `\n\nSeguí tu lugar acá: https://${PUBLIC_HOST}/sala/t/${appt.data.publicToken}`
+    : "";
+  const text = item.calledAt
+    ? `¡Hola ${name}! ${staff} te está llamando. Pasá ahora, tu número es el #${item.ticketNumber}.${link}`
+    : item.position === 0
+      ? `¡Hola ${name}! Sos el siguiente con ${staff}. Andá acercándote.${link}`
+      : `¡Hola ${name}! Hay ${item.position} ${item.position === 1 ? "persona" : "personas"} antes que vos con ${staff} (aprox. ${item.etaMinutes} min). Andá acercándote.${link}`;
+
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+      title="Se abre WhatsApp con el mensaje escrito: solo tenés que tocar Enviar"
+    >
+      <a href={whatsAppLink(phone, text)} target="_blank" rel="noopener noreferrer">
+        <MessageCircle className="size-4 text-accent" />
+        {label}
+      </a>
+    </Button>
   );
 }
 
@@ -647,16 +715,37 @@ function ProPushButton() {
   const publicKey = usePushPublicKey();
   const subscribe = useSubscribeProPush();
   const [on, setOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
   const [support, setSupport] = useState<ReturnType<typeof pushSupport>>("unsupported");
 
   useEffect(() => {
+    setSoundOn(isAttentionArmed());
     setSupport(pushSupport());
     void currentEndpoint().then((ep) => setOn(!!ep && Notification.permission === "granted"));
   }, []);
 
-  if (!publicKey.data?.enabled || support === "unsupported") return null;
+  // Notificaciones bloqueadas o sin soporte: queda el aviso sonoro con la pantalla abierta.
+  if (support === "unsupported" || support === "denied" || !publicKey.data?.enabled) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={async () => setSoundOn(await armAttention())}
+        disabled={soundOn}
+        title={
+          support === "denied"
+            ? "Bloqueaste las notificaciones del navegador: avisamos con sonido mientras esta pantalla esté abierta"
+            : "Suena un aviso cuando alguien se anota, mientras esta pantalla esté abierta"
+        }
+      >
+        <Volume2 className="size-4" />
+        {soundOn ? "Sonido activo" : "Activar sonido"}
+      </Button>
+    );
+  }
 
   async function enable() {
+    void armAttention(); // además de la notificación, deja listo el sonido
     try {
       const sub = await subscribeBrowser(publicKey.data!.publicKey);
       subscribe.mutate(sub, { onSuccess: () => setOn(true) });
@@ -670,13 +759,11 @@ function ProPushButton() {
       variant="outline"
       size="sm"
       onClick={enable}
-      disabled={on || support === "denied" || subscribe.isPending}
+      disabled={on || subscribe.isPending}
       title={
-        support === "denied"
-          ? "Bloqueaste las notificaciones en el navegador"
-          : on
-            ? "Te avisamos cuando alguien se anote"
-            : "Avisarme cuando alguien se anote desde su celular"
+        on
+          ? "Te avisamos cuando alguien se anote"
+          : "Avisarme cuando alguien se anote desde su celular"
       }
     >
       {on ? <Bell className="size-4" /> : <BellOff className="size-4" />}
@@ -845,6 +932,7 @@ function DefaultMinutesField({
 
 function QueueRow({
   item,
+  staffName,
   isFirst,
   isLast,
   busy,
@@ -857,6 +945,7 @@ function QueueRow({
   onAssignService,
 }: {
   item: WaitingItemDto;
+  staffName: string;
   isFirst: boolean;
   isLast: boolean;
   busy: boolean;
@@ -922,6 +1011,10 @@ function QueueRow({
           <PlayCircle className="size-4" />
           Atender
         </Button>
+        {/* Solo a los que están por tocar; quien ya fue llamado tiene su botón en el panel de arriba. */}
+        {!item.calledAt && !away && item.position <= 2 && (
+          <WhatsAppNotify item={item} staffName={staffName} label="WhatsApp" />
+        )}
         {!item.serviceId && (
           <Button
             variant="outline"

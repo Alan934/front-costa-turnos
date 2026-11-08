@@ -27,6 +27,7 @@ import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/l
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { CashOutcome } from "@/lib/api/generated/model/cashOutcome";
 import { formatDateLong, formatTime, formatMoney } from "@/lib/format";
+import { whatsAppLink } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -131,7 +132,7 @@ export function AppointmentDetail({
             <ContactRow
               label="Teléfono"
               value={person.phone}
-              href={`https://wa.me/${person.phone.replace(/[^\d]/g, "")}`}
+              href={whatsAppLink(person.phone)}
             />
           )}
           {person.email && (

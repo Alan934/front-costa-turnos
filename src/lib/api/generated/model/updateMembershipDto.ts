@@ -21,6 +21,8 @@ export interface UpdateMembershipDto {
   allowProvisionalBookings?: boolean;
   /** Atiende SIEMPRE por orden de llegada: no ofrece turnos con horario. Reversible: al apagarlo, cada franja de trabajo vuelve a su modo (con turno / por orden de llegada). */
   walkInOnly?: boolean;
+  /** ¿Trabaja los feriados nacionales? true (default) = la agenda no se bloquea. false = cada feriado bloquea el día, salvo los que el profesional marque puntualmente como "sí trabajo" (PUT /comercios/:comercioId/holidays/:date). Con true también puede marcar un feriado puntual como "no trabajo". */
+  worksHolidays?: boolean;
   /** Publica la sala de espera de esta agenda en /r/:slug/sala (la pantalla del QR del local). */
   waitingRoomEnabled?: boolean;
   /** Permite que el cliente se anote solo escaneando el QR. Entra como pendiente hasta que el profesional lo acepta. */
