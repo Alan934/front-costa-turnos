@@ -29,8 +29,17 @@ import {
   Wallet,
   CalendarClock,
   Tag,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { getApiErrorMessage } from "@/lib/api/error-message";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState, EmptyState } from "@/components/state-views";
@@ -786,6 +795,7 @@ function RoomStatusBar({
   onChanged: () => void;
 }) {
   const update = useUpdateMyMembership(comercioId);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const options: { value: WaitingRoomStatus; label: string; icon: typeof Play }[] = [
     { value: WaitingRoomStatus.open, label: "Abierto", icon: Play },
@@ -815,65 +825,134 @@ function RoomStatusBar({
         ))}
       </div>
 
-      <div className="ml-auto flex flex-col gap-1.5">
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-          <input
-            type="checkbox"
-            className="size-4 accent-[var(--accent)]"
+      <Button
+        variant="outline"
+        size="sm"
+        className="ml-auto"
+        onClick={() => setSettingsOpen(true)}
+        title="Opciones de la sala: QR, servicio, aceptación y demora"
+      >
+        <Settings className="size-4" />
+        Configuración
+      </Button>
+
+      {settingsOpen && (
+        <RoomSettingsDialog
+          room={room}
+          comercioId={comercioId}
+          onChanged={onChanged}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Opciones de la sala de espera de este profesional (aplican a todos sus clientes). Cada cambio se
+ * guarda al instante, igual que antes en la barra. Las dos que dependen del QR quedan apagadas
+ * mientras el QR no esté habilitado: sin self check-in no hay nada que elegir ni que aceptar.
+ */
+function RoomSettingsDialog({
+  room,
+  comercioId,
+  onChanged,
+  onClose,
+}: {
+  room: WaitingRoomDto;
+  comercioId: string;
+  onChanged: () => void;
+  onClose: () => void;
+}) {
+  const update = useUpdateMyMembership(comercioId);
+  const qrOff = !room.selfCheckInEnabled;
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Configuración de la sala</DialogTitle>
+          <DialogDescription>
+            Cómo se anotan tus clientes y cómo se calcula la espera. Los cambios se guardan solos.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <SettingCheckbox
+            label="Dejar que se anoten con el QR"
+            hint="Quien escanea el QR del local puede anotarse en la fila desde su celular."
             checked={room.selfCheckInEnabled}
             disabled={update.isPending}
-            onChange={(e) =>
-              update.mutate({ waitingRoomSelfCheckIn: e.target.checked }, { onSuccess: onChanged })
-            }
+            onChange={(v) => update.mutate({ waitingRoomSelfCheckIn: v }, { onSuccess: onChanged })}
           />
-          Dejar que se anoten con el QR
-        </label>
-        {/* Por defecto el cliente solo se anota; el servicio lo completa el profesional. Aplica a
-            todos los clientes de este profesional. Sin el self check-in no hay nada que elegir. */}
-        {room.selfCheckInEnabled && (
-          <label
-            className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
-            title="Apagado: el cliente solo se anota y vos elegís el servicio al atenderlo. Con un único servicio se asigna solo."
-          >
-            <input
-              type="checkbox"
-              className="size-4 accent-[var(--accent)]"
-              checked={room.selfCheckInAskService}
-              disabled={update.isPending}
-              onChange={(e) =>
-                update.mutate({ waitingRoomAskService: e.target.checked }, { onSuccess: onChanged })
-              }
-            />
-            Que el cliente elija el servicio
-          </label>
-        )}
-        {/* Por defecto cada anotado queda pendiente hasta que lo aceptás. Con esto entra directo a
-            la fila (te llega igual el aviso). Aplica a todos los clientes de este profesional. */}
-        {room.selfCheckInEnabled && (
-          <label
-            className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
-            title="Apagado: cada persona que se anota espera a que la aceptes. Prendido: entra directo a la fila."
-          >
-            <input
-              type="checkbox"
-              className="size-4 accent-[var(--accent)]"
-              checked={room.selfCheckInAutoAccept}
-              disabled={update.isPending}
-              onChange={(e) =>
-                update.mutate({ waitingRoomAutoAccept: e.target.checked }, { onSuccess: onChanged })
-              }
-            />
-            Aceptar automáticamente a quien se anota
-          </label>
-        )}
-        <DefaultMinutesField
-          key={room.defaultServiceMinutes}
-          minutes={room.defaultServiceMinutes}
-          disabled={update.isPending}
-          onSave={(n) => update.mutate({ waitingRoomDefaultMinutes: n }, { onSuccess: onChanged })}
-        />
-      </div>
-    </div>
+          {/* Por defecto el cliente solo se anota; el servicio lo completa el profesional. */}
+          <SettingCheckbox
+            label="Que el cliente elija el servicio"
+            hint="Apagado: el cliente solo se anota y vos elegís el servicio al atenderlo. Con un único servicio se asigna solo."
+            checked={room.selfCheckInAskService}
+            disabled={update.isPending || qrOff}
+            onChange={(v) => update.mutate({ waitingRoomAskService: v }, { onSuccess: onChanged })}
+          />
+          {/* Por defecto cada anotado queda pendiente hasta que lo aceptás. */}
+          <SettingCheckbox
+            label="Aceptar automáticamente a quien se anota"
+            hint="Apagado: cada persona que se anota espera a que la aceptes. Prendido: entra directo a la fila (te llega el aviso igual)."
+            checked={room.selfCheckInAutoAccept}
+            disabled={update.isPending || qrOff}
+            onChange={(v) => update.mutate({ waitingRoomAutoAccept: v }, { onSuccess: onChanged })}
+          />
+          <DefaultMinutesField
+            key={room.defaultServiceMinutes}
+            minutes={room.defaultServiceMinutes}
+            disabled={update.isPending}
+            onSave={(n) => update.mutate({ waitingRoomDefaultMinutes: n }, { onSuccess: onChanged })}
+          />
+
+          {update.isError && (
+            <p className="text-sm text-destructive">{getApiErrorMessage(update.error)}</p>
+          )}
+
+          <Button variant="outline" className="w-full" onClick={onClose}>
+            Listo
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SettingCheckbox({
+  label,
+  hint,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex items-start gap-3",
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+      )}
+    >
+      <input
+        type="checkbox"
+        className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]"
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="min-w-0">
+        <span className="block text-sm font-medium">{label}</span>
+        <span className="block text-xs text-muted-foreground">{hint}</span>
+      </span>
+    </label>
   );
 }
 
@@ -908,7 +987,7 @@ function DefaultMinutesField({
 
   return (
     <label
-      className="flex items-center gap-2 text-xs text-muted-foreground"
+      className="flex items-center gap-2 text-sm font-medium"
       title={`Cuánto te demorás con cada cliente que se anota sin elegir servicio. Entre ${DEFAULT_MINUTES_MIN} y ${DEFAULT_MINUTES_MAX} minutos.`}
     >
       Demora por cliente sin servicio
@@ -923,9 +1002,9 @@ function DefaultMinutesField({
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-        className="h-8 w-16 rounded-md border border-input bg-card px-2 text-center text-base text-foreground sm:text-xs"
+        className="h-9 w-16 rounded-md border border-input bg-card px-2 text-center text-base text-foreground sm:text-sm"
       />
-      min
+      <span className="text-muted-foreground">min</span>
     </label>
   );
 }
