@@ -466,10 +466,8 @@ function RoomBoard({
                 <p className="text-xs font-medium uppercase tracking-wide text-status-serving-foreground">
                   Atendiendo ahora
                 </p>
+                {/* Sin número: es el lugar en la fila, y el que quedó primero también es el #1. */}
                 <p className="mt-1 font-display text-2xl font-semibold">
-                  <span className="text-status-serving-foreground">
-                    #{serving.ticketNumber}
-                  </span>{" "}
                   {serving.displayName}
                 </p>
                 <p className="text-sm text-status-serving-foreground/80">

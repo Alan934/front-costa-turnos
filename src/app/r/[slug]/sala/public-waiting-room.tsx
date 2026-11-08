@@ -249,15 +249,13 @@ function NowServing({ room, tv }: { room: WaitingRoomDto; tv: boolean }) {
       >
         Atendiendo ahora
       </p>
+      {/* Sin número: es el lugar en la fila, y el que quedó primero también es el #1. */}
       <p
         className={cn(
-          "mt-1 font-display font-semibold tabular-nums text-status-serving-foreground",
-          tv ? "text-[10rem] leading-none" : "text-6xl",
+          "mt-1 font-display font-semibold text-status-serving-foreground",
+          tv ? "text-8xl leading-tight" : "text-4xl",
         )}
       >
-        #{room.nowServing.ticketNumber}
-      </p>
-      <p className={cn("mt-2 font-medium", tv ? "text-4xl" : "text-lg")}>
         {room.nowServing.displayName}
       </p>
     </div>
