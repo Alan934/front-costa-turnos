@@ -91,7 +91,9 @@ export function SelfCheckInDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      {/* Centrado (no bottom sheet): con el teclado abierto el viewport se achica y el modal queda
+          centrado en el espacio que queda arriba del teclado. */}
+      <DialogContent sheet={false} className="w-[calc(100%-2rem)] max-w-md">
         <DialogHeader>
           <DialogTitle>Anotarme en la fila</DialogTitle>
           <DialogDescription>
