@@ -410,7 +410,12 @@ function RoomBoard({
           canStart={!serving}
           onStart={() => start.mutate({ id: item.appointmentId }, done)}
           onCallAgain={() => call.mutate({ id: item.appointmentId }, done)}
-          onToBack={() => sendToBack.mutate({ id: item.appointmentId }, done)}
+          onBackOne={() =>
+            sendToBack.mutate({ id: item.appointmentId, data: { position: "next" } }, done)
+          }
+          onToBack={() =>
+            sendToBack.mutate({ id: item.appointmentId, data: { position: "end" } }, done)
+          }
           onNoShow={() => noShow.mutate({ id: item.appointmentId }, done)}
         />
       ))}
@@ -548,7 +553,8 @@ function AttendanceInfo({ room }: { room: WaitingRoomDto }) {
 
 /**
  * Alguien a quien ya se llamó y todavía no se acercó. En lugar de decidir "no vino" de golpe,
- * el profesional puede llamarlo de nuevo, mandarlo al final de la fila o recién ahí darlo por ausente.
+ * el profesional puede llamarlo de nuevo, pasarlo un lugar atrás, mandarlo al final de la fila o
+ * recién ahí darlo por ausente.
  */
 function CalledPanel({
   item,
@@ -557,6 +563,7 @@ function CalledPanel({
   canStart,
   onStart,
   onCallAgain,
+  onBackOne,
   onToBack,
   onNoShow,
 }: {
@@ -566,6 +573,9 @@ function CalledPanel({
   canStart: boolean;
   onStart: () => void;
   onCallAgain: () => void;
+  /** Un solo lugar atrás: cede el paso a quien venía detrás. */
+  onBackOne: () => void;
+  /** Al último lugar de la fila. */
   onToBack: () => void;
   onNoShow: () => void;
 }) {
@@ -580,7 +590,7 @@ function CalledPanel({
       <p className="mt-1 font-display text-xl font-semibold">
         #{item.ticketNumber} {item.displayName}
       </p>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <Button
           size="sm"
           onClick={onStart}
@@ -594,7 +604,23 @@ function CalledPanel({
           <BellRing className="size-4" />
           Llamar de nuevo
         </Button>
-        <Button variant="outline" size="sm" onClick={onToBack} disabled={busy}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackOne}
+          disabled={busy}
+          title="Deja pasar a quien sigue y queda detrás de esa persona"
+        >
+          <ArrowDown className="size-4" />
+          Un lugar atrás
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToBack}
+          disabled={busy}
+          title="Pasa al último lugar de la fila"
+        >
           <SkipForward className="size-4" />
           Al final
         </Button>
