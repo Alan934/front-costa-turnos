@@ -12,7 +12,16 @@ import { useServices } from "@/lib/api/catalog";
 import { usePersonLookup } from "@/lib/api/clients";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useComercioSchedule, useComercioTimeOff } from "@/lib/api/availability-comercio";
-import { addDays, addMonths, dayRange, weekRange, monthGridRange, weekDays } from "@/lib/agenda";
+import { useMembershipHolidays } from "@/lib/api/holidays";
+import {
+  addDays,
+  addMonths,
+  dayRange,
+  holidaysAsTimeOff,
+  weekRange,
+  monthGridRange,
+  weekDays,
+} from "@/lib/agenda";
 import { formatDateLong, formatDayChip, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
@@ -50,7 +59,19 @@ export function AgendaView() {
     .map((s: Staff) => ({ ...s, displayName: titleCaseName(s.displayName) }));
   const services = (servicesQuery.data ?? []).map((s) => ({ ...s, name: titleCaseName(s.name) }));
   const scheduleRules = scheduleQuery.data ?? [];
-  const timeOff = timeOffQuery.data ?? [];
+  // Feriados en los que el profesional no trabaja: se suman a los bloqueos manuales como días
+  // completos "Feriado" (el nombre del feriado va de motivo). Se trae el año visible con margen
+  // (dic anterior – ene siguiente) para que la grilla mensual no quede corta en los bordes.
+  const holidaysQuery = useMembershipHolidays(activeId ?? undefined, {
+    from: `${date.getFullYear() - 1}-12-01`,
+    to: `${date.getFullYear() + 1}-01-31`,
+  });
+  const manualTimeOff = timeOffQuery.data;
+  const holidayData = holidaysQuery.data;
+  const timeOff = useMemo(
+    () => [...(manualTimeOff ?? []), ...holidaysAsTimeOff(holidayData ?? [])],
+    [manualTimeOff, holidayData],
+  );
 
   // En semana mostramos un staff; en día, todos (columnas) o el filtrado.
   const weekStaffId = activeStaffId ?? staffList[0]?.id ?? "";

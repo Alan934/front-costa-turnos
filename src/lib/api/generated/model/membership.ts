@@ -23,6 +23,7 @@ export interface Membership {
   maxBookingDays: number;
   allowProvisionalBookings: boolean;
   walkInOnly: boolean;
+  worksHolidays: boolean;
   waitingRoomEnabled: boolean;
   waitingRoomSelfCheckIn: boolean;
   waitingRoomAskService: boolean;

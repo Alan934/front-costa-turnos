@@ -8,6 +8,7 @@ import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import type { ScheduleRule } from "@/lib/api/generated/model/scheduleRule";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import type { TimeOff } from "@/lib/api/generated/model/timeOff";
+import { TimeOffType } from "@/lib/api/generated/model/timeOffType";
 
 export const DAY_START_HOUR = 8;
 export const DAY_END_HOUR = 20;
@@ -270,4 +271,34 @@ export function personDisplayName(personId: string): string {
     .split(" ")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+/**
+ * Feriados en los que el profesional NO trabaja → bloqueos de día completo (type=holiday) con
+ * el nombre del feriado como motivo. Son bloqueos "virtuales" (no existen como time-off en el
+ * back): así la agenda los pinta igual que cualquier feriado/vacaciones sin lógica extra.
+ * Las fechas llegan como YYYY-MM-DD y se interpretan en hora local del navegador.
+ */
+export function holidaysAsTimeOff(
+  holidays: { date: string; name: string; works: boolean }[],
+  membershipId = "",
+): TimeOff[] {
+  return holidays
+    .filter((h) => !h.works)
+    .map((h) => {
+      const [y, m, d] = h.date.split("-").map(Number);
+      const start = new Date(y, m - 1, d);
+      const end = addDays(start, 1);
+      return {
+        id: `holiday-${h.date}`,
+        createdAt: start.toISOString(),
+        updatedAt: start.toISOString(),
+        staffId: "",
+        membershipId,
+        startAt: start.toISOString(),
+        endAt: end.toISOString(),
+        type: TimeOffType.holiday,
+        reason: h.name,
+      };
+    });
 }

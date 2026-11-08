@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
 import { ImageUpload } from "@/components/image-upload";
 import { PublicPageLink } from "@/components/public-page-link";
+import { HolidaysSection } from "./holidays-section";
 import { useProfessional, useUpdateProfessional, useSubscription } from "@/lib/api/professional";
 import { SubscriptionStatus } from "@/lib/api/generated/model/subscriptionStatus";
 import { subscriptionEndInfo } from "@/lib/subscription";
@@ -42,6 +43,8 @@ export function SettingsView() {
           <VatSection professional={pro.data} />
           <Separator />
           <BrandingSection professional={pro.data} />
+          <Separator />
+          <HolidaysSection />
           <Separator />
           <SubscriptionSection />
         </div>
