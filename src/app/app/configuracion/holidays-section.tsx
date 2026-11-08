@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Save } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +32,9 @@ function formatHolidayDate(date: string): string {
     month: "long",
   });
 }
+
+/** Cuántos feriados próximos se muestran antes de "Ver más". */
+const PREVIEW_COUNT = 3;
 
 const KIND_LABEL: Record<string, string> = {
   puente: "Puente",
@@ -93,6 +96,13 @@ function HolidaysForm({
     to: isoDate(oneYearAhead),
   });
   const setHolidayWorks = useSetHolidayWorks(comercioId, savedWorksHolidays);
+  const [showAll, setShowAll] = useState(false);
+
+  // Solo feriados de hoy en adelante (el back ya filtra por rango; esto es por las dudas).
+  const todayIso = isoDate(today);
+  const upcoming = (holidays.data ?? []).filter((h) => h.date >= todayIso);
+  const visible = showAll ? upcoming : upcoming.slice(0, PREVIEW_COUNT);
+  const hiddenCount = upcoming.length - PREVIEW_COUNT;
 
   function save() {
     update.mutate(
@@ -157,14 +167,14 @@ function HolidaysForm({
           {holidays.isError && (
             <p className="text-xs text-destructive">No pudimos cargar los feriados.</p>
           )}
-          {holidays.data && holidays.data.length === 0 && (
+          {holidays.data && upcoming.length === 0 && (
             <p className="text-xs text-muted-foreground">
               Todavía no hay feriados cargados. Se actualizan automáticamente cada mes.
             </p>
           )}
-          {holidays.data && holidays.data.length > 0 && (
+          {upcoming.length > 0 && (
             <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-              {holidays.data.map((h) => (
+              {visible.map((h) => (
                 <HolidayRow
                   key={h.date}
                   holiday={h}
@@ -173,6 +183,26 @@ function HolidaysForm({
                 />
               ))}
             </ul>
+          )}
+          {hiddenCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              {showAll ? (
+                <>
+                  <ChevronUp className="size-4" />
+                  Ver menos
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-4" />
+                  Ver más ({hiddenCount})
+                </>
+              )}
+            </Button>
           )}
           {setHolidayWorks.isError && (
             <p className="mt-2 text-xs text-destructive">
