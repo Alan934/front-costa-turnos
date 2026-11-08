@@ -166,7 +166,10 @@ export function AppointmentDetail({
           {appointment.checkedInAt && (
             <p className="text-center text-xs text-muted-foreground">
               En la sala de espera
-              {appointment.ticketNumber ? ` · turno #${appointment.ticketNumber}` : ""}
+              {/* El número es el lugar en la fila: en atención ya no lo tiene (otro es el #1). */}
+              {appointment.ticketNumber && appointment.status === AppointmentStatus.confirmed
+                ? ` · turno #${appointment.ticketNumber}`
+                : ""}
             </p>
           )}
           {/* Cobro: QR de Mercado Pago, "ya pagó" o pagaré. Disponible mientras lo atienden y

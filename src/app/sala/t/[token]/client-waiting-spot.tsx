@@ -174,7 +174,6 @@ function SpotContent({ spot, token }: { spot: MyWaitingSpotDto; token: string })
         icon={<Bell className="size-9" />}
         title="¡Es tu turno!"
         subtitle={`Pasá con ${titleCaseName(room.staffName)}. Te están esperando.`}
-        ticket={me.ticketNumber}
       />
     );
   }
@@ -577,7 +576,9 @@ function QueueRow({
           serving ? "bg-status-serving-foreground/15 text-status-serving-foreground" : "bg-muted",
         )}
       >
-        {item.ticketNumber}
+        {/* El número es el lugar en la fila: quien ya pasó a atención no lo muestra, porque el
+            que quedó primero también es el #1. */}
+        {serving ? <Hand className="size-4" /> : item.ticketNumber}
       </span>
       <span className="flex-1 text-sm font-medium">
         {item.displayName}
