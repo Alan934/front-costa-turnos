@@ -27,6 +27,7 @@ export interface Membership {
   waitingRoomSelfCheckIn: boolean;
   waitingRoomAskService: boolean;
   waitingRoomAutoAccept: boolean;
+  waitingRoomDefaultMinutes: number;
   waitingRoomStatus: WaitingRoomStatus;
   /** @nullable */
   waitingRoomNote?: string | null;

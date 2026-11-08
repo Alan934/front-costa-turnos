@@ -18,6 +18,7 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DelayNotice } from "@/components/delay-notice";
 import { ErrorState } from "@/components/state-views";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -184,6 +185,8 @@ function SpotContent({ spot, token }: { spot: MyWaitingSpotDto; token: string })
           </div>
         </div>
       )}
+
+      <DelayNotice minutes={room.delayMinutes} audience="client" className="mt-4" />
 
       <PushCard spot={spot} token={token} />
 

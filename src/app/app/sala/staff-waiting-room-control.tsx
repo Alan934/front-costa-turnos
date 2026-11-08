@@ -35,6 +35,7 @@ import { ErrorState, EmptyState } from "@/components/state-views";
 import { QrCard } from "@/components/qr-card";
 import { ChargeDialog } from "@/components/charge-dialog";
 import { AssignServiceDialog } from "@/components/assign-service-dialog";
+import { DelayNotice } from "@/components/delay-notice";
 import { PUBLIC_HOST } from "@/components/public-page-link";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
@@ -253,6 +254,8 @@ function RoomBoard({
       )}
 
       <AttendanceInfo room={room} />
+
+      <DelayNotice minutes={room.delayMinutes} audience="pro" className="mb-4" />
 
       {showQr && publicUrl && (
         <QrCard
@@ -776,8 +779,67 @@ function RoomStatusBar({
             Aceptar automáticamente a quien se anota
           </label>
         )}
+        <DefaultMinutesField
+          key={room.defaultServiceMinutes}
+          minutes={room.defaultServiceMinutes}
+          disabled={update.isPending}
+          onSave={(n) => update.mutate({ waitingRoomDefaultMinutes: n }, { onSuccess: onChanged })}
+        />
       </div>
     </div>
+  );
+}
+
+/** Rango que acepta el backend (`waitingRoomDefaultMinutes`). */
+const DEFAULT_MINUTES_MIN = 5;
+const DEFAULT_MINUTES_MAX = 240;
+
+/**
+ * Cuánto se demora el profesional con cada cliente que se anotó sin servicio. Estima la espera de
+ * los de atrás hasta que se le asigne el servicio. Se guarda al salir del campo (o con Enter);
+ * un valor fuera de rango vuelve al anterior en vez de mandarse y fallar.
+ * El padre lo remonta (`key`) cuando el valor guardado cambia, así el campo nunca queda desfasado.
+ */
+function DefaultMinutesField({
+  minutes,
+  disabled,
+  onSave,
+}: {
+  minutes: number;
+  disabled: boolean;
+  onSave: (minutes: number) => void;
+}) {
+  const [value, setValue] = useState(String(minutes));
+
+  function commit() {
+    const n = Number(value);
+    const valid =
+      Number.isInteger(n) && n >= DEFAULT_MINUTES_MIN && n <= DEFAULT_MINUTES_MAX;
+    if (!valid) return setValue(String(minutes));
+    if (n !== minutes) onSave(n);
+  }
+
+  return (
+    <label
+      className="flex items-center gap-2 text-xs text-muted-foreground"
+      title={`Cuánto te demorás con cada cliente que se anota sin elegir servicio. Entre ${DEFAULT_MINUTES_MIN} y ${DEFAULT_MINUTES_MAX} minutos.`}
+    >
+      Demora por cliente sin servicio
+      <input
+        type="number"
+        inputMode="numeric"
+        min={DEFAULT_MINUTES_MIN}
+        max={DEFAULT_MINUTES_MAX}
+        step={5}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        className="h-8 w-16 rounded-md border border-input bg-card px-2 text-center text-base text-foreground sm:text-xs"
+      />
+      min
+    </label>
   );
 }
 

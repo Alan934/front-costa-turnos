@@ -29,6 +29,12 @@ export interface UpdateMembershipDto {
   waitingRoomAskService?: boolean;
   /** Quien se anota por el QR entra directo a la fila. Apagado (default): queda pendiente hasta que el profesional lo acepta. */
   waitingRoomAutoAccept?: boolean;
+  /**
+   * Minutos que se demora con cada cliente de la sala que no tiene servicio (se anotó sin elegir). Default 30. Estima la espera de los que vienen detrás.
+   * @minimum 5
+   * @maximum 240
+   */
+  waitingRoomDefaultMinutes?: number;
   /** Estado que ve el cliente en la pantalla pública: open | paused | closed. */
   waitingRoomStatus?: WaitingRoomStatus;
   /**
