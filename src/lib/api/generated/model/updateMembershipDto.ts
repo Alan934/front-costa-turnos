@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { WaitingRoomStatus } from './waitingRoomStatus';
+import type { UpdateMembershipDtoWaitingRoomWhatsappMessages } from './updateMembershipDtoWaitingRoomWhatsappMessages';
 
 export interface UpdateMembershipDto {
   /**
@@ -44,4 +45,9 @@ export interface UpdateMembershipDto {
    * @nullable
    */
   waitingRoomNote?: string | null;
+  /**
+   * Mensajes de WhatsApp personalizados para avisar a quien espera (called | next | waiting). Se reemplazan completos; una clave ausente o vacía usa el texto por defecto. null = todos por defecto.
+   * @nullable
+   */
+  waitingRoomWhatsappMessages?: UpdateMembershipDtoWaitingRoomWhatsappMessages;
 }

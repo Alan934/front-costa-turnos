@@ -8,6 +8,7 @@
  */
 import type { Service } from "@/lib/api/generated/model/service";
 import type { ServiceCombinationRule } from "@/lib/api/generated/model/serviceCombinationRule";
+import type { WaitingRoomWhatsappMessagesDto } from "@/lib/api/generated/model/waitingRoomWhatsappMessagesDto";
 
 /**
  * `ServiceCombinationRule` con los servicios embebidos. El endpoint público
@@ -170,6 +171,8 @@ export interface MembershipWithComercio {
   waitingRoomStatus?: "open" | "paused" | "closed";
   /** Aclaración libre para la pantalla pública ("vuelvo 15:30"). */
   waitingRoomNote?: string | null;
+  /** Mensajes de WhatsApp personalizados para avisar a quien espera. null/ausente = por defecto. */
+  waitingRoomWhatsappMessages?: WaitingRoomWhatsappMessagesDto | null;
   comercio?: {
     id: string;
     name: string;

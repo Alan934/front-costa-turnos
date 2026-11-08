@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { MembershipStatus } from './membershipStatus';
+import type { MembershipWaitingRoomWhatsappMessages } from './membershipWaitingRoomWhatsappMessages';
 import type { WaitingRoomStatus } from './waitingRoomStatus';
 
 export interface Membership {
@@ -29,6 +30,8 @@ export interface Membership {
   waitingRoomAskService: boolean;
   waitingRoomAutoAccept: boolean;
   waitingRoomDefaultMinutes: number;
+  /** @nullable */
+  waitingRoomWhatsappMessages?: MembershipWaitingRoomWhatsappMessages;
   waitingRoomStatus: WaitingRoomStatus;
   /** @nullable */
   waitingRoomNote?: string | null;
