@@ -131,7 +131,7 @@ export function Dashboard() {
                 Tenés servicios configurados con cobro online (seña o pago completo), pero{" "}
                 <strong>MercadoPago no está conectado</strong>. Esas opciones no estarán
                 disponibles para tus clientes hasta que lo conectes.{" "}
-                <Link href="/ajustes/pagos" className="font-medium underline underline-offset-2">
+                <Link href="/app/cobros" className="font-medium underline underline-offset-2">
                   Conectar cobros
                 </Link>
                 .

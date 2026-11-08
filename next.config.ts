@@ -87,6 +87,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // Cobros vivía fuera del panel. El callback OAuth de MercadoPago (back) y links viejos
+      // todavía apuntan acá; la query (?mp=connected|error) se conserva en el redirect.
+      { source: "/ajustes/pagos", destination: "/app/cobros", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

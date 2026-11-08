@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { RequireAuth } from "@/components/require-auth";
 import { PaymentsSettings } from "./payments-settings";
 
 export const metadata: Metadata = {
@@ -8,11 +7,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
+  // Suspense: PaymentsSettings lee ?mp= (resultado del callback de MercadoPago) con useSearchParams.
   return (
-    <RequireAuth role="professional">
-      <Suspense>
-        <PaymentsSettings />
-      </Suspense>
-    </RequireAuth>
+    <Suspense>
+      <PaymentsSettings />
+    </Suspense>
   );
 }

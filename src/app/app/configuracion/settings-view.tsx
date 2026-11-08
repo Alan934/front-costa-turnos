@@ -369,7 +369,7 @@ function SubscriptionSection() {
               <Link href="/app/suscripcion">Administrar suscripción</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/ajustes/pagos">Cobros (MercadoPago)</Link>
+              <Link href="/app/cobros">Cobros (MercadoPago)</Link>
             </Button>
           </div>
         </div>

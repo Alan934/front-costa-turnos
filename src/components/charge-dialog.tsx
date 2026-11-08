@@ -151,7 +151,7 @@ export function ChargeDialog({
                 {!sum.mpConnected && (
                   <p className="text-xs text-muted-foreground">
                     Para cobrar con QR conectá tu Mercado Pago en{" "}
-                    <Link href="/ajustes/pagos" className="text-accent underline">
+                    <Link href="/app/cobros" className="text-accent underline">
                       Cobros
                     </Link>
                     .

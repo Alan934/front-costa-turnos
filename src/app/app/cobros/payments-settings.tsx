@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Link2, Unlink, AlertTriangle, Wallet } from "lucide-react";
+import { CheckCircle2, Link2, Unlink, AlertTriangle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorState } from "@/components/state-views";
 import { useMpStatus, useMpConnect, useMpDisconnect } from "@/lib/api/billing";
 import { formatDateLong } from "@/lib/format";
@@ -39,16 +37,8 @@ export function PaymentsSettings() {
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl px-5 py-6 sm:px-8">
-      <header className="flex items-center justify-between">
-        <Link href="/app" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" />
-          Volver al panel
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      <div className="mt-6 flex items-center gap-3">
+    <div className="mx-auto max-w-2xl px-5 py-6 sm:px-8">
+      <div className="flex items-center gap-3">
         <span className="grid size-11 place-items-center rounded-xl bg-accent/10 text-accent">
           <Wallet className="size-5" />
         </span>
