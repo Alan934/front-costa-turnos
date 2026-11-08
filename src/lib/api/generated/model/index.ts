@@ -204,6 +204,8 @@ export * from './scheduleRule';
 export * from './scheduleRuleKind';
 export * from './selfCheckInDto';
 export * from './selfCheckInResultDto';
+export * from './sendToBackDto';
+export * from './sendToBackDtoPosition';
 export * from './service';
 export * from './serviceAssignedMembership';
 export * from './serviceCombinationRule';

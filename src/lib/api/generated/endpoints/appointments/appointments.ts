@@ -37,6 +37,7 @@ import type {
   CompleteAppointmentDto,
   CreateWalkInDto,
   MoveInQueueDto,
+  SendToBackDto,
   SetPriorityDto,
   WaitingRoomDto,
   WaitingRoomStatsDto
@@ -665,17 +666,20 @@ export const useAppointmentsCall = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Alternativa a marcarlo como que no vino. Conserva su número de turno.
- * @summary Mandar al final de la fila (no respondió)
+ * Alternativa a marcarlo como que no vino. `position`: `end` (default) lo manda al último lugar; `next` lo pasa un solo lugar atrás (cede el paso a quien venía detrás). El número de turno acompaña al lugar: se reasignan 1..n según el nuevo orden.
+ * @summary Mandar atrás en la fila (no respondió)
  */
 export const appointmentsSendToBack = (
     id: string,
+    sendToBackDto: BodyType<SendToBackDto>,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
       
       
       return customInstance<Appointment>(
-      {url: `/v1/appointments/${id}/send-to-back`, method: 'POST', signal
+      {url: `/v1/appointments/${id}/send-to-back`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: sendToBackDto, signal
     },
       options);
     }
@@ -683,8 +687,8 @@ export const appointmentsSendToBack = (
 
 
 export const getAppointmentsSendToBackMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string;data: BodyType<SendToBackDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string;data: BodyType<SendToBackDto>}, TContext> => {
 
 const mutationKey = ['appointmentsSendToBack'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -696,10 +700,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsSendToBack>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsSendToBack>>, {id: string;data: BodyType<SendToBackDto>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  appointmentsSendToBack(id,requestOptions)
+          return  appointmentsSendToBack(id,data,requestOptions)
         }
 
         
@@ -708,18 +712,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type AppointmentsSendToBackMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsSendToBack>>>
-    
+    export type AppointmentsSendToBackMutationBody = BodyType<SendToBackDto>
     export type AppointmentsSendToBackMutationError = ErrorType<void>
 
     /**
- * @summary Mandar al final de la fila (no respondió)
+ * @summary Mandar atrás en la fila (no respondió)
  */
 export const useAppointmentsSendToBack = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSendToBack>>, TError,{id: string;data: BodyType<SendToBackDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof appointmentsSendToBack>>,
         TError,
-        {id: string},
+        {id: string;data: BodyType<SendToBackDto>},
         TContext
       > => {
 

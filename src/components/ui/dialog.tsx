@@ -42,6 +42,9 @@ const DialogContent = React.forwardRef<
           ? "inset-x-0 bottom-0 rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl"
           : "left-1/2 top-1/2 max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl",
         "w-full sm:w-full",
+        // Más alto que la pantalla (celular, teclado abierto, listas largas): scrollea adentro en
+        // vez de cortarse. `dvh` descuenta la barra del navegador.
+        "max-h-[92dvh] overflow-y-auto",
         className,
       )}
       {...props}

@@ -37,11 +37,14 @@ export function SelfCheckInDialog({
   slug,
   membershipId,
   askService,
+  autoAccept,
   onClose,
 }: {
   slug: string;
   membershipId: string;
   askService: boolean;
+  /** El profesional aceptó de antemano: se entra a la fila directo, sin esperar confirmación. */
+  autoAccept: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -88,14 +91,14 @@ export function SelfCheckInDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      {/* En celular es un bottom sheet: con muchos servicios es más alto que la pantalla, así que
-          scrollea adentro (dvh descuenta la barra del navegador) en vez de cortarse. */}
-      <DialogContent className="max-h-[92dvh] max-w-md overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Anotarme en la fila</DialogTitle>
           <DialogDescription>
-            Entrás a la fila cuando el profesional confirme que llegaste. Te queda un link para
-            seguir tu lugar.
+            {autoAccept
+              ? "Entrás a la fila al instante."
+              : "Entrás a la fila cuando el profesional confirme que llegaste."}{" "}
+            Te queda un link para seguir tu lugar.
           </DialogDescription>
         </DialogHeader>
 

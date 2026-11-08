@@ -511,6 +511,9 @@ export function buildWaitingRoom(staffId: string): WaitingRoomDto {
     selfCheckInEnabled: true,
     selfCheckInOpen: true,
     selfCheckInAskService: false,
+    selfCheckInAutoAccept: false,
+    defaultServiceMinutes: 30,
+    delayMinutes: 0,
     attendance: {
       walkInOnly: false,
       hasSchedule: false,

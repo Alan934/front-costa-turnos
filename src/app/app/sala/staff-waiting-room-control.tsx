@@ -35,6 +35,7 @@ import { ErrorState, EmptyState } from "@/components/state-views";
 import { QrCard } from "@/components/qr-card";
 import { ChargeDialog } from "@/components/charge-dialog";
 import { AssignServiceDialog } from "@/components/assign-service-dialog";
+import { DelayNotice } from "@/components/delay-notice";
 import { PUBLIC_HOST } from "@/components/public-page-link";
 import { useActiveComercio } from "@/components/comercio-context";
 import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
@@ -254,6 +255,8 @@ function RoomBoard({
 
       <AttendanceInfo room={room} />
 
+      <DelayNotice minutes={room.delayMinutes} audience="pro" className="mb-4" />
+
       {showQr && publicUrl && (
         <QrCard
           className="mb-4"
@@ -269,7 +272,9 @@ function RoomBoard({
                   room.selfCheckInAskService
                     ? "Tocá «Anotarme en la fila», elegí qué venís a hacerte y poné tu nombre y teléfono."
                     : "Tocá «Anotarme en la fila» y poné tu nombre y teléfono.",
-                  "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
+                  room.selfCheckInAutoAccept
+                    ? "Listo: ya estás en la fila. Vas a ver tu número y cuántas personas tenés adelante."
+                    : "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
                   "Cuando te llamen, pasá. Podés dejar el celular a mano: la pantalla se actualiza sola.",
                 ]
               : [
@@ -408,7 +413,12 @@ function RoomBoard({
           canStart={!serving}
           onStart={() => start.mutate({ id: item.appointmentId }, done)}
           onCallAgain={() => call.mutate({ id: item.appointmentId }, done)}
-          onToBack={() => sendToBack.mutate({ id: item.appointmentId }, done)}
+          onBackOne={() =>
+            sendToBack.mutate({ id: item.appointmentId, data: { position: "next" } }, done)
+          }
+          onToBack={() =>
+            sendToBack.mutate({ id: item.appointmentId, data: { position: "end" } }, done)
+          }
           onNoShow={() => noShow.mutate({ id: item.appointmentId }, done)}
         />
       ))}
@@ -546,7 +556,8 @@ function AttendanceInfo({ room }: { room: WaitingRoomDto }) {
 
 /**
  * Alguien a quien ya se llamó y todavía no se acercó. En lugar de decidir "no vino" de golpe,
- * el profesional puede llamarlo de nuevo, mandarlo al final de la fila o recién ahí darlo por ausente.
+ * el profesional puede llamarlo de nuevo, pasarlo un lugar atrás, mandarlo al final de la fila o
+ * recién ahí darlo por ausente.
  */
 function CalledPanel({
   item,
@@ -555,6 +566,7 @@ function CalledPanel({
   canStart,
   onStart,
   onCallAgain,
+  onBackOne,
   onToBack,
   onNoShow,
 }: {
@@ -564,6 +576,9 @@ function CalledPanel({
   canStart: boolean;
   onStart: () => void;
   onCallAgain: () => void;
+  /** Un solo lugar atrás: cede el paso a quien venía detrás. */
+  onBackOne: () => void;
+  /** Al último lugar de la fila. */
   onToBack: () => void;
   onNoShow: () => void;
 }) {
@@ -578,7 +593,7 @@ function CalledPanel({
       <p className="mt-1 font-display text-xl font-semibold">
         #{item.ticketNumber} {item.displayName}
       </p>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
         <Button
           size="sm"
           onClick={onStart}
@@ -592,7 +607,23 @@ function CalledPanel({
           <BellRing className="size-4" />
           Llamar de nuevo
         </Button>
-        <Button variant="outline" size="sm" onClick={onToBack} disabled={busy}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBackOne}
+          disabled={busy}
+          title="Deja pasar a quien sigue y queda detrás de esa persona"
+        >
+          <ArrowDown className="size-4" />
+          Un lugar atrás
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToBack}
+          disabled={busy}
+          title="Pasa al último lugar de la fila"
+        >
           <SkipForward className="size-4" />
           Al final
         </Button>
@@ -729,8 +760,86 @@ function RoomStatusBar({
             Que el cliente elija el servicio
           </label>
         )}
+        {/* Por defecto cada anotado queda pendiente hasta que lo aceptás. Con esto entra directo a
+            la fila (te llega igual el aviso). Aplica a todos los clientes de este profesional. */}
+        {room.selfCheckInEnabled && (
+          <label
+            className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
+            title="Apagado: cada persona que se anota espera a que la aceptes. Prendido: entra directo a la fila."
+          >
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--accent)]"
+              checked={room.selfCheckInAutoAccept}
+              disabled={update.isPending}
+              onChange={(e) =>
+                update.mutate({ waitingRoomAutoAccept: e.target.checked }, { onSuccess: onChanged })
+              }
+            />
+            Aceptar automáticamente a quien se anota
+          </label>
+        )}
+        <DefaultMinutesField
+          key={room.defaultServiceMinutes}
+          minutes={room.defaultServiceMinutes}
+          disabled={update.isPending}
+          onSave={(n) => update.mutate({ waitingRoomDefaultMinutes: n }, { onSuccess: onChanged })}
+        />
       </div>
     </div>
+  );
+}
+
+/** Rango que acepta el backend (`waitingRoomDefaultMinutes`). */
+const DEFAULT_MINUTES_MIN = 5;
+const DEFAULT_MINUTES_MAX = 240;
+
+/**
+ * Cuánto se demora el profesional con cada cliente que se anotó sin servicio. Estima la espera de
+ * los de atrás hasta que se le asigne el servicio. Se guarda al salir del campo (o con Enter);
+ * un valor fuera de rango vuelve al anterior en vez de mandarse y fallar.
+ * El padre lo remonta (`key`) cuando el valor guardado cambia, así el campo nunca queda desfasado.
+ */
+function DefaultMinutesField({
+  minutes,
+  disabled,
+  onSave,
+}: {
+  minutes: number;
+  disabled: boolean;
+  onSave: (minutes: number) => void;
+}) {
+  const [value, setValue] = useState(String(minutes));
+
+  function commit() {
+    const n = Number(value);
+    const valid =
+      Number.isInteger(n) && n >= DEFAULT_MINUTES_MIN && n <= DEFAULT_MINUTES_MAX;
+    if (!valid) return setValue(String(minutes));
+    if (n !== minutes) onSave(n);
+  }
+
+  return (
+    <label
+      className="flex items-center gap-2 text-xs text-muted-foreground"
+      title={`Cuánto te demorás con cada cliente que se anota sin elegir servicio. Entre ${DEFAULT_MINUTES_MIN} y ${DEFAULT_MINUTES_MAX} minutos.`}
+    >
+      Demora por cliente sin servicio
+      <input
+        type="number"
+        inputMode="numeric"
+        min={DEFAULT_MINUTES_MIN}
+        max={DEFAULT_MINUTES_MAX}
+        step={5}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        className="h-8 w-16 rounded-md border border-input bg-card px-2 text-center text-base text-foreground sm:text-xs"
+      />
+      min
+    </label>
   );
 }
 

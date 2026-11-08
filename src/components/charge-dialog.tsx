@@ -107,16 +107,18 @@ export function ChargeDialog({
         </DialogHeader>
 
         {summary.isLoading && (
-          <div className="grid place-items-center py-10">
+          <div className="grid place-items-center px-6 py-10">
             <Spinner />
           </div>
         )}
         {summary.isError && (
-          <p className="text-sm text-destructive">{getApiErrorMessage(summary.error)}</p>
+          <p className="px-6 pb-6 text-sm text-destructive">{getApiErrorMessage(summary.error)}</p>
         )}
 
+        {/* px-6 como el header (antes el contenido quedaba pegado a los bordes en celular); el pb
+            suma el área segura de abajo para que "Cobrar después" no quede bajo la barra de gestos. */}
         {sum && (
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
             <div className="grid grid-cols-3 gap-2 text-center">
               <Figure label="Valor" value={formatMoney(sum.totalCents)} />
               <Figure label="Cobrado" value={formatMoney(sum.paidCents)} />

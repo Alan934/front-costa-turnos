@@ -49,8 +49,7 @@ export function AssignServiceDialog({
 
   return (
     <Dialog open onOpenChange={(o) => !o && !assign.isPending && onClose()}>
-      {/* Mismo criterio que el diálogo de anotarse: en celular es un bottom sheet que scrollea. */}
-      <DialogContent className="max-h-[92dvh] max-w-md overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>¿Qué servicio es?</DialogTitle>
           <DialogDescription>

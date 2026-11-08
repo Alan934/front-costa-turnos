@@ -93,7 +93,7 @@ export function AddToQueueDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-5 px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <div>
             <Label htmlFor="walkin-search">Buscar en tus clientes</Label>
             <div className="relative mt-1.5">

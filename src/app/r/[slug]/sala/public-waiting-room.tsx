@@ -16,6 +16,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { DelayNotice } from "@/components/delay-notice";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
@@ -141,6 +142,7 @@ function RoomView({
       )}
       <RoomStatusBanner room={room} />
       <AttendanceBanner room={room} tv={tv} />
+      <DelayNotice minutes={room.delayMinutes} audience="client" tv={tv} className="mt-3" />
 
       <NowServing room={room} tv={tv} />
       <Calling room={room} tv={tv} />
@@ -217,6 +219,7 @@ function RoomView({
           slug={slug}
           membershipId={membershipId}
           askService={room.selfCheckInAskService}
+          autoAccept={room.selfCheckInAutoAccept}
           onClose={() => setCheckingIn(false)}
         />
       )}
