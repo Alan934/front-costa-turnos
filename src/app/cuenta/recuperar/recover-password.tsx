@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
+import { useBackLayer } from "@/lib/use-back-layer";
 import { useAuthRequestPasswordReset, useAuthResetPassword } from "@/lib/api/generated/endpoints/auth/auth";
 
 type Step = "email" | "codigo" | "listo";
@@ -20,6 +21,8 @@ export function RecoverPassword() {
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // "Atrás" desde el código vuelve al paso del email (en vez de salir de la página).
+  useBackLayer(step !== "email", () => setStep("email"));
 
   const requestReset = useAuthRequestPasswordReset();
   const reset = useAuthResetPassword();

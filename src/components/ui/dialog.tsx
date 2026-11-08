@@ -4,8 +4,31 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBackLayer } from "@/lib/use-back-layer";
 
-const Dialog = DialogPrimitive.Root;
+/**
+ * Root del modal. Igual que el de Radix, pero el botón "atrás" del navegador/celular lo cierra
+ * (en vez de salir de la página). Soporta modo controlado y no controlado.
+ */
+function Dialog({
+  open: openProp,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : uncontrolledOpen;
+
+  const handleOpenChange = (next: boolean) => {
+    if (!controlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
+
+  useBackLayer(open, () => handleOpenChange(false));
+
+  return <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange} {...props} />;
+}
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogClose = DialogPrimitive.Close;
 

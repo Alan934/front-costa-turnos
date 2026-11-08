@@ -49,6 +49,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 import { DaySlotPicker } from "@/components/booking/day-slot-picker";
+import { useBackLayer } from "@/lib/use-back-layer";
 import type { ComercioPublicPageDto } from "@/lib/api/generated/model/comercioPublicPageDto";
 import type { PublicServiceDto } from "@/lib/api/generated/model/publicServiceDto";
 import type { PublicServiceProfessionalDto } from "@/lib/api/generated/model/publicServiceProfessionalDto";
@@ -155,6 +156,14 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
     setSel({ service: null, professional: null, slot: null });
     setStep(1);
   }
+
+  // Cada paso es una entrada del historial: el "atrás" del navegador/celular vuelve un paso
+  // (igual que el botón "Volver") en vez de salir de la página. Una capa por nivel del flujo.
+  useBackLayer(step >= 2 && !singlePro, () => setStep(1));
+  useBackLayer(step >= 3, () => setStep(singlePro ? 1 : 2));
+  useBackLayer(step >= 4, () => setStep(3));
+  // Desde la confirmación, "atrás" arranca una reserva nueva (el horario ya quedó tomado).
+  useBackLayer(!!confirmed, reset);
 
   if (confirmed) {
     return (

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
+import { useBackLayer } from "@/lib/use-back-layer";
 import { useAuthRequestEmailCode, useAuthVerifyEmail } from "@/lib/api/generated/endpoints/auth/auth";
 import { useAuth } from "@/components/auth-provider";
 
@@ -19,6 +20,8 @@ export function VerifyEmail() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // "Atrás" desde el código vuelve al paso del email (en vez de salir de la página).
+  useBackLayer(step !== "email", () => setStep("email"));
 
   const { refresh } = useAuth();
   const requestCode = useAuthRequestEmailCode();
