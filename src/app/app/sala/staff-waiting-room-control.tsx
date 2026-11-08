@@ -269,7 +269,9 @@ function RoomBoard({
                   room.selfCheckInAskService
                     ? "Tocá «Anotarme en la fila», elegí qué venís a hacerte y poné tu nombre y teléfono."
                     : "Tocá «Anotarme en la fila» y poné tu nombre y teléfono.",
-                  "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
+                  room.selfCheckInAutoAccept
+                    ? "Listo: ya estás en la fila. Vas a ver tu número y cuántas personas tenés adelante."
+                    : "Esperá a que el local confirme tu llegada. Vas a ver tu número y cuántas personas tenés adelante.",
                   "Cuando te llamen, pasá. Podés dejar el celular a mano: la pantalla se actualiza sola.",
                 ]
               : [
@@ -727,6 +729,25 @@ function RoomStatusBar({
               }
             />
             Que el cliente elija el servicio
+          </label>
+        )}
+        {/* Por defecto cada anotado queda pendiente hasta que lo aceptás. Con esto entra directo a
+            la fila (te llega igual el aviso). Aplica a todos los clientes de este profesional. */}
+        {room.selfCheckInEnabled && (
+          <label
+            className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground"
+            title="Apagado: cada persona que se anota espera a que la aceptes. Prendido: entra directo a la fila."
+          >
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--accent)]"
+              checked={room.selfCheckInAutoAccept}
+              disabled={update.isPending}
+              onChange={(e) =>
+                update.mutate({ waitingRoomAutoAccept: e.target.checked }, { onSuccess: onChanged })
+              }
+            />
+            Aceptar automáticamente a quien se anota
           </label>
         )}
       </div>

@@ -23,6 +23,8 @@ export interface WaitingRoomDto {
   selfCheckInOpen: boolean;
   /** Al anotarse, el cliente elige el servicio. false (default) = solo se anota; el profesional lo completa después (si ofrece un único servicio activo, se asigna solo). */
   selfCheckInAskService: boolean;
+  /** Quien se anota entra directo a la fila. false (default) = queda pendiente hasta que el profesional lo acepta. */
+  selfCheckInAutoAccept: boolean;
   /** Cuándo atiende por orden de llegada (franjas de hoy, próxima franja, etc.). */
   attendance: WalkInStatusDto;
   /** @nullable */

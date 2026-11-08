@@ -217,6 +217,7 @@ function RoomView({
           slug={slug}
           membershipId={membershipId}
           askService={room.selfCheckInAskService}
+          autoAccept={room.selfCheckInAutoAccept}
           onClose={() => setCheckingIn(false)}
         />
       )}

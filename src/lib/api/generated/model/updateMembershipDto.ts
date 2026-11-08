@@ -27,6 +27,8 @@ export interface UpdateMembershipDto {
   waitingRoomSelfCheckIn?: boolean;
   /** Al anotarse por el QR el cliente elige el servicio. Apagado (default): solo se anota y el profesional completa el servicio al atenderlo (con un único servicio se asigna solo). */
   waitingRoomAskService?: boolean;
+  /** Quien se anota por el QR entra directo a la fila. Apagado (default): queda pendiente hasta que el profesional lo acepta. */
+  waitingRoomAutoAccept?: boolean;
   /** Estado que ve el cliente en la pantalla pública: open | paused | closed. */
   waitingRoomStatus?: WaitingRoomStatus;
   /**
