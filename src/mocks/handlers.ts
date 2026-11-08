@@ -1263,7 +1263,15 @@ export const handlers: RequestHandler[] = [
   }),
   http.get(url("/appointments/:id"), ({ params }) => {
     const apt = appointments.find((a) => a.id === params.id);
-    return apt ? HttpResponse.json(apt) : new HttpResponse(null, { status: 404 });
+    if (!apt) return new HttpResponse(null, { status: 404 });
+    // Espeja el backend: el detalle trae el contacto del cliente (lo usa el aviso por WhatsApp).
+    const c = clients.find((cl) => cl.personId === apt.personId);
+    return HttpResponse.json({
+      ...apt,
+      personName: c?.fullName,
+      personPhone: c?.phone ?? null,
+      personEmail: c?.email ?? null,
+    });
   }),
 
   // ---- Turnos del cliente (vista /mis-turnos, API-GAPS §2d) ----
