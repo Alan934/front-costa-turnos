@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers";
 import { MswProvider } from "@/components/msw-provider";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
+import { baseOpenGraph } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: {
@@ -14,6 +15,16 @@ export const metadata: Metadata = {
   description:
     "Reservá turnos online, sin papel ni vueltas por WhatsApp. Costa Turnos: gestión de turnos para peluquerías, consultorios, talleres y cualquier servicio con turnos.",
   metadataBase: new URL("https://www.costaturnos.com"),
+  // Tarjeta al compartir el link (WhatsApp, Instagram, Facebook…). La imagen sale de
+  // app/opengraph-image.tsx; las páginas de reserva (/r/<slug>) tienen la suya.
+  openGraph: {
+    ...baseOpenGraph,
+    title: "Costa Turnos · Turnos online para tu negocio",
+    description:
+      "Tus clientes reservan solos. Turnos online, fila por orden de llegada y cobros con MercadoPago, todo en un solo lugar.",
+    url: "/",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
