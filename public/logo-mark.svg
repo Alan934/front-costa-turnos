@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#15808B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Costa Turnos">
-  <circle cx="12" cy="12" r="9"/>
-  <path d="M8 12.3l2.6 2.6L16 9.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Costa Turnos">
+  <rect width="48" height="48" rx="12" fill="#2E9A9C"/>
+  <path d="M0 36L7 33L12 37L20 28L28 36L33 31L41 37L48 33.5V36A12 12 0 0 1 36 48H12A12 12 0 0 1 0 36Z" fill="#247F81"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M34.6 14.4A14.5 14.5 0 1 0 34.6 33.6"/><path d="M18 18H30M24 18V31"/></g>
 </svg>

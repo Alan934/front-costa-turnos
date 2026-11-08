@@ -2,27 +2,26 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- *
- *  Logo de marca: monograma "CT" (Costa Turnos).
+ *  Logo de marca: monograma "CT" sobre un cuadrado turquesa con la cordillera
+ *  de fondo (Costa de Araujo, Mendoza).
  *
- *  Hay DOS variantes y se eligen según el tema:
- *    - light → "outline": cuadrado blanco con borde y CT turquesa.
- *    - dark  → "solid":   cuadrado turquesa con CT blanco.
- *
- *  👉 Para cambiar qué variante usa cada tema, tocá solo VARIANT_BY_THEME.
- *     (No hace falta tocar nada más; el resto se deriva de acá.)
+ *  Es una marca de colores fijos: se ve igual en tema claro y oscuro.
+ *  Los mismos trazos están en `src/app/icon.svg` (favicon), `public/logo-mark.svg`
+ *  (ícono de notificaciones) y `public/brand/*.png` (fotos de perfil). Si cambiás
+ *  el dibujo acá, actualizá esos archivos también.
  * -------------------------------------------------------------------------- */
-const VARIANT_BY_THEME = {
-  light: "outline",
-  dark: "solid",
+
+export const BRAND_COLORS = {
+  tile: "#2E9A9C",
+  mountains: "#247F81",
+  mark: "#FFFFFF",
 } as const;
 
-type Variant = (typeof VARIANT_BY_THEME)[keyof typeof VARIANT_BY_THEME];
-
-const boxSizes = {
-  sm: "size-7 rounded-lg text-[15px]",
-  md: "size-8 rounded-lg text-[17px]",
-  lg: "size-9 rounded-xl text-[19px]",
-  xl: "size-12 rounded-2xl text-[26px]",
+const markSizes = {
+  sm: "size-7",
+  md: "size-8",
+  lg: "size-9",
+  xl: "size-12",
 } as const;
 
 const textSizes = {
@@ -32,42 +31,12 @@ const textSizes = {
   xl: "text-lg",
 } as const;
 
-export type LogoSize = keyof typeof boxSizes;
-
-const variantClasses: Record<Variant, string> = {
-  solid: "bg-accent text-accent-foreground",
-  outline: "border border-border bg-card text-accent",
-};
-
-/** El cuadrado con el monograma "CT", para una variante concreta. */
-function LogoBox({
-  size,
-  variant,
-  className,
-}: {
-  size: LogoSize;
-  variant: Variant;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "grid place-items-center font-display font-extrabold leading-none tracking-tighter",
-        boxSizes[size],
-        variantClasses[variant],
-        className,
-      )}
-      aria-hidden="true"
-    >
-      CT
-    </span>
-  );
-}
+export type LogoSize = keyof typeof markSizes;
 
 /**
- * Marca sola (sin texto). Muestra la variante outline en claro y solid en
- * oscuro: renderiza ambas y CSS oculta la que no corresponde según `.dark` en
- * <html>. Así no hay parpadeo en la hidratación ni se necesita JS de tema.
+ * Marca sola (sin texto). SVG inline: nítida en cualquier tamaño y sin pedir archivos.
+ * La cordillera sigue el borde redondeado del cuadrado, así no hace falta clipPath
+ * (y no hay ids repetidos cuando el logo aparece varias veces en la página).
  */
 export function LogoMark({
   size = "lg",
@@ -77,23 +46,33 @@ export function LogoMark({
   className?: string;
 }) {
   return (
-    <span className={cn("inline-grid", className)}>
-      <LogoBox
-        size={size}
-        variant={VARIANT_BY_THEME.light}
-        className="col-start-1 row-start-1 dark:hidden"
+    <svg
+      viewBox="0 0 48 48"
+      className={cn("shrink-0 rounded-[25%]", markSizes[size], className)}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect width="48" height="48" rx="12" fill={BRAND_COLORS.tile} />
+      <path
+        d="M0 36L7 33L12 37L20 28L28 36L33 31L41 37L48 33.5V36A12 12 0 0 1 36 48H12A12 12 0 0 1 0 36Z"
+        fill={BRAND_COLORS.mountains}
       />
-      <LogoBox
-        size={size}
-        variant={VARIANT_BY_THEME.dark}
-        className="col-start-1 row-start-1 hidden dark:grid"
-      />
-    </span>
+      <g
+        fill="none"
+        stroke={BRAND_COLORS.mark}
+        strokeWidth="3.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M34.6 14.4A14.5 14.5 0 1 0 34.6 33.6" />
+        <path d="M18 18H30M24 18V31" />
+      </g>
+    </svg>
   );
 }
 
 interface LogoProps {
-  /** Tamaño del cuadrado de la marca. */
+  /** Tamaño de la marca. */
   size?: LogoSize;
   /** Mostrar el texto "Costa Turnos" al lado de la marca. */
   showText?: boolean;
@@ -102,10 +81,7 @@ interface LogoProps {
   className?: string;
 }
 
-/**
- * Logo completo (marca + texto opcional). Reemplaza el patrón repetido de
- * `CalendarClock` dentro de un cuadrado en los headers/shells.
- */
+/** Logo completo (marca + texto opcional), para headers y shells. */
 export function Logo({
   size = "lg",
   showText = true,
@@ -130,7 +106,7 @@ export function Logo({
 
   if (href) {
     return (
-      <Link href={href} className="inline-flex items-center">
+      <Link href={href} className="inline-flex items-center" aria-label="Costa Turnos">
         {inner}
       </Link>
     );

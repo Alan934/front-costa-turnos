@@ -24,7 +24,7 @@ self.addEventListener("push", (event) => {
       renotify: Boolean(data.tag),
       vibrate: data.vibrate,
       icon: "/logo-mark.svg",
-      badge: "/logo-mark.svg",
+      badge: "/logo-badge.svg",
       // El llamado no debe desaparecer solo: la persona puede tardar unos segundos en mirar.
       requireInteraction: isCall,
       data: { url: data.url || "/" },
