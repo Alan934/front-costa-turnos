@@ -34,6 +34,10 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // Con el teclado abierto, Chrome Android por defecto solo achica el viewport "visual": los
+  // paneles anclados abajo (bottom sheets) quedaban tapados por el teclado. Así el layout se
+  // achica con el teclado y el sheet queda justo encima.
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({
