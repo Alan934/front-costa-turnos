@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth-shell";
+import { useBackLayer } from "@/lib/use-back-layer";
 import { useAuth } from "@/components/auth-provider";
 import { homeForUser } from "@/lib/auth-routing";
 import { useAuthRequestClaimCode, useAuthClaim } from "@/lib/api/generated/endpoints/auth/auth";
@@ -32,6 +33,13 @@ export function ClaimAccount() {
   const [error, setError] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  // "Atrás" desde el código vuelve al paso del email. Si se entró directo al código (link del
+  // email de activación), no hay paso anterior: "atrás" sale de la página como siempre.
+  const [startedAtEmail] = useState(step === "email");
+  useBackLayer(startedAtEmail && step === "codigo", () => {
+    setStep("email");
+    setResent(false);
+  });
 
   const requestCode = useAuthRequestClaimCode();
   const claim = useAuthClaim();

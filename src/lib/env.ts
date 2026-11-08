@@ -13,4 +13,11 @@ export const env = {
     "http://localhost:3000",
   /** Interruptor de mocks: "enabled" => MSW intercepta las llamadas. */
   mockingEnabled: process.env.NEXT_PUBLIC_API_MOCKING === "enabled",
+  /**
+   * Slug de un comercio real para los botones "Ver demo" de la landing (/r/<slug>).
+   * Sin configurar, la landing no muestra el demo (para no linkear a una página inexistente).
+   */
+  demoSlug:
+    process.env.NEXT_PUBLIC_DEMO_SLUG ||
+    (process.env.NEXT_PUBLIC_API_MOCKING === "enabled" ? "peluqueria-del-pueblo" : null),
 } as const;

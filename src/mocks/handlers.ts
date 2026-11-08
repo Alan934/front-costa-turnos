@@ -1046,7 +1046,7 @@ export const handlers: RequestHandler[] = [
     mpConnected = true;
     const origin =
       typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-    return HttpResponse.json({ url: `${origin}/ajustes/pagos?mp=connected` });
+    return HttpResponse.json({ url: `${origin}/app/cobros?mp=connected` });
   }),
   http.get(url("/payments/mp/oauth/status"), () =>
     HttpResponse.json({

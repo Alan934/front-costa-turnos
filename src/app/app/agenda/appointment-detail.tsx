@@ -443,7 +443,7 @@ function DepositSection({ appointmentId, onChanged }: { appointmentId: string; o
         <p className="mt-2 flex items-center gap-1.5 text-xs text-warning-foreground">
           <CircleAlert className="size-3.5" />
           Conectá MercadoPago en{" "}
-          <Link href="/ajustes/pagos" className="font-medium underline">
+          <Link href="/app/cobros" className="font-medium underline">
             Cobros
           </Link>{" "}
           para generar links.

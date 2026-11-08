@@ -94,6 +94,7 @@ import { cn } from "@/lib/utils";
 import { AddToQueueDialog } from "./add-to-queue-dialog";
 import { StatsPanel } from "./stats-panel";
 import { WhatsAppMessagesEditor } from "./whatsapp-messages-editor";
+import { useBackLayer } from "@/lib/use-back-layer";
 import type { WaitingRoomWhatsappMessagesDto } from "@/lib/api/generated/model/waitingRoomWhatsappMessagesDto";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { WaitingItemDto } from "@/lib/api/generated/model/waitingItemDto";
@@ -1054,6 +1055,8 @@ function RoomSettingsDialog({
   const qrOff = !room.selfCheckInEnabled;
   // El editor de mensajes reemplaza el contenido del mismo modal (con "Volver").
   const [view, setView] = useState<"main" | "whatsapp">("main");
+  // "Atrás" desde el editor vuelve a la configuración (no cierra el modal).
+  useBackLayer(view === "whatsapp", () => setView("main"));
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

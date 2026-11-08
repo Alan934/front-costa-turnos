@@ -328,7 +328,7 @@ export function ServiceFormDialog({
                 <Wallet className="mt-0.5 size-4 shrink-0" />
                 <span>
                   Para cobrar seña o pago completo necesitás conectar tu cuenta de MercadoPago.{" "}
-                  <Link href="/ajustes/pagos" className="font-medium underline underline-offset-2">
+                  <Link href="/app/cobros" className="font-medium underline underline-offset-2">
                     Conectar cobros
                   </Link>
                   .
