@@ -6,19 +6,32 @@
  * OpenAPI spec version: 1.0
  */
 import type { MetricsRange } from './metricsRange';
-import type { AttendanceByDayDto } from './attendanceByDayDto';
-import type { NewVsReturningDto } from './newVsReturningDto';
-import type { PeakHourDto } from './peakHourDto';
-import type { IncomeByDayDto } from './incomeByDayDto';
+import type { MetricsPeriodDto } from './metricsPeriodDto';
 import type { MetricsTotalsDto } from './metricsTotalsDto';
+import type { AttendanceByDayDto } from './attendanceByDayDto';
+import type { IncomeByDayDto } from './incomeByDayDto';
+import type { PeakHourDto } from './peakHourDto';
+import type { ServiceMetricsDto } from './serviceMetricsDto';
+import type { NewVsReturningDto } from './newVsReturningDto';
+import type { PendingMetricsDto } from './pendingMetricsDto';
 import type { AtRiskClientDto } from './atRiskClientDto';
 
 export interface MetricsOverviewDto {
   range: MetricsRange;
-  attendanceByDay: AttendanceByDayDto[];
-  newVsReturning: NewVsReturningDto;
-  peakHours: PeakHourDto[];
-  incomeByDay: IncomeByDayDto[];
+  offset: number;
+  period: MetricsPeriodDto;
+  /** Período anterior, recortado al mismo tramo transcurrido para comparar parejo. */
+  previousPeriod: MetricsPeriodDto;
   totals: MetricsTotalsDto;
+  previousTotals: MetricsTotalsDto;
+  attendanceByDay: AttendanceByDayDto[];
+  incomeByDay: IncomeByDayDto[];
+  peakHours: PeakHourDto[];
+  services: ServiceMetricsDto[];
+  newVsReturning: NewVsReturningDto;
+  /** Pendientes a hoy (no dependen del período). */
+  pending: PendingMetricsDto;
   atRiskClients: AtRiskClientDto[];
+  /** Total de clientes que dejaron de venir. */
+  atRiskTotal: number;
 }

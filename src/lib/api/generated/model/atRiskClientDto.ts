@@ -7,7 +7,14 @@
  */
 
 export interface AtRiskClientDto {
-  id: string;
+  /** Id del cliente (ficha) del profesional. */
+  clientId: string;
+  personId: string;
   fullName: string;
+  /** @nullable */
+  phone?: string | null;
   lastVisitLabel: string;
+  daysSinceLastVisit: number;
+  /** Veces que fue atendido. */
+  visits: number;
 }

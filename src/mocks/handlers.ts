@@ -439,51 +439,120 @@ function transition(
 /** Cliente registrado/reclamado en esta sesión (sobreescribe el de semilla). */
 let registeredClient: MeResponse | null = null;
 
-/** Genera métricas plausibles para el dashboard y la pantalla de métricas. */
-function buildMetrics(range: "week" | "month") {
-  const dayLabels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+/** Genera métricas plausibles para la pantalla de métricas (mismo formato que el back). */
+function buildMetrics(range: "week" | "month", offset = 0) {
+  const dayLabels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
   const rng = (seed: number) => {
     // pseudo-aleatorio determinístico
-    const x = Math.sin(seed) * 10000;
+    const x = Math.sin(seed + offset * 97) * 10000;
     return x - Math.floor(x);
   };
-  const attendanceByDay = Array.from({ length: range === "week" ? 7 : 8 }).map((_, i) => {
-    const atendidos = 4 + Math.floor(rng(i + 1) * 9);
-    return {
-      label: range === "week" ? dayLabels[i] : `Sem ${i + 1}`,
-      atendidos,
-      cancelados: Math.floor(rng(i + 7) * 3),
-      noShow: Math.floor(rng(i + 13) * 2),
-    };
-  });
-  const peakHours = ["09", "10", "11", "12", "14", "15", "16", "17", "18"].map((h, i) => ({
-    hour: `${h}h`,
-    turnos: 1 + Math.floor(rng(i + 21) * 10),
+  const iso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let start: Date;
+  let end: Date;
+  if (range === "week") {
+    start = new Date(today);
+    start.setDate(today.getDate() - ((today.getDay() + 6) % 7) - offset * 7);
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+  } else {
+    start = new Date(today.getFullYear(), today.getMonth() - offset, 1);
+    end = new Date(today.getFullYear(), today.getMonth() - offset + 1, 0);
+  }
+  const until = offset === 0 ? today : end;
+  const days: Date[] = [];
+  for (let d = new Date(start); d <= until; d.setDate(d.getDate() + 1)) days.push(new Date(d));
+  const period = { from: iso(start), to: iso(end), until: iso(until), isCurrent: offset === 0 };
+  const prevStart = new Date(start);
+  if (range === "week") prevStart.setDate(prevStart.getDate() - 7);
+  else prevStart.setMonth(prevStart.getMonth() - 1);
+  const prevEnd = range === "week" ? new Date(prevStart.getTime() + 6 * 86400000) : new Date(prevStart.getFullYear(), prevStart.getMonth() + 1, 0);
+
+  const attendanceByDay = days.map((d, i) => ({
+    date: iso(d),
+    label: range === "week" ? `${dayLabels[d.getDay()]} ${d.getDate()}` : String(d.getDate()),
+    atendidos: d.getDay() === 0 ? 0 : 3 + Math.floor(rng(i + 1) * 7),
+    cancelados: Math.floor(rng(i + 7) * 2),
+    ausentes: rng(i + 13) > 0.7 ? 1 : 0,
   }));
   const incomeByDay = attendanceByDay.map((d, i) => ({
+    date: d.date,
     label: d.label,
-    cents: (d.atendidos * (8000 + Math.floor(rng(i + 31) * 12000))) * 100,
+    cents: d.atendidos * (9000 + Math.floor(rng(i + 31) * 6000)) * 100,
   }));
-  const totalAppts = attendanceByDay.reduce((s, d) => s + d.atendidos, 0);
-  const incomeCents = incomeByDay.reduce((s, d) => s + d.cents, 0);
+  const peakHours = ["09", "10", "11", "12", "13", "14", "15", "16", "17", "18"].map((h, i) => ({
+    hour: `${h}h`,
+    turnos: h === "13" ? 0 : 1 + Math.floor(rng(i + 21) * 8),
+  }));
+  const sum = <T,>(xs: T[], f: (x: T) => number) => xs.reduce((acc, x) => acc + f(x), 0);
+  const attended = sum(attendanceByDay, (d) => d.atendidos);
+  const cancelled = sum(attendanceByDay, (d) => d.cancelados);
+  const noShow = sum(attendanceByDay, (d) => d.ausentes);
+  const incomeCents = sum(incomeByDay, (d) => d.cents);
+  const services = [
+    { serviceId: "svc_corte", name: "Corte de pelo", share: 0.5, price: 1200000 },
+    { serviceId: "svc_color", name: "Coloración", share: 0.2, price: 3500000 },
+    { serviceId: "svc_barba", name: "Arreglo de barba", share: 0.3, price: 700000 },
+  ].map((s) => {
+    const n = Math.round(attended * s.share);
+    return { serviceId: s.serviceId, name: s.name, attended: n, billedCents: n * s.price };
+  }).sort((a, b) => b.billedCents - a.billedCents);
+  const billedCents = sum(services, (s) => s.billedCents);
+  const nuevos = Math.round(attended * 0.3);
+  const totals = (k: number) => ({
+    appointments: Math.round((attended + cancelled + noShow) * k),
+    attended: Math.round(attended * k),
+    cancelled: Math.round(cancelled * k),
+    noShow: Math.round(noShow * k),
+    noShowRate: attended + noShow ? Math.round((noShow / (attended + noShow)) * 1000) / 1000 : 0,
+    incomeCents: Math.round(incomeCents * k),
+    billedCents: Math.round(billedCents * k),
+    averageTicketCents: attended ? Math.round(billedCents / attended) : 0,
+    newClients: Math.round(nuevos * k),
+    returningClients: Math.round((attended - nuevos) * k),
+    occupancyRate: Math.min(1, Math.round(0.68 * k * 1000) / 1000),
+    bookedMinutes: Math.round(attended * 40 * k),
+    availableMinutes: Math.round((attended * 40) / 0.68),
+    onlineBookings: Math.round(attended * 0.45 * k),
+  });
 
   return {
     range,
+    offset,
+    period,
+    previousPeriod: { from: iso(prevStart), to: iso(prevEnd), until: iso(prevEnd), isCurrent: false },
+    totals: totals(1),
+    previousTotals: totals(0.88),
     attendanceByDay,
-    newVsReturning: { nuevos: Math.round(totalAppts * 0.35), recurrentes: Math.round(totalAppts * 0.65) },
-    peakHours,
     incomeByDay,
-    totals: {
-      appointments: totalAppts,
-      incomeCents,
-      pendingCashCents: Math.round(incomeCents * 0.12),
-      newClients: Math.round(totalAppts * 0.35),
-      noShowRate: 0.06,
-    },
+    peakHours,
+    services,
+    newVsReturning: { nuevos, recurrentes: attended - nuevos },
+    pending: { cashCents: 1850000, cashCount: 2, unclosedAppointments: 1 },
     atRiskClients: [
-      { id: "cli_die", fullName: "Diego Ruiz", lastVisitLabel: "hace 3 meses" },
-      { id: "cli_juan", fullName: "Juan López", lastVisitLabel: "nunca volvió" },
+      {
+        clientId: "cli_die",
+        personId: "per_die",
+        fullName: "Diego Ruiz",
+        phone: "2615551004",
+        lastVisitLabel: "hace 2 meses",
+        daysSinceLastVisit: 62,
+        visits: 6,
+      },
+      {
+        clientId: "cli_juan",
+        personId: "per_juan",
+        fullName: "Juan López",
+        phone: null,
+        lastVisitLabel: "hace 3 meses",
+        daysSinceLastVisit: 95,
+        visits: 1,
+      },
     ],
+    atRiskTotal: 2,
   };
 }
 
@@ -1088,7 +1157,54 @@ export const handlers: RequestHandler[] = [
   http.get(url("/metrics/overview"), ({ request }) => {
     const u = new URL(request.url);
     const range = u.searchParams.get("range") === "month" ? "month" : "week";
-    return HttpResponse.json(buildMetrics(range));
+    const offset = Math.max(0, Number(u.searchParams.get("offset") ?? 0) || 0);
+    return HttpResponse.json(buildMetrics(range, offset));
+  }),
+
+  // ---- Métricas del equipo (dueño del comercio) ----
+  http.get(url("/comercios/:comercioId/metrics"), ({ request }) => {
+    const u = new URL(request.url);
+    const range = u.searchParams.get("range") === "month" ? "month" : "week";
+    const offset = Math.max(0, Number(u.searchParams.get("offset") ?? 0) || 0);
+    const base = buildMetrics(range, offset);
+    const member = (id: string, name: string, k: number, shares: boolean) => ({
+      membershipId: id,
+      professionalName: name,
+      sharesIncome: shares,
+      attended: Math.round(base.totals.attended * k),
+      previousAttended: Math.round(base.previousTotals.attended * k),
+      cancelled: Math.round(base.totals.cancelled * k),
+      noShow: Math.round(base.totals.noShow * k),
+      noShowRate: base.totals.noShowRate,
+      previousNoShowRate: base.previousTotals.noShowRate,
+      occupancyRate: base.totals.occupancyRate,
+      previousOccupancyRate: base.previousTotals.occupancyRate,
+      bookedMinutes: Math.round(base.totals.bookedMinutes * k),
+      availableMinutes: Math.round(base.totals.availableMinutes * k),
+      topServiceName: base.services[0]?.name ?? null,
+      incomeCents: shares ? Math.round(base.totals.incomeCents * k) : null,
+      previousIncomeCents: shares ? Math.round(base.previousTotals.incomeCents * k) : null,
+      billedCents: shares ? Math.round(base.totals.billedCents * k) : null,
+      averageTicketCents: shares ? base.totals.averageTicketCents : null,
+    });
+    const members = [member("mem_1", "Peluquería Juan", 0.6, true), member("mem_2", "Barbería Lucas", 0.4, false)];
+    const attended = members.reduce((a, m) => a + m.attended, 0);
+    const noShow = members.reduce((a, m) => a + m.noShow, 0);
+    return HttpResponse.json({
+      range,
+      offset,
+      period: base.period,
+      previousPeriod: base.previousPeriod,
+      team: {
+        attended,
+        previousAttended: members.reduce((a, m) => a + m.previousAttended, 0),
+        noShow,
+        noShowRate: attended + noShow ? noShow / (attended + noShow) : 0,
+        occupancyRate: base.totals.occupancyRate,
+        sharingCount: 1,
+      },
+      members,
+    });
   }),
 
   // ---- Admin de plataforma ----

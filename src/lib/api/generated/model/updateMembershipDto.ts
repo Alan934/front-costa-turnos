@@ -50,4 +50,6 @@ export interface UpdateMembershipDto {
    * @nullable
    */
   waitingRoomWhatsappMessages?: UpdateMembershipDtoWaitingRoomWhatsappMessages;
+  /** Compartir con el dueño del comercio lo que cobrás y facturás (Métricas del equipo). false (default) = el comercio solo ve tu actividad, nunca tu plata. */
+  shareIncomeWithComercio?: boolean;
 }

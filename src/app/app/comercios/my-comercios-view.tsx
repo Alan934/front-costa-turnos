@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, MapPin, User, Pencil, Clock3, CalendarRange } from "lucide-react";
+import { Building2, MapPin, User, Pencil, Clock3, CalendarRange, Lock, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState, EmptyState, SkeletonList } from "@/components/state-views";
-import { useMyMemberships } from "@/lib/api/comercios";
+import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
 import { titleCaseName } from "@/lib/format";
 import type { MembershipWithComercio } from "@/mocks/contract-extensions";
 import { MembershipAddressDialog } from "./membership-address-dialog";
@@ -87,6 +87,12 @@ export function MyComerciosView() {
                         Hasta {maxDays} {maxDays === 1 ? "día" : "días"} de anticipación
                       </p>
                     )}
+                    {m.status === "active" && !personal && (
+                      <ShareIncomeToggle
+                        comercioId={m.comercioId}
+                        shared={m.shareIncomeWithComercio ?? false}
+                      />
+                    )}
                   </div>
                   {m.status === "active" && !personal && (
                     <Button
@@ -123,6 +129,38 @@ export function MyComerciosView() {
           onClose={() => setEditing(null)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Privacidad de la plata frente al comercio. Por defecto el comercio solo ve la actividad
+ * (atendidos, ausencias, agenda ocupada); con esto prendido ve también cobrado y facturado.
+ */
+function ShareIncomeToggle({ comercioId, shared }: { comercioId: string; shared: boolean }) {
+  const update = useUpdateMyMembership(comercioId);
+  // Optimista: muestra lo último que eligió mientras guarda y hasta que vuelve la lista.
+  const chosen = update.variables?.shareIncomeWithComercio;
+  const value = !update.isError && chosen !== undefined ? chosen : shared;
+  return (
+    <div className="mt-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+      <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+        <input
+          type="checkbox"
+          checked={value}
+          disabled={update.isPending}
+          onChange={(e) => update.mutate({ shareIncomeWithComercio: e.target.checked })}
+          className="size-4 accent-[var(--color-accent)]"
+        />
+        {value ? <Eye className="size-3.5 text-accent" /> : <Lock className="size-3.5 text-muted-foreground" />}
+        Compartir mis ingresos con este comercio
+      </label>
+      <p className="mt-0.5 pl-6 text-xs text-muted-foreground">
+        {value
+          ? "El comercio ve cuánto cobrás y facturás en este local, además de tu actividad."
+          : "El comercio solo ve tu actividad (atendidos, ausencias y agenda ocupada), nunca tu plata."}
+      </p>
+      {update.isError && <p className="mt-1 pl-6 text-xs text-destructive">No pudimos guardar el cambio. Probá de nuevo.</p>}
     </div>
   );
 }

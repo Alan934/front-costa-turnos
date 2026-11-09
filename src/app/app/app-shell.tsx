@@ -23,9 +23,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr] print:block">
       {/* Sidebar desktop */}
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-card lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-border bg-card lg:flex print:hidden">
         <Brand />
         <ComercioSwitcher />
         <NavList onNavigate={() => {}} />
@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Topbar mobile */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden print:hidden">
         <Logo href="/app" size="md" />
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
@@ -77,11 +77,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
 
       <main className="min-w-0">
-        <VerifyEmailBanner />
-        <SetupChecklist />
+        <div className="print:hidden">
+          <VerifyEmailBanner />
+          <SetupChecklist />
+        </div>
         {children}
         {/* Va al final: rinde una tarjeta FIJA al pie + un espaciador para no tapar contenido. */}
-        <SubscriptionBanner />
+        <div className="print:hidden">
+          <SubscriptionBanner />
+        </div>
       </main>
     </div>
   );

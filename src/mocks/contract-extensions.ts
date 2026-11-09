@@ -173,6 +173,11 @@ export interface MembershipWithComercio {
   waitingRoomNote?: string | null;
   /** Mensajes de WhatsApp personalizados para avisar a quien espera. null/ausente = por defecto. */
   waitingRoomWhatsappMessages?: WaitingRoomWhatsappMessagesDto | null;
+  /**
+   * El dueño del comercio puede ver lo que el profesional cobra y factura (Métricas del equipo).
+   * false (default) = el comercio solo ve la actividad. Lo decide el profesional, por comercio.
+   */
+  shareIncomeWithComercio?: boolean;
   comercio?: {
     id: string;
     name: string;

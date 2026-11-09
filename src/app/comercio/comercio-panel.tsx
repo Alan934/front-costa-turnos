@@ -10,6 +10,7 @@ import type { Comercio } from "@/lib/api/generated/model/comercio";
 import { ComercioDetails } from "./comercio-details";
 import { MembersSection } from "./members-section";
 import { InvitationsSection } from "./invitations-section";
+import { TeamMetricsSection } from "./team-metrics-section";
 
 /** Panel comercial: elige el comercio y muestra datos + roster + invitaciones. */
 export function ComercioPanel() {
@@ -33,7 +34,7 @@ export function ComercioPanel() {
       <div>
         <h1 className="font-display text-2xl font-semibold tracking-tight">Mi comercio</h1>
         <p className="text-sm text-muted-foreground">
-          Gestioná los datos del local y el equipo de profesionales.
+          Gestioná los datos del local, el equipo de profesionales y cómo le va a cada uno.
         </p>
       </div>
 
@@ -55,6 +56,7 @@ export function ComercioPanel() {
             )}
             <ComercioDetails comercio={selected} />
             <MembersSection comercioId={selected.id} />
+            <TeamMetricsSection comercioId={selected.id} />
             <InvitationsSection comercioId={selected.id} />
           </>
         )}

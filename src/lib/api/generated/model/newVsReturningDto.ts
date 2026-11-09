@@ -7,6 +7,8 @@
  */
 
 export interface NewVsReturningDto {
+  /** Atendidos por primera vez en el período. */
   nuevos: number;
+  /** Atendidos que ya habían venido antes. */
   recurrentes: number;
 }

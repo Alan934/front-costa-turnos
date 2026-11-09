@@ -35,4 +35,5 @@ export interface Membership {
   waitingRoomStatus: WaitingRoomStatus;
   /** @nullable */
   waitingRoomNote?: string | null;
+  shareIncomeWithComercio: boolean;
 }

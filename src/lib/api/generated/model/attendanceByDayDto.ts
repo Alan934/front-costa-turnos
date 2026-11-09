@@ -7,8 +7,10 @@
  */
 
 export interface AttendanceByDayDto {
+  date: string;
   label: string;
   atendidos: number;
   cancelados: number;
-  noShow: number;
+  /** Turnos a los que el cliente no vino. */
+  ausentes: number;
 }

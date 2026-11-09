@@ -1,12 +1,14 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { Comercio } from "@/lib/api/generated/model/comercio";
 import type { ComercioInvitation } from "@/lib/api/generated/model/comercioInvitation";
 import type { Membership } from "@/lib/api/generated/model/membership";
 import type { UpdateMembershipDto } from "@/lib/api/generated/model/updateMembershipDto";
 import type { InvitationPreviewDto } from "@/lib/api/generated/model/invitationPreviewDto";
+import type { ComercioTeamMetricsDto } from "@/lib/api/generated/model/comercioTeamMetricsDto";
+import type { MetricsRange } from "@/lib/api/generated/model/metricsRange";
 import type {
   MembershipWithComercio,
   MembershipWithProfessional,
@@ -154,5 +156,23 @@ export function useCancelInvitation(comercioId: string) {
         method: "DELETE",
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["comercio-invitations", comercioId] }),
+  });
+}
+
+/**
+ * Métricas del equipo del comercio (`GET /v1/comercios/:id/metrics?range=&offset=`). La plata de
+ * cada profesional viene `null` salvo que él la comparta (`sharesIncome`).
+ */
+export function useComercioTeamMetrics(comercioId: string, range: MetricsRange, offset = 0) {
+  return useQuery({
+    queryKey: ["comercio-team-metrics", comercioId, range, offset],
+    queryFn: ({ signal }) =>
+      customInstance<ComercioTeamMetricsDto>({
+        url: `/v1/comercios/${comercioId}/metrics`,
+        method: "GET",
+        params: { range, offset },
+        signal,
+      }),
+    placeholderData: keepPreviousData,
   });
 }

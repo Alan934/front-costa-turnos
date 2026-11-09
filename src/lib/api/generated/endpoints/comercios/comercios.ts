@@ -28,6 +28,8 @@ import type {
   AcceptInvitationDto,
   Comercio,
   ComercioInvitation,
+  ComercioMetricsTeamParams,
+  ComercioTeamMetricsDto,
   ComerciosPreviewInvitationParams,
   InvitationPreviewDto,
   InviteProfessionalDto,
@@ -982,4 +984,103 @@ export const useComerciosCancelInvitation = <TError = ErrorType<void>,
 
       return useMutation(mutationOptions, queryClient);
     }
+    /**
+ * @summary Métricas del equipo del comercio (dueño del comercio)
+ */
+export const comercioMetricsTeam = (
+    comercioId: unknown,
+    params?: ComercioMetricsTeamParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<ComercioTeamMetricsDto>(
+      {url: `/v1/comercios/${comercioId}/metrics`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getComercioMetricsTeamQueryKey = (comercioId?: unknown,
+    params?: ComercioMetricsTeamParams,) => {
+    return [
+    `/v1/comercios/${comercioId}/metrics`, ...(params ? [params]: [])
+    ] as const;
+    }
+
     
+export const getComercioMetricsTeamQueryOptions = <TData = Awaited<ReturnType<typeof comercioMetricsTeam>>, TError = ErrorType<void>>(comercioId: unknown,
+    params?: ComercioMetricsTeamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getComercioMetricsTeamQueryKey(comercioId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof comercioMetricsTeam>>> = ({ signal }) => comercioMetricsTeam(comercioId,params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(comercioId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ComercioMetricsTeamQueryResult = NonNullable<Awaited<ReturnType<typeof comercioMetricsTeam>>>
+export type ComercioMetricsTeamQueryError = ErrorType<void>
+
+
+export function useComercioMetricsTeam<TData = Awaited<ReturnType<typeof comercioMetricsTeam>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    params: undefined |  ComercioMetricsTeamParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioMetricsTeam>>,
+          TError,
+          Awaited<ReturnType<typeof comercioMetricsTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioMetricsTeam<TData = Awaited<ReturnType<typeof comercioMetricsTeam>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    params?: ComercioMetricsTeamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof comercioMetricsTeam>>,
+          TError,
+          Awaited<ReturnType<typeof comercioMetricsTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useComercioMetricsTeam<TData = Awaited<ReturnType<typeof comercioMetricsTeam>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    params?: ComercioMetricsTeamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Métricas del equipo del comercio (dueño del comercio)
+ */
+
+export function useComercioMetricsTeam<TData = Awaited<ReturnType<typeof comercioMetricsTeam>>, TError = ErrorType<void>>(
+ comercioId: unknown,
+    params?: ComercioMetricsTeamParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof comercioMetricsTeam>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getComercioMetricsTeamQueryOptions(comercioId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
