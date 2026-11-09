@@ -35,11 +35,15 @@ import {
   MessageCircle,
   Sparkles,
   BarChart3,
+  Building2,
+  ShieldCheck,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
 import { useMetrics } from "@/lib/api/metrics";
+import { useActiveComercio } from "@/components/comercio-context";
 import { useTokenColors } from "@/lib/use-token-colors";
 import { formatMoney } from "@/lib/format";
 import { whatsAppLink } from "@/lib/whatsapp";
@@ -53,7 +57,11 @@ type Range = "week" | "month";
 export function MetricsView() {
   const [range, setRange] = useState<Range>("week");
   const [offset, setOffset] = useState(0);
-  const { data, isLoading, isError, isFetching, refetch } = useMetrics(range, offset);
+  // null = todos los comercios. El selector solo aparece si atiende en más de uno.
+  const [comercioId, setComercioId] = useState<string | null>(null);
+  const { options: comercios } = useActiveComercio();
+  const { data, isLoading, isError, isFetching, refetch } = useMetrics(range, offset, comercioId);
+  const comercioName = comercios.find((c) => c.comercioId === comercioId)?.name ?? null;
 
   const changeRange = (r: Range) => {
     setRange(r);
@@ -136,18 +144,45 @@ export function MetricsView() {
             {range === "week" ? "Ir a esta semana" : "Ir a este mes"}
           </button>
         )}
+        {comercios.length > 1 && (
+          <div className="relative ml-auto print:hidden">
+            <label htmlFor="metrics-comercio" className="sr-only">
+              Comercio
+            </label>
+            <Building2 className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <select
+              id="metrics-comercio"
+              value={comercioId ?? ""}
+              onChange={(e) => setComercioId(e.target.value || null)}
+              className="h-9 max-w-[12rem] appearance-none truncate rounded-lg border border-border bg-background pl-8 pr-3 text-sm font-medium outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Todos tus comercios</option>
+              {comercios.map((c) => (
+                <option key={c.comercioId} value={c.comercioId}>
+                  {c.name}
+                  {c.isPersonal ? " (tu negocio)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
+      {comercioName && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Mostrando solo lo que pasó en <b className="text-foreground">{comercioName}</b>.
+        </p>
+      )}
 
       {isLoading && <MetricsSkeleton />}
       {isError && !data && (
         <ErrorState className="mt-6" message="No pudimos cargar las métricas." onRetry={() => refetch()} />
       )}
-      {data && <MetricsContent data={data} range={range} />}
+      {data && <MetricsContent data={data} range={range} filtered={comercioId != null} />}
     </div>
   );
 }
 
-function MetricsContent({ data, range }: { data: MetricsOverviewDto; range: Range }) {
+function MetricsContent({ data, range, filtered }: { data: MetricsOverviewDto; range: Range; filtered: boolean }) {
   const c = useTokenColors();
   const t = data.totals;
   const p = data.previousTotals;
@@ -256,6 +291,15 @@ function MetricsContent({ data, range }: { data: MetricsOverviewDto; range: Rang
             tone={data.pending.cashCents > 0 ? "warning" : undefined}
           />
         </div>
+        {data.retainedDeposits.count > 0 && (
+          <p className="mt-4 flex items-start gap-2 rounded-lg bg-success/10 px-3 py-2 text-xs">
+            <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-success" />
+            <span>
+              Las señas te salvaron <b>{formatMoney(data.retainedDeposits.cents)}</b> en{" "}
+              {plural(data.retainedDeposits.count, "turno al que no vinieron", "turnos a los que no vinieron")}.
+            </span>
+          </p>
+        )}
       </Card>
 
       {isEmpty ? (
@@ -404,9 +448,206 @@ function MetricsContent({ data, range }: { data: MetricsOverviewDto; range: Rang
         </div>
       )}
 
-      <AtRiskCard data={data} />
+      {!isEmpty && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <PaymentMethodsCard data={data} />
+          <ChannelsCard data={data} />
+          <CancellationsCard data={data} />
+          <WaitingRoomCard data={data} />
+        </div>
+      )}
+
+      <AtRiskCard data={data} filtered={filtered} />
     </div>
   );
+}
+
+/* ---------- Cómo te pagaron / cómo llegaron / cancelaciones / sala ---------- */
+
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  cash: "Efectivo",
+  mercadopago: "Mercado Pago",
+  transfer: "Transferencia",
+};
+
+function PaymentMethodsCard({ data }: { data: MetricsOverviewDto }) {
+  const rows = data.byPaymentMethod;
+  const total = rows.reduce((acc, r) => acc + r.cents, 0);
+  const mp = rows.find((r) => r.method === "mercadopago");
+  return (
+    <Card
+      title="Cómo te pagaron"
+      help="Lo cobrado en el período según el medio de pago, sin IVA. Te sirve para cerrar la caja: el efectivo lo tenés vos, Mercado Pago y las transferencias están en tus cuentas."
+    >
+      {rows.length === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">No hubo cobros en este período.</p>
+      ) : (
+        <>
+          <ul className="space-y-3">
+            {rows.map((r) => (
+              <BarRow
+                key={r.method}
+                label={PAYMENT_METHOD_LABEL[r.method] ?? r.method}
+                value={formatMoney(r.cents)}
+                sub={plural(r.count, "cobro", "cobros")}
+                ratio={total ? r.cents / total : 0}
+              />
+            ))}
+          </ul>
+          {mp && mp.vatCents > 0 && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Además, tus clientes pagaron {formatMoney(mp.vatCents)} de IVA en Mercado Pago, que cubre la comisión de
+              Mercado Pago y no cuenta como ingreso tuyo.
+            </p>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+function ChannelsCard({ data }: { data: MetricsOverviewDto }) {
+  const ch = data.bookingChannels;
+  const total = ch.online + ch.manual + ch.walkIn;
+  return (
+    <Card
+      title="Cómo llegaron los turnos"
+      help="Online: el cliente reservó solo con tu link. A mano: lo cargaste vos. Sin turno: llegó y se anotó en la sala de espera."
+    >
+      {total === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">Sin turnos en este período.</p>
+      ) : (
+        <>
+          <ul className="space-y-3">
+            <BarRow label="Online, con tu link" value={String(ch.online)} ratio={ch.online / total} />
+            <BarRow label="Cargados a mano" value={String(ch.manual)} ratio={ch.manual / total} />
+            {ch.walkIn > 0 && <BarRow label="Llegaron sin turno" value={String(ch.walkIn)} ratio={ch.walkIn / total} />}
+          </ul>
+          {ch.online > 0 && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              {ch.online === 1 ? "1 turno se reservó solo" : `${ch.online} turnos se reservaron solos`} con tu link: menos
+              mensajes y llamadas para vos.
+            </p>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+const CANCELLATION_LABEL: Record<string, string> = {
+  client: "Los canceló el cliente",
+  professional: "Los cancelaste vos",
+  bumped: "Los desplazó otra reserva con seña",
+  no_show: "Cancelados por ausencia",
+  other: "Sin motivo registrado",
+};
+
+function CancellationsCard({ data }: { data: MetricsOverviewDto }) {
+  const rows = data.cancellationsByReason;
+  const total = rows.reduce((acc, r) => acc + r.count, 0);
+  return (
+    <Card
+      title={`Por qué se cancelaron${total > 0 ? ` (${total})` : ""}`}
+      help="Turnos cancelados en el período, según quién o qué los canceló. Si muchos los cancela el cliente, pedir seña ayuda a que se comprometa."
+    >
+      {total === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">No hubo cancelaciones en este período.</p>
+      ) : (
+        <ul className="space-y-3">
+          {rows.map((r) => (
+            <BarRow
+              key={r.reason}
+              label={CANCELLATION_LABEL[r.reason] ?? r.reason}
+              value={String(r.count)}
+              ratio={r.count / total}
+              tone="cancelled"
+            />
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function WaitingRoomCard({ data }: { data: MetricsOverviewDto }) {
+  const w = data.waitingRoom;
+  return (
+    <Card
+      title="Sala de espera"
+      help="Tiempos reales de quienes pasaron por la sala en el período: cuánto esperaron desde que llegaron hasta que los atendiste y cuánto duró de verdad la atención."
+    >
+      {w.checkedIn === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">Nadie pasó por la sala de espera en este período.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <MiniStat icon={<Timer className="size-3.5" />} label="Espera promedio" value={minutesLabel(w.avgWaitMinutes)} />
+            <MiniStat label="Espera más larga" value={minutesLabel(w.maxWaitMinutes)} />
+            <MiniStat label="Duración real de la atención" value={w.avgServiceMinutes ? minutesLabel(w.avgServiceMinutes) : "—"} />
+            <MiniStat label="Atendidos que vinieron sin turno" value={String(w.walkInsAttended)} />
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {plural(w.checkedIn, "persona pasó", "personas pasaron")} por la sala.{" "}
+            <Link href="/app/sala" className="font-medium text-accent hover:underline print:hidden">
+              Ir a la Sala de espera
+            </Link>
+          </p>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function BarRow({
+  label,
+  value,
+  sub,
+  ratio,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  ratio: number;
+  tone?: "cancelled";
+}) {
+  return (
+    <li>
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="min-w-0 truncate font-medium">{label}</span>
+        <span className="shrink-0 font-display font-semibold tabular-nums">{value}</span>
+      </div>
+      <div className="mt-1 flex items-center gap-2">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full", tone === "cancelled" ? "bg-status-cancelled-foreground" : "bg-accent")}
+            style={{ width: `${Math.max(3, Math.round(ratio * 100))}%` }}
+          />
+        </div>
+        <span className="w-24 shrink-0 text-right text-xs text-muted-foreground">{sub ?? pct(ratio)}</span>
+      </div>
+    </li>
+  );
+}
+
+function MiniStat({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-muted/50 p-3">
+      <p className="flex items-center gap-1 font-display text-lg font-semibold tabular-nums">
+        {icon}
+        {value}
+      </p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function minutesLabel(min: number): string {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h} h ${m} min` : `${h} h`;
 }
 
 /* ---------- Resumen en lenguaje simple ---------- */
@@ -451,13 +692,23 @@ function Summary({ data, range }: { data: MetricsOverviewDto; range: Range }) {
     if (t.onlineBookings > 0) {
       sentences.push(
         <>
-          {t.onlineBookings === 1 ? "1 turno lo reservó" : `${t.onlineBookings} turnos los reservaron`} tus clientes
-          solos, online.
+          {t.onlineBookings === 1 ? "1 turno se reservó solo" : `${t.onlineBookings} turnos se reservaron solos`} con
+          tu link.
         </>,
       );
     }
     if (t.noShow > 0) {
-      sentences.push(<>{t.noShow === 1 ? "1 cliente no vino" : `${t.noShow} clientes no vinieron`}.</>);
+      sentences.push(
+        <>
+          {t.noShow === 1 ? "1 cliente no vino" : `${t.noShow} clientes no vinieron`}
+          {data.retainedDeposits.cents > 0 ? (
+            <>
+              , pero las señas te salvaron <b>{formatMoney(data.retainedDeposits.cents)}</b>
+            </>
+          ) : null}
+          .
+        </>,
+      );
     }
   }
 
@@ -478,12 +729,12 @@ function Summary({ data, range }: { data: MetricsOverviewDto; range: Range }) {
 
 /* ---------- Clientes que dejaron de venir ---------- */
 
-function AtRiskCard({ data }: { data: MetricsOverviewDto }) {
+function AtRiskCard({ data, filtered }: { data: MetricsOverviewDto; filtered: boolean }) {
   const rest = data.atRiskTotal - data.atRiskClients.length;
   return (
     <Card
       title={`Clientes que dejaron de venir${data.atRiskTotal > 0 ? ` (${data.atRiskTotal})` : ""}`}
-      help="Clientes que no atendés hace más de 45 días y que no tienen un turno reservado. Arriba, los que se fueron hace menos: son los más fáciles de recuperar. No depende del período elegido."
+      help={`Clientes que no atendés hace más de 45 días y que no tienen un turno reservado. Arriba, los que se fueron hace menos: son los más fáciles de recuperar. No depende del período elegido${filtered ? " e incluye clientes de todos tus comercios" : ""}.`}
     >
       {data.atRiskClients.length === 0 ? (
         <p className="py-2 text-sm text-muted-foreground">¡Todos tus clientes están al día!</p>
@@ -880,6 +1131,28 @@ function exportCsv(data: MetricsOverviewDto) {
     "",
     row("Servicio", "Atendidos", "Facturado ($)"),
     ...data.services.map((s) => row(s.name, s.attended, pesos(s.billedCents))),
+    "",
+    row("Medio de pago", "Cobros", "Cobrado ($)", "IVA pagado por el cliente ($)"),
+    ...data.byPaymentMethod.map((m) =>
+      row(PAYMENT_METHOD_LABEL[m.method] ?? m.method, m.count, pesos(m.cents), pesos(m.vatCents)),
+    ),
+    "",
+    row("Cómo llegaron los turnos", "Cantidad"),
+    row("Online, con tu link", data.bookingChannels.online),
+    row("Cargados a mano", data.bookingChannels.manual),
+    row("Llegaron sin turno", data.bookingChannels.walkIn),
+    "",
+    row("Motivo de cancelación", "Cantidad"),
+    ...data.cancellationsByReason.map((c) => row(CANCELLATION_LABEL[c.reason] ?? c.reason, c.count)),
+    "",
+    row("Sala de espera", ""),
+    row("Pasaron por la sala", data.waitingRoom.checkedIn),
+    row("Espera promedio (min)", data.waitingRoom.avgWaitMinutes),
+    row("Espera más larga (min)", data.waitingRoom.maxWaitMinutes),
+    row("Duración real de la atención (min)", data.waitingRoom.avgServiceMinutes),
+    row("Atendidos sin turno", data.waitingRoom.walkInsAttended),
+    "",
+    row("Señas que te quedaste por ausencias ($)", pesos(data.retainedDeposits.cents)),
   ];
 
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });

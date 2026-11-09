@@ -15,4 +15,8 @@ range?: MetricsRange;
  * @maximum 120
  */
 offset?: number;
+/**
+ * Solo lo que pasó en este comercio. Sin valor = todos los comercios del profesional.
+ */
+comercioId?: string;
 };

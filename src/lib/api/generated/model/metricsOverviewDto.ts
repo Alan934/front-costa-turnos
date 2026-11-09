@@ -15,8 +15,18 @@ import type { ServiceMetricsDto } from './serviceMetricsDto';
 import type { NewVsReturningDto } from './newVsReturningDto';
 import type { PendingMetricsDto } from './pendingMetricsDto';
 import type { AtRiskClientDto } from './atRiskClientDto';
+import type { PaymentMethodMetricsDto } from './paymentMethodMetricsDto';
+import type { CancellationReasonMetricsDto } from './cancellationReasonMetricsDto';
+import type { BookingChannelsDto } from './bookingChannelsDto';
+import type { WaitingRoomMetricsDto } from './waitingRoomMetricsDto';
+import type { RetainedDepositsDto } from './retainedDepositsDto';
 
 export interface MetricsOverviewDto {
+  /**
+   * Comercio filtrado, o null si son todos.
+   * @nullable
+   */
+  comercioId?: string | null;
   range: MetricsRange;
   offset: number;
   period: MetricsPeriodDto;
@@ -34,4 +44,9 @@ export interface MetricsOverviewDto {
   atRiskClients: AtRiskClientDto[];
   /** Total de clientes que dejaron de venir. */
   atRiskTotal: number;
+  byPaymentMethod: PaymentMethodMetricsDto[];
+  cancellationsByReason: CancellationReasonMetricsDto[];
+  bookingChannels: BookingChannelsDto;
+  waitingRoom: WaitingRoomMetricsDto;
+  retainedDeposits: RetainedDepositsDto;
 }

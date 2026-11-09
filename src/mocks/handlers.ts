@@ -553,6 +553,25 @@ function buildMetrics(range: "week" | "month", offset = 0) {
       },
     ],
     atRiskTotal: 2,
+    comercioId: null,
+    byPaymentMethod: [
+      { method: "cash", count: Math.round(attended * 0.4), cents: Math.round(incomeCents * 0.4), vatCents: 0 },
+      { method: "mercadopago", count: Math.round(attended * 0.45), cents: Math.round(incomeCents * 0.45), vatCents: Math.round(incomeCents * 0.45 * 0.21) },
+      { method: "transfer", count: Math.round(attended * 0.15), cents: Math.round(incomeCents * 0.15), vatCents: 0 },
+    ],
+    cancellationsByReason: cancelled
+      ? [
+          { reason: "client", count: Math.ceil(cancelled * 0.6) },
+          { reason: "professional", count: Math.floor(cancelled * 0.4) },
+        ]
+      : [],
+    bookingChannels: {
+      online: Math.round(attended * 0.45),
+      manual: Math.round(attended * 0.4),
+      walkIn: Math.round(attended * 0.15),
+    },
+    waitingRoom: { checkedIn: Math.round(attended * 0.3), avgWaitMinutes: 14, maxWaitMinutes: 41, avgServiceMinutes: 32, walkInsAttended: Math.round(attended * 0.15) },
+    retainedDeposits: noShow ? { cents: noShow * 400000, count: noShow } : { cents: 0, count: 0 },
   };
 }
 
