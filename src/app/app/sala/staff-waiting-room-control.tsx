@@ -60,7 +60,9 @@ import { useActiveComercio } from "@/components/comercio-context";
 import { useMyMemberships, useUpdateMyMembership } from "@/lib/api/comercios";
 import { useServices } from "@/lib/api/catalog";
 import { usePushPublicKey, useSubscribeProPush } from "@/lib/api/sala";
-import { currentEndpoint, pushSupport, subscribeBrowser } from "@/lib/push";
+import { closeNotifications, currentEndpoint } from "@/lib/push";
+import { usePushActivation } from "@/lib/use-push-activation";
+import { NotificationHelp } from "@/components/notification-help";
 import { armAttention, beep, isAttentionArmed } from "@/lib/attention";
 import {
   DEFAULT_WAITING_MESSAGES,
@@ -251,6 +253,12 @@ function RoomBoard({
       beep();
     prevPending.current = room ? pendingCount : null;
   }, [room, pendingCount]);
+
+  // Ya aceptó o descartó a todos: el aviso "se anotó alguien" no tiene que quedar en la bandeja.
+  const roomLoaded = !!room;
+  useEffect(() => {
+    if (roomLoaded && pendingCount === 0) void closeNotifications(["sala-pendiente"]);
+  }, [roomLoaded, pendingCount]);
 
   const servicesQuery = useServices();
   // El walk-in se crea en el comercio activo: solo sus servicios activos.
@@ -878,40 +886,50 @@ function WhatsAppNotify({
   );
 }
 
-/** Aviso al profesional (web push) cuando alguien se anota por QR: nadie mira la pantalla con la fila llena. */
+/**
+ * Aviso al profesional (web push) cuando alguien se anota por QR: nadie mira la pantalla con la fila
+ * llena. Un solo botón activa las notificaciones Y el sonido de la pantalla abierta. Si el navegador
+ * las tiene bloqueadas, el botón abre la guía para habilitarlas en vez de quedar muerto.
+ */
 function ProPushButton() {
   const publicKey = usePushPublicKey();
   const subscribe = useSubscribeProPush();
+  const push = usePushActivation({
+    publicKey: publicKey.data?.publicKey,
+    save: subscribe.mutateAsync,
+  });
+  const { support, problem } = push;
   const [on, setOn] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
-  const [support, setSupport] =
-    useState<ReturnType<typeof pushSupport>>("unsupported");
 
   useEffect(() => {
     setSoundOn(isAttentionArmed());
-    setSupport(pushSupport());
     void currentEndpoint().then((ep) =>
       setOn(!!ep && Notification.permission === "granted"),
     );
   }, []);
 
-  // Notificaciones bloqueadas o sin soporte: queda el aviso sonoro con la pantalla abierta.
-  if (
-    support === "unsupported" ||
-    support === "denied" ||
-    !publicKey.data?.enabled
-  ) {
+  const pushAvailable = !!publicKey.data?.enabled;
+  const active = (on || push.done) && support !== "denied";
+  const blocked = support === "denied" || support === "unsupported";
+
+  async function onClick() {
+    // El clic es el gesto que destraba el audio: queda listo aunque las notificaciones no salgan.
+    void armAttention().then(setSoundOn);
+    if (!pushAvailable) return;
+    if (blocked) push.openHelp();
+    else await push.enable();
+  }
+
+  if (!pushAvailable) {
+    // El servidor no tiene push configurado: queda solo el aviso sonoro con la pantalla abierta.
     return (
       <Button
         variant="outline"
         size="sm"
-        onClick={async () => setSoundOn(await armAttention())}
+        onClick={onClick}
         disabled={soundOn}
-        title={
-          support === "denied"
-            ? "Bloqueaste las notificaciones del navegador: avisamos con sonido mientras esta pantalla esté abierta"
-            : "Suena un aviso cuando alguien se anota, mientras esta pantalla esté abierta"
-        }
+        title="Suena un aviso cuando alguien se anota, mientras esta pantalla esté abierta"
       >
         <Volume2 className="size-4" />
         {soundOn ? "Sonido activo" : "Activar sonido"}
@@ -919,31 +937,48 @@ function ProPushButton() {
     );
   }
 
-  async function enable() {
-    void armAttention(); // además de la notificación, deja listo el sonido
-    try {
-      const sub = await subscribeBrowser(publicKey.data!.publicKey);
-      subscribe.mutate(sub, { onSuccess: () => setOn(true) });
-    } catch {
-      setSupport(pushSupport());
-    }
-  }
-
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={enable}
-      disabled={on || subscribe.isPending}
-      title={
-        on
-          ? "Te avisamos cuando alguien se anote"
-          : "Avisarme cuando alguien se anote desde su celular"
-      }
-    >
-      {on ? <Bell className="size-4" /> : <BellOff className="size-4" />}
-      {on ? "Avisos activos" : "Activar avisos"}
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onClick}
+        disabled={active || push.busy}
+        title={
+          active
+            ? "Te avisamos cuando alguien se anote"
+            : blocked
+              ? "Las notificaciones están bloqueadas: tocá para ver cómo habilitarlas. El sonido con la pantalla abierta funciona igual."
+              : "Avisarme cuando alguien se anote desde su celular"
+        }
+      >
+        {push.busy ? (
+          <Spinner />
+        ) : active ? (
+          <Bell className="size-4" />
+        ) : soundOn ? (
+          <Volume2 className="size-4" />
+        ) : (
+          <BellOff className="size-4" />
+        )}
+        {active ? "Avisos activos" : "Activar avisos"}
+      </Button>
+      {!active && problem && problem !== "denied" && problem !== "unsupported" && (
+        <span className="text-xs text-destructive">
+          {problem === "dismissed"
+            ? "Elegí «Permitir» en el cuadro del navegador."
+            : problem === "server"
+              ? "No pudimos guardar el aviso. Probá de nuevo."
+              : "No se pudo activar en este navegador. Probá de nuevo."}
+        </span>
+      )}
+      <NotificationHelp
+        open={push.helpOpen}
+        problem={support === "unsupported" ? "unsupported" : problem}
+        onClose={push.closeHelp}
+        onRetry={() => void push.enable()}
+      />
+    </>
   );
 }
 
