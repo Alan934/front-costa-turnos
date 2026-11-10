@@ -24,19 +24,25 @@ export function whatsAppLink(phone: string, text?: string): string {
 /** Situación del cliente en la fila: define qué mensaje se le manda. */
 export type WaitingMessageKind = "called" | "next" | "waiting";
 
-/** Variables que el profesional puede usar en sus mensajes, escritas entre llaves. */
+/**
+ * Datos que se completan solos en el mensaje. Se guardan como `{clave}`, pero el profesional nunca
+ * ve las llaves: en el editor aparecen como etiquetas con `label`.
+ */
 export const WHATSAPP_PLACEHOLDERS = [
-  { key: "nombre", label: "Nombre", help: "Nombre del cliente" },
-  { key: "profesional", label: "Profesional", help: "Tu nombre en la sala" },
-  { key: "numero", label: "Número", help: "Número de turno del cliente" },
+  { key: "nombre", label: "Nombre del cliente", help: "Ej. «Carla»" },
+  { key: "profesional", label: "Tu nombre", help: "Como aparecés en la sala" },
+  { key: "numero", label: "N° de turno", help: "Ej. «12»" },
   {
     key: "personas",
-    label: "Personas",
-    help: "Cuánta gente hay antes, ej. «2 personas»",
+    label: "Personas antes",
+    help: "Ej. «2 personas»",
   },
-  { key: "minutos", label: "Minutos", help: "Espera estimada en minutos" },
-  { key: "telefono", label: "Teléfono", help: "Tu teléfono / WhatsApp" },
+  { key: "minutos", label: "Minutos de espera", help: "Ej. «20»" },
+  { key: "telefono", label: "Tu teléfono", help: "Tu número de WhatsApp" },
 ] as const;
+
+export type WhatsAppPlaceholderKey =
+  (typeof WHATSAPP_PLACEHOLDERS)[number]["key"];
 
 /** Largo máximo que acepta el backend por mensaje. */
 export const WHATSAPP_MESSAGE_MAX = 1000;
@@ -52,15 +58,21 @@ export const DEFAULT_WAITING_MESSAGES: Record<WaitingMessageKind, string> = {
 
 export const WAITING_MESSAGE_LABELS: Record<
   WaitingMessageKind,
-  { title: string; when: string }
+  { title: string; short: string; when: string }
 > = {
   called: {
     title: "Cuando lo llamás",
+    short: "Lo llamás",
     when: "Ya le tocó y todavía no se acercó.",
   },
-  next: { title: "Cuando es el siguiente", when: "No hay nadie antes que él." },
+  next: {
+    title: "Cuando es el siguiente",
+    short: "Es el siguiente",
+    when: "No hay nadie antes que él.",
+  },
   waiting: {
     title: "Cuando todavía espera",
+    short: "Está esperando",
     when: "Hay gente antes en la fila.",
   },
 };
