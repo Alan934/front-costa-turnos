@@ -9,4 +9,14 @@ import type { MetricsRange } from './metricsRange';
 
 export type MetricsOverviewParams = {
 range?: MetricsRange;
+/**
+ * Cuántos períodos hacia atrás: 0 = semana/mes actual, 1 = la semana/el mes anterior, etc.
+ * @minimum 0
+ * @maximum 120
+ */
+offset?: number;
+/**
+ * Solo lo que pasó en este comercio. Sin valor = todos los comercios del profesional.
+ */
+comercioId?: string;
 };

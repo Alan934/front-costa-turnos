@@ -7,12 +7,30 @@
  */
 
 export interface MetricsTotalsDto {
+  /** Turnos del período (cualquier estado). */
   appointments: number;
-  /** Ingreso del período: solo pagos cobrados (Paid). */
-  incomeCents: number;
-  /** Efectivo pendiente de cobro (pendiente + pagaré), en centavos. */
-  pendingCashCents: number;
-  newClients: number;
-  /** Proporcion 0..1 de no-show */
+  /** Turnos atendidos (terminados). */
+  attended: number;
+  cancelled: number;
+  /** Turnos a los que el cliente no vino. */
+  noShow: number;
+  /** Proporción 0..1 de ausencias: no vinieron / (atendidos + no vinieron). */
   noShowRate: number;
+  /** Cobrado en el período (pagos cobrados, por fecha de cobro, sin IVA). */
+  incomeCents: number;
+  /** Valor de lo atendido en el período según el precio de cada servicio. */
+  billedCents: number;
+  /** Facturado / atendidos, en centavos. */
+  averageTicketCents: number;
+  newClients: number;
+  returningClients: number;
+  /**
+   * Proporción 0..1 de la agenda reservada (minutos reservados / minutos de atención con turno). Null si no hay horarios con turno.
+   * @nullable
+   */
+  occupancyRate?: number | null;
+  bookedMinutes: number;
+  availableMinutes: number;
+  /** Turnos que el cliente reservó solo, online. */
+  onlineBookings: number;
 }

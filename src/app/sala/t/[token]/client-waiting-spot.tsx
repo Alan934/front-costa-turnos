@@ -32,7 +32,9 @@ import {
   useSubscribeSpotPush,
   useUnsubscribeSpotPush,
 } from "@/lib/api/sala";
-import { pushSupport, subscribeBrowser, unsubscribeBrowser } from "@/lib/push";
+import { closeNotifications, unsubscribeBrowser } from "@/lib/push";
+import { usePushActivation, type PushProblem } from "@/lib/use-push-activation";
+import { NotificationHelp } from "@/components/notification-help";
 import {
   armAttention,
   beep,
@@ -46,6 +48,9 @@ import { formatTime, formatRelativeMinutes, titleCaseName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { MyWaitingSpotDto } from "@/lib/api/generated/model/myWaitingSpotDto";
 import type { WaitingItemDto } from "@/lib/api/generated/model/waitingItemDto";
+
+/** Tope del timbre dentro de la página: pasado este tiempo deja de sonar (el cartel queda). */
+const RING_MAX_MS = 90_000;
 
 /**
  * "Mi lugar en la fila": la pantalla que abre el cliente con su link personal.
@@ -80,17 +85,44 @@ export function ClientWaitingSpot({ token }: { token: string }) {
   // Aviso dentro de la página, sin depender del permiso de notificaciones (que el cliente puede
   // tener bloqueado): al ser llamado suena y vibra hasta que toque "Ya voy" (Android vibra; iOS
   // no, ahí queda el sonido). El audio solo suena si antes tocó "Activar sonido".
+  //
+  // Suena SOLO mientras lo están llamando. En cuanto el profesional lo atiende (`in_progress`) ya
+  // se acercó: seguir sonando era el bug, y como `calledAt` no se borra al atender, la clave de
+  // "silenciado" cambiaba y el timbre arrancaba de nuevo aunque ya lo hubiera silenciado.
   const calledAt = spot?.me?.calledAt ?? null;
   const beingServed = spot?.me?.status === AppointmentStatus.in_progress;
+  const calling = !!calledAt && !beingServed;
   const alerting = !!calledAt || beingServed;
   const [silencedFor, setSilencedFor] = useState<string | null>(null);
-  const alertKey = alerting ? `${calledAt ?? "serving"}` : null;
+  // Un "Llamar de nuevo" del profesional cambia `calledAt`: vuelve a sonar aunque lo haya silenciado.
+  const alertKey = calling ? calledAt : null;
   const ringing = alertKey !== null && silencedFor !== alertKey;
 
   useEffect(() => {
     if (!ringing) return;
-    return startRinging();
-  }, [ringing]);
+    const stop = startRinging();
+    // Si no mira el celular, no suena para siempre: corta solo y queda el cartel en pantalla.
+    const t = setTimeout(() => setSilencedFor(alertKey), RING_MAX_MS);
+    return () => {
+      stop();
+      clearTimeout(t);
+    };
+  }, [ringing, alertKey]);
+
+  // Ya no hay llamado pendiente (lo atienden, lo mandaron atrás, terminó): la notificación del
+  // "¡Es tu turno!" es permanente y quedaría en la bandeja si no la cerramos.
+  const hasSpot = !!spot?.me;
+  useEffect(() => {
+    if (hasSpot && !calling) void closeNotifications(["sala-llamado", "sala-progreso"]);
+  }, [hasSpot, calling]);
+
+  // Pasó directo a "Atender" sin llamarlo antes: un solo aviso corto, no un timbre.
+  const prevServed = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (!hasSpot) return;
+    if (prevServed.current === false && beingServed && !calledAt) beep();
+    prevServed.current = beingServed;
+  }, [hasSpot, beingServed, calledAt]);
 
   // Título parpadeante: se nota desde otra pestaña o con el celular apoyado.
   useEffect(() => {
@@ -146,6 +178,7 @@ export function ClientWaitingSpot({ token }: { token: string }) {
           onClick={() => {
             stopRinging();
             setSilencedFor(alertKey);
+            void closeNotifications(["sala-llamado"]);
           }}
           className="mb-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-4 font-display text-lg font-semibold text-accent-foreground animate-pulse"
         >
@@ -320,24 +353,18 @@ function PushCard({ spot, token }: { spot: MyWaitingSpotDto; token: string }) {
   const publicKey = usePushPublicKey();
   const subscribe = useSubscribeSpotPush(token);
   const unsubscribe = useUnsubscribeSpotPush(token);
-  const [support, setSupport] = useState<ReturnType<typeof pushSupport>>("unsupported");
-  const [failed, setFailed] = useState(false);
-
-  // Si desbloquea las notificaciones desde el candado, lo detectamos al volver a la pestaña.
-  useEffect(() => {
-    setSupport(pushSupport());
-    const recheck = () => setSupport(pushSupport());
-    document.addEventListener("visibilitychange", recheck);
-    window.addEventListener("focus", recheck);
-    return () => {
-      document.removeEventListener("visibilitychange", recheck);
-      window.removeEventListener("focus", recheck);
-    };
-  }, []);
+  // Si desbloquea las notificaciones desde los ajustes, la activación se completa sola al volver.
+  const push = usePushActivation({
+    publicKey: publicKey.data?.publicKey,
+    save: subscribe.mutateAsync,
+  });
+  const { support, problem } = push;
 
   if (!spot.pushEnabled || !publicKey.data?.enabled) return null;
 
-  if (spot.pushSubscribed) {
+  // El back dice "suscripto", pero si en este navegador se bloquearon después, el aviso no llega:
+  // mejor admitirlo y guiar que prometer algo falso.
+  if (spot.pushSubscribed && support !== "denied") {
     return (
       <div className="mt-4 flex items-center gap-3 rounded-2xl border border-status-serving-foreground/30 bg-status-serving px-4 py-3">
         <Bell className="size-5 shrink-0 text-status-serving-foreground" />
@@ -359,48 +386,57 @@ function PushCard({ spot, token }: { spot: MyWaitingSpotDto; token: string }) {
     );
   }
 
-  if (support === "unsupported") {
-    return (
-      <p className="mt-4 rounded-2xl bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
-        Tu navegador no permite avisos con la pantalla cerrada. Activá el sonido de acá abajo y
-        dejá esta pantalla abierta: te avisamos con sonido y vibración. En iPhone, agregala a la
-        pantalla de inicio para recibir avisos también con la pantalla cerrada.
-      </p>
-    );
-  }
-  if (support === "denied") {
-    return (
-      <p className="mt-4 rounded-2xl bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
-        Las notificaciones de este sitio están bloqueadas. Podés habilitarlas desde el candado de la
-        barra de direcciones, o activar el sonido de acá abajo y dejar esta pantalla abierta.
-      </p>
-    );
-  }
-
-  async function enable() {
-    setFailed(false);
-    try {
-      const sub = await subscribeBrowser(publicKey.data!.publicKey);
-      subscribe.mutate(sub, { onError: () => setFailed(true) });
-    } catch {
-      setSupport(pushSupport());
-      setFailed(true);
-    }
-  }
+  // En vez de un cartel sin salida, el botón sigue ahí: abre la guía paso a paso de SU navegador
+  // para habilitar los avisos (o instalar la web en iPhone / salir del navegador de otra app).
+  const blocked = support === "denied" || support === "unsupported";
+  const message = problemMessage(problem, blocked);
 
   return (
     <div className="mt-4">
-      <Button className="w-full" variant="outline" onClick={enable} disabled={subscribe.isPending}>
-        {subscribe.isPending ? <Spinner /> : <BellRing className="size-4" />}
-        Avisarme cuando me toque
+      <Button
+        className="w-full"
+        variant="outline"
+        onClick={() => (blocked ? push.openHelp() : void push.enable())}
+        disabled={push.busy}
+      >
+        {push.busy ? <Spinner /> : <BellRing className="size-4" />}
+        {support === "denied" ? "Habilitar avisos" : "Avisarme cuando me toque"}
       </Button>
-      {failed && support === "ok" && (
-        <p className="mt-1.5 text-center text-xs text-destructive">
-          No pudimos activar los avisos. Probá de nuevo.
+      {message && (
+        <p
+          className={cn(
+            "mt-1.5 text-center text-xs",
+            problem === "dismissed" || blocked ? "text-muted-foreground" : "text-destructive",
+          )}
+        >
+          {message}
         </p>
       )}
+      <NotificationHelp
+        open={push.helpOpen}
+        problem={support === "unsupported" ? "unsupported" : problem}
+        onClose={push.closeHelp}
+        onRetry={() => void push.enable()}
+      />
     </div>
   );
+}
+
+function problemMessage(problem: PushProblem | null, blocked: boolean): string | null {
+  if (blocked) {
+    return "Las notificaciones no están habilitadas. Tocá el botón y te mostramos cómo, o activá el sonido de abajo y dejá esta pantalla abierta.";
+  }
+  switch (problem) {
+    case "dismissed":
+      return "Cerraste el cuadro sin elegir. Tocá de nuevo y elegí «Permitir».";
+    case "server":
+      return "Permitiste los avisos pero no pudimos guardarlos. Probá de nuevo.";
+    case "worker":
+    case "subscribe":
+      return "Tu navegador no pudo activar los avisos. Probá de nuevo; si sigue igual, activá el sonido de abajo y dejá esta pantalla abierta.";
+    default:
+      return null;
+  }
 }
 
 /**

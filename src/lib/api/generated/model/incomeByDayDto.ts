@@ -7,7 +7,8 @@
  */
 
 export interface IncomeByDayDto {
+  date: string;
   label: string;
-  /** Ingreso del periodo en centavos */
+  /** Cobrado ese día, en centavos (sin IVA). */
   cents: number;
 }

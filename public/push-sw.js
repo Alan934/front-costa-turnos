@@ -15,14 +15,18 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   const title = data.title || "Costa Turnos";
-  const isCall = data.tag === "sala-llamado";
+  // `silent`: aviso informativo que reemplaza a uno anterior sin sonar ni vibrar (ej. "te están
+  // atendiendo" pisa al "¡Es tu turno!" que quedaba fijo en la bandeja).
+  const silent = data.silent === true;
+  const isCall = data.tag === "sala-llamado" && !silent;
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
       // Misma tag = la notificación nueva reemplaza a la anterior (no se apilan "estás segundo").
       tag: data.tag,
-      renotify: Boolean(data.tag),
-      vibrate: data.vibrate,
+      renotify: Boolean(data.tag) && !silent,
+      silent,
+      vibrate: silent ? undefined : data.vibrate,
       icon: "/logo-mark.svg",
       badge: "/logo-badge.svg",
       // El llamado no debe desaparecer solo: la persona puede tardar unos segundos en mirar.
