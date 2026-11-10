@@ -1186,10 +1186,16 @@ function RoomSettingsDialog({
                     {whatsappMessages
                       ? "Usás un mensaje personalizado"
                       : "Con el mensaje por defecto"}
-                    {typeof publicPageSettings.phone === "string" &&
-                    publicPageSettings.phone
-                      ? ""
-                      : " · Sin teléfono propio cargado"}
+                    {/* Solo importa si algún mensaje usa «Tu teléfono». */}
+                    {Object.values(whatsappMessages ?? {}).some(
+                      (m) => typeof m === "string" && m.includes("{telefono}"),
+                    ) &&
+                    !(
+                      typeof publicPageSettings.phone === "string" &&
+                      publicPageSettings.phone
+                    )
+                      ? " · Falta cargar tu teléfono"
+                      : ""}
                   </span>
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
