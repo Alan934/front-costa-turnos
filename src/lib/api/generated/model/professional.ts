@@ -7,6 +7,7 @@
  */
 import type { DepositMode } from './depositMode';
 import type { ProfessionalPublicPageSettings } from './professionalPublicPageSettings';
+import type { ProfessionalNotificationPrefs } from './professionalNotificationPrefs';
 
 export interface Professional {
   id: string;
@@ -26,6 +27,7 @@ export interface Professional {
   cancellationWindowHours: number;
   rescheduleWindowHours: number;
   publicPageSettings: ProfessionalPublicPageSettings;
+  notificationPrefs: ProfessionalNotificationPrefs;
   /** @nullable */
   mpUserId?: string | null;
   /** @nullable */

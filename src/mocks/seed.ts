@@ -72,6 +72,7 @@ export const professional: Professional = {
   vatChargedToClient: true,
   cancellationWindowHours: 24,
   rescheduleWindowHours: 8,
+  notificationPrefs: {},
   publicPageSettings: {
     accentColor: "#16707A",
     bio: "Cortes, color y barbería en Costa de Araujo. Atendemos con turno.",
@@ -581,6 +582,7 @@ function adminRow(args: {
     vatChargedToClient: true,
     cancellationWindowHours: 24,
     rescheduleWindowHours: 24,
+    notificationPrefs: {},
     publicPageSettings: {},
   };
   const sub: Subscription = {

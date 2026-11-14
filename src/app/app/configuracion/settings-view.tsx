@@ -40,6 +40,8 @@ export function SettingsView() {
         <div className="mt-7 space-y-8">
           <BusinessSection professional={pro.data} />
           <Separator />
+          <NotificationsSection professional={pro.data} />
+          <Separator />
           <VatSection professional={pro.data} />
           <Separator />
           <BrandingSection professional={pro.data} />
@@ -130,6 +132,81 @@ function BusinessSection({
  * acreditación de Checkout (que varía según el plazo de cobro). Cada servicio puede tener su propio
  * IVA; si no, hereda este valor. Efectivo y transferencia nunca llevan IVA.
  */
+/**
+ * Avisos al profesional cuando un cliente reserva, cancela o reprograma. Cada canal se guarda
+ * al tocarlo. Un canal está activo salvo que figure en false (cuentas viejas: todo activado).
+ */
+function NotificationsSection({
+  professional,
+}: {
+  professional: { notificationPrefs?: { email?: boolean; push?: boolean } | null };
+}) {
+  const update = useUpdateProfessional();
+  const [email, setEmail] = useState(professional.notificationPrefs?.email !== false);
+  const [push, setPush] = useState(professional.notificationPrefs?.push !== false);
+
+  function save(next: { email: boolean; push: boolean }) {
+    setEmail(next.email);
+    setPush(next.push);
+    update.mutate(
+      { notificationPrefs: next },
+      {
+        // Si no se pudo guardar, la pantalla vuelve a mostrar lo que quedó guardado.
+        onError: () => {
+          setEmail(email);
+          setPush(push);
+        },
+      },
+    );
+  }
+
+  return (
+    <section>
+      <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">Avisos</h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Te avisamos cuando un cliente reserva, cancela o reprograma un turno desde tu página.
+      </p>
+      <div className="space-y-3">
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={email}
+            onChange={(e) => save({ email: e.target.checked, push })}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Por email
+            <span className="block text-xs text-muted-foreground">
+              Al email con el que ingresás a tu cuenta.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={push}
+            onChange={(e) => save({ email, push: e.target.checked })}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Notificación en el celular
+            <span className="block text-xs text-muted-foreground">
+              Llega a los dispositivos donde activaste las notificaciones. Se activan desde{" "}
+              <Link href="/app/sala" className="font-medium text-accent hover:underline">
+                la Sala
+              </Link>
+              , una vez por dispositivo.
+            </span>
+          </span>
+        </label>
+        {update.isError && (
+          <p className="text-xs text-destructive">No pudimos guardar el cambio. Probá de nuevo.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function VatSection({
   professional,
 }: {

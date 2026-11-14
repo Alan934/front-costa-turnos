@@ -5,10 +5,12 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { NotificationPrefsDto } from './notificationPrefsDto';
 import type { UpdateProfessionalDtoDefaultDepositMode } from './updateProfessionalDtoDefaultDepositMode';
 import type { UpdateProfessionalDtoPublicPageSettings } from './updateProfessionalDtoPublicPageSettings';
 
 export interface UpdateProfessionalDto {
+  notificationPrefs?: NotificationPrefsDto;
   businessName?: string;
   timezone?: string;
   address?: string;

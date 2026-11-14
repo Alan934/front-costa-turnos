@@ -18,4 +18,6 @@ export const NotificationType = {
   subscription: 'subscription',
   rescheduled: 'rescheduled',
   booked: 'booked',
+  pro_booked: 'pro_booked',
+  pro_cancelled: 'pro_cancelled',
 } as const;
