@@ -15,7 +15,10 @@ import {
   ArrowRight,
   Users,
   Footprints,
+  CalendarPlus,
+  Download,
 } from "lucide-react";
+import { googleCalendarUrl, downloadIcs, mapsUrl, type CalendarEvent } from "@/lib/calendar";
 import { Button } from "@/components/ui/button";
 import { formatWalkInWindows } from "@/lib/attendance";
 import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
@@ -75,6 +78,8 @@ interface ConfirmedState {
   provisional: boolean;
   /** Nombre del profesional asignado por el back cuando se eligió "cualquiera". */
   professionalDisplayName?: string;
+  /** Email que dejó al reservar ('' si no dejó). */
+  email?: string;
 }
 
 export function PublicBookingPage({ slug }: { slug: string }) {
@@ -172,6 +177,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
         sel={sel}
         provisional={confirmed.provisional}
         assignedProName={confirmed.professionalDisplayName}
+        email={confirmed.email}
         onReset={reset}
       />
     );
@@ -228,8 +234,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             professional={sel.professional}
             slot={sel.slot}
             mpConnected={mpConnected}
-            onConfirmed={(provisional, professionalDisplayName) =>
-              setConfirmed({ provisional, professionalDisplayName })
+            onConfirmed={(provisional, professionalDisplayName, email) =>
+              setConfirmed({ provisional, professionalDisplayName, email })
             }
           />
         )}
@@ -757,7 +763,7 @@ function ConfirmStep({
   professional: ProfessionalChoice;
   slot: Slot;
   mpConnected: boolean;
-  onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
+  onConfirmed: (provisional: boolean, professionalDisplayName?: string, email?: string) => void;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -832,7 +838,7 @@ function ConfirmStep({
   // cliente para que, al entrar a /mis-turnos, vea el turno recién sacado sin tener que reloguear.
   function onBooked(provisional: boolean, proName?: string) {
     queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-    onConfirmed(provisional, proName);
+    onConfirmed(provisional, proName, email.trim());
   }
 
   function submit(option: PayOption) {
@@ -961,6 +967,9 @@ function ConfirmStep({
           <Label htmlFor="email">
             Email <span className="text-muted-foreground">(opcional)</span>
           </Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Ahí te mandamos la confirmación y un recordatorio el día anterior.
+          </p>
           <Input
             id="email"
             type="email"
@@ -1041,18 +1050,43 @@ function Confirmation({
   sel,
   provisional,
   assignedProName,
+  email,
   onReset,
 }: {
   page: ComercioPublicPageDto;
   sel: Selection;
   provisional: boolean;
   assignedProName?: string;
+  /** Email que dejó al reservar ('' si no dejó): ahí van la confirmación y el recordatorio. */
+  email?: string;
   onReset: () => void;
 }) {
+  const { user } = useAuth();
   const proDisplay =
     sel.professional === "any"
       ? assignedProName ?? "un profesional disponible"
       : sel.professional?.displayName ?? "";
+
+  // Misma regla que el back: el recordatorio sale 24 h antes, salvo que falten menos de ~26 h.
+  const [willRemind] = useState(
+    () => !!sel.slot && +new Date(sel.slot.startAt) - Date.now() >= 26 * 3_600_000,
+  );
+
+  // Dónde es: la dirección propia del profesional elegido o, si no, la del comercio.
+  const address =
+    (sel.professional && sel.professional !== "any" ? sel.professional.address : null) ||
+    page.address ||
+    null;
+  const event: CalendarEvent | null =
+    sel.service && sel.slot
+      ? {
+          title: `${sel.service.name} en ${page.name}`,
+          startAt: sel.slot.startAt,
+          endAt: sel.slot.endAt,
+          location: [page.name, address].filter(Boolean).join(", "),
+          description: proDisplay ? `Con ${proDisplay}.` : null,
+        }
+      : null;
 
   return (
     <div className="py-8 text-center">
@@ -1080,10 +1114,74 @@ function Confirmation({
           los datos para asegurarlo.
         </p>
       )}
-      <p className="mt-4 text-sm text-muted-foreground">
-        Te avisaremos por WhatsApp. {page.name} te espera.
+      {/* Solo se promete lo que el sistema hace: confirmación y recordatorio van por email. */}
+      <p className="mx-auto mt-4 max-w-sm text-sm text-muted-foreground">
+        {email ? (
+          <>
+            Te mandamos la confirmación a <span className="font-medium text-foreground">{email}</span>
+            {willRemind ? " y te lo recordamos el día anterior." : "."}
+          </>
+        ) : (
+          "No dejaste un email, así que no vas a recibir recordatorio: guardalo en tu calendario."
+        )}{" "}
+        {page.name} te espera.
       </p>
-      <Button variant="outline" className="mt-6" onClick={onReset}>
+
+      {event && (
+        <div className="mx-auto mt-6 max-w-sm space-y-2.5">
+          <Button asChild className="w-full">
+            <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer">
+              <CalendarPlus className="size-4" />
+              Agregar a Google Calendar
+            </a>
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => downloadIcs(event)}>
+            <Download className="size-4" />
+            Otro calendario (iPhone, Outlook)
+          </Button>
+          {address && (
+            <Button asChild variant="outline" className="w-full">
+              <a href={mapsUrl(address)} target="_blank" rel="noopener noreferrer">
+                <MapPin className="size-4" />
+                Cómo llegar
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="mx-auto mt-6 max-w-sm rounded-xl border border-border bg-card p-4 text-sm">
+        {user ? (
+          <>
+            <p className="text-muted-foreground">
+              Si no podés ir, reprogramalo o cancelalo desde tus turnos.
+            </p>
+            <Link
+              href="/mis-turnos"
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Ver mis turnos <ArrowRight className="size-4" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground">
+              ¿Querés poder reprogramarlo o cancelarlo vos?{" "}
+              {email
+                ? "Creá tu cuenta con ese mismo email y el turno aparece solo."
+                : "Creá tu cuenta gratis."}
+            </p>
+            <Link
+              href="/ingresar?registro=cliente&next=%2Fmis-turnos"
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Crear mi cuenta <ArrowRight className="size-4" />
+            </Link>
+          </>
+        )}
+      </div>
+
+      <Button variant="ghost" className="mt-4" onClick={onReset}>
         Reservar otro turno
       </Button>
     </div>

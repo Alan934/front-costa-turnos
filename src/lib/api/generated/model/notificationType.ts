@@ -17,4 +17,5 @@ export const NotificationType = {
   deposit: 'deposit',
   subscription: 'subscription',
   rescheduled: 'rescheduled',
+  booked: 'booked',
 } as const;
