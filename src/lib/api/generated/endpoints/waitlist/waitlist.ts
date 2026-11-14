@@ -26,7 +26,8 @@ import type {
 
 import type {
   CreateWaitlistDto,
-  WaitlistEntry
+  WaitlistEntry,
+  WaitlistItemDto
 } from '../../model';
 
 import { customInstance } from '../../../axios-instance';
@@ -38,7 +39,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Listar entradas de lista de espera
+ * @summary Lista de espera vigente (días que no pasaron), con contacto y servicio
  */
 export const waitlistList = (
     
@@ -46,7 +47,7 @@ export const waitlistList = (
 ) => {
       
       
-      return customInstance<WaitlistEntry[]>(
+      return customInstance<WaitlistItemDto[]>(
       {url: `/v1/waitlist`, method: 'GET', signal
     },
       options);
@@ -109,7 +110,7 @@ export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Listar entradas de lista de espera
+ * @summary Lista de espera vigente (días que no pasaron), con contacto y servicio
  */
 
 export function useWaitlistList<TData = Awaited<ReturnType<typeof waitlistList>>, TError = ErrorType<void>>(

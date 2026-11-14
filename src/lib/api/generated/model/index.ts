@@ -274,6 +274,8 @@ export * from './waitingRoomWhatsappMessagesDto';
 export * from './waitlistEntry';
 export * from './waitlistEntryServiceId';
 export * from './waitlistEntryStaffId';
+export * from './waitlistItemDto';
+export * from './waitlistItemDtoStatus';
 export * from './waitlistStatus';
 export * from './walkInStatusDto';
 export * from './walkInStatusDtoNextWindow';

@@ -27,6 +27,9 @@ import type { Staff } from "@/lib/api/generated/model/staff";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { EnrichedClient, Slot } from "@/mocks/contract-extensions";
 
+/** Lo que hace falta de un cliente ya existente para cargarle el turno. */
+export type ClientChoice = Pick<EnrichedClient, "personId" | "fullName" | "phone">;
+
 /** Sin acentos ni mayúsculas, para buscar clientes por nombre. */
 function norm(value: string) {
   return value
@@ -51,14 +54,22 @@ export function NewAppointmentDialog({
   services,
   onClose,
   onCreated,
+  initialClient,
+  initialServiceId,
 }: {
   date: Date;
   staff: Staff[];
   services: Service[];
   onClose: () => void;
   onCreated: () => void;
+  /** Cliente ya elegido (por ejemplo, alguien de la lista de espera). */
+  initialClient?: ClientChoice;
+  /** Servicio preseleccionado, si existe entre `services`. */
+  initialServiceId?: string | null;
 }) {
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  const [serviceId, setServiceId] = useState(
+    services.find((s) => s.id === initialServiceId)?.id ?? services[0]?.id ?? "",
+  );
   const [staffId, setStaffId] = useState(staff[0]?.id ?? "");
   const service = services.find((s) => s.id === serviceId);
 
@@ -106,7 +117,7 @@ export function NewAppointmentDialog({
   // ---- Cliente: uno existente o uno nuevo ----
   const clients = useClients();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<EnrichedClient | null>(null);
+  const [selected, setSelected] = useState<ClientChoice | null>(initialClient ?? null);
   const [isNew, setIsNew] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");

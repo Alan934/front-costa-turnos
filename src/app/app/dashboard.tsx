@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -11,6 +11,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Wallet,
+  BellRing,
+  CalendarPlus,
+  CalendarX2,
+  Hourglass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +27,7 @@ import { useAppointments } from "@/lib/api/appointments";
 import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
+import { useWaitlistList } from "@/lib/api/generated/endpoints/waitlist/waitlist";
 import { WelcomeSetup } from "@/components/welcome-setup";
 import { ComercioWelcomeBanner } from "./comercio-welcome-banner";
 import { PublicPageLink } from "@/components/public-page-link";
@@ -39,6 +44,9 @@ const ACTIVE: AppointmentStatus[] = [
   AppointmentStatus.in_progress,
 ];
 
+/** Máximo de novedades listadas de cada tipo; el resto se resume en una línea. */
+const NEWS_MAX = 5;
+
 export function Dashboard() {
   const { user } = useAuth();
   const today = useMemo(() => new Date(), []);
@@ -48,6 +56,8 @@ export function Dashboard() {
   const lookupPerson = usePersonLookup();
   const pro = useProfessional();
   const mp = useMpStatus();
+  const waitlist = useWaitlistList();
+  const waitingCount = (waitlist.data ?? []).filter((w) => w.status === "waiting").length;
   const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
   const todays = (appts.data ?? []).filter((a) => isSameLocalDay(new Date(a.startAt), today));
@@ -67,6 +77,83 @@ export function Dashboard() {
   const hasPaidServices = (services.data ?? []).some((s) => s.allowDeposit || s.allowFullPayment);
 
   const loading = appts.isLoading || services.isLoading;
+
+  // ---- Próximos 7 días (desde mañana) ----
+  const nextRange = useMemo(() => {
+    const from = new Date(today);
+    from.setDate(from.getDate() + 1);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 6);
+    to.setHours(23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, [today]);
+  const nextAppts = useAppointments(nextRange);
+  const nextDays = useMemo(() => {
+    const from = +new Date(nextRange.from);
+    const to = +new Date(nextRange.to);
+    const byDay = new Map<string, Appointment[]>();
+    for (const a of nextAppts.data ?? []) {
+      const t = +new Date(a.startAt);
+      if (t < from || t > to || !ACTIVE.includes(a.status)) continue;
+      const key = new Date(a.startAt).toDateString();
+      byDay.set(key, [...(byDay.get(key) ?? []), a]);
+    }
+    return [...byDay.values()]
+      .map((list) => list.sort((x, y) => +new Date(x.startAt) - +new Date(y.startAt)))
+      .sort((x, y) => +new Date(x[0].startAt) - +new Date(y[0].startAt));
+  }, [nextAppts.data, nextRange]);
+
+  // ---- Novedades desde la última visita: reservas y cancelaciones hechas por clientes ----
+  const seenKey = user ? `costa-dash-seen:${user.id}` : null;
+  const [since, setSince] = useState<number | null>(null);
+  useEffect(() => {
+    if (!seenKey) return;
+    const floor = Date.now() - 7 * 24 * 3_600_000; // nunca más de una semana hacia atrás
+    let stored = NaN;
+    try {
+      stored = Number(localStorage.getItem(seenKey));
+    } catch {
+      // sin almacenamiento: se usa el valor por defecto
+    }
+    // Primera vez en este dispositivo: mostramos lo de las últimas 24 h.
+    setSince(Math.max(Number.isFinite(stored) && stored > 0 ? stored : Date.now() - 86_400_000, floor));
+  }, [seenKey]);
+
+  const news = useMemo(() => {
+    if (since == null) return { booked: [] as Appointment[], cancelled: [] as Appointment[] };
+    const all = [...(appts.data ?? []), ...(nextAppts.data ?? [])];
+    const unique = [...new Map(all.map((a) => [a.id, a])).values()];
+    const upcomingOnly = unique.filter((a) => +new Date(a.startAt) > Date.now());
+    return {
+      booked: upcomingOnly.filter(
+        (a) =>
+          a.createdVia === "client_self" &&
+          ACTIVE.includes(a.status) &&
+          +new Date(a.createdAt) > since,
+      ),
+      cancelled: upcomingOnly.filter(
+        (a) =>
+          a.status === AppointmentStatus.cancelled &&
+          a.cancellationReason === "client" &&
+          +new Date(a.updatedAt) > since,
+      ),
+    };
+  }, [appts.data, nextAppts.data, since]);
+
+  function markNewsSeen() {
+    const now = Date.now();
+    setSince(now);
+    try {
+      if (seenKey) localStorage.setItem(seenKey, String(now));
+    } catch {
+      // idem
+    }
+  }
+
+  const serviceName = (a: Appointment) =>
+    titleCaseName(a.serviceName ?? services.data?.find((s) => s.id === a.serviceId)?.name ?? "") ||
+    "Servicio";
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
@@ -107,7 +194,7 @@ export function Dashboard() {
           <p className="mb-1.5 text-xs font-medium text-muted-foreground">
             Compartí tu página de reservas
           </p>
-          <PublicPageLink slug={pro.data.slug} />
+          <PublicPageLink slug={pro.data.slug} businessName={pro.data.businessName} share />
         </div>
       )}
 
@@ -146,6 +233,70 @@ export function Dashboard() {
                 provisional{provisional.length > 1 ? "es" : ""} sin seña hoy. Pueden ser tomados por quien abone.
               </p>
             </div>
+          )}
+          {waitingCount > 0 && (
+            <Link
+              href="/app/lista-espera"
+              className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-accent"
+            >
+              <Hourglass className="size-4 shrink-0 text-accent" />
+              <p className="flex-1 text-sm">
+                <strong>{waitingCount}</strong>{" "}
+                {waitingCount === 1 ? "persona espera" : "personas esperan"} que se libere un
+                lugar en un día completo. Si tenés un hueco, podés {waitingCount === 1 ? "darle" : "darles"}{" "}
+                turno.
+              </p>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+          )}
+
+          {/* Novedades desde la última visita */}
+          {(news.booked.length > 0 || news.cancelled.length > 0) && (
+            <section className="mt-6 rounded-2xl border border-accent/30 bg-accent/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="inline-flex items-center gap-2 font-display text-sm font-semibold">
+                  <BellRing className="size-4 text-accent" />
+                  Novedades desde tu última visita
+                </h2>
+                <Button variant="ghost" size="sm" onClick={markNewsSeen}>
+                  Listo, ya las vi
+                </Button>
+              </div>
+              <ul className="mt-3 space-y-1.5 text-sm">
+                {news.booked.slice(0, NEWS_MAX).map((a) => (
+                  <li key={a.id} className="flex items-start gap-2">
+                    <CalendarPlus className="mt-0.5 size-4 shrink-0 text-success" />
+                    <span>
+                      <span className="font-medium">
+                        {lookupPerson(a.personId, { name: a.personName }).name}
+                      </span>{" "}
+                      reservó {serviceName(a)} para el {formatDayAndTime(a.startAt)}.
+                    </span>
+                  </li>
+                ))}
+                {news.cancelled.slice(0, NEWS_MAX).map((a) => (
+                  <li key={a.id} className="flex items-start gap-2">
+                    <CalendarX2 className="mt-0.5 size-4 shrink-0 text-destructive" />
+                    <span>
+                      <span className="font-medium">
+                        {lookupPerson(a.personId, { name: a.personName }).name}
+                      </span>{" "}
+                      canceló su turno del {formatDayAndTime(a.startAt)}. El horario quedó libre.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {(news.booked.length > NEWS_MAX || news.cancelled.length > NEWS_MAX) && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  En total: {news.booked.length} reserva{news.booked.length === 1 ? "" : "s"} nueva
+                  {news.booked.length === 1 ? "" : "s"} y {news.cancelled.length} cancelaci
+                  {news.cancelled.length === 1 ? "ón" : "ones"}.{" "}
+                  <Link href="/app/agenda" className="font-medium text-accent hover:underline">
+                    Ver todo en la agenda
+                  </Link>
+                </p>
+              )}
+            </section>
           )}
 
           {/* Próximos turnos */}
@@ -195,10 +346,74 @@ export function Dashboard() {
               </ul>
             )}
           </section>
+
+          {/* Próximos días: para planificar sin entrar a la agenda */}
+          <section className="mt-8">
+            <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">
+              Próximos 7 días
+            </h2>
+            {nextAppts.isLoading ? (
+              <Skeleton className="h-16 w-full rounded-xl" />
+            ) : nextAppts.isError ? (
+              <p className="text-sm text-muted-foreground">No pudimos cargar los próximos días.</p>
+            ) : nextDays.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                Todavía no tenés turnos para los próximos días. Compartí tu página de reservas
+                para que te empiecen a llegar.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {nextDays.map((list) => (
+                  <li key={list[0].id}>
+                    <Link
+                      href="/app/agenda"
+                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-accent/50"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium capitalize">
+                          {formatDayLabel(list[0].startAt, today)}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {list
+                            .slice(0, 3)
+                            .map(
+                              (a) =>
+                                `${formatTime(a.startAt)} ${lookupPerson(a.personId, { name: a.personName }).name}`,
+                            )
+                            .join(" · ")}
+                          {list.length > 3 ? ` · y ${list.length - 3} más` : ""}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent">
+                        {list.length} turno{list.length === 1 ? "" : "s"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       )}
     </div>
   );
+}
+
+/** "Mañana", o "viernes 20" para los días siguientes. */
+function formatDayLabel(iso: string, today: Date): string {
+  const d = new Date(iso);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (isSameLocalDay(d, tomorrow)) return "Mañana";
+  return new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric" }).format(d);
+}
+
+/** "viernes 20 a las 10:30" (para las novedades). */
+function formatDayAndTime(iso: string): string {
+  const day = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric" }).format(
+    new Date(iso),
+  );
+  return `${day} a las ${formatTime(iso)}`;
 }
 
 function Kpi({
