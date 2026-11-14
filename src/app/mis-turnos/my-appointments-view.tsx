@@ -14,6 +14,8 @@ import {
   ArrowDownUp,
   MessageCircle,
   Mail,
+  Store,
+  ArrowRight,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -236,6 +238,26 @@ export function MyAppointmentsView() {
             )}
           </>
         )
+      )}
+
+      {/* Camino para que una cuenta de cliente pase a ser profesional (p. ej. quien entró
+          con Google sin elegir tipo, o dejó el asistente a medias en otro dispositivo). */}
+      {user && !user.professionalId && !user.roles.includes("comercial") && !user.roles.includes("admin") && (
+        <Link
+          href="/onboarding"
+          className="mt-10 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-accent/60"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+            <Store className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">¿Atendés clientes? Ofrecé tus servicios</span>
+            <span className="block text-xs text-muted-foreground">
+              Armá tu agenda y tu página de reservas en un par de minutos. 15 días gratis.
+            </span>
+          </span>
+          <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+        </Link>
       )}
     </div>
   );

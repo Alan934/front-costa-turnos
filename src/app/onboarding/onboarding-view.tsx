@@ -28,9 +28,11 @@ import {
 import { availabilityCreateScheduleRule } from "@/lib/api/generated/endpoints/availability/availability";
 import { useServices, useCreateService } from "@/lib/api/catalog";
 import { useMpStatus } from "@/lib/api/billing";
+import { useSlugAvailability } from "@/lib/api/slug";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { paymentSummary } from "@/lib/deposit";
 import { formatMoney, formatDuration, titleCaseName } from "@/lib/format";
+import { finishOnboardingPath } from "@/lib/auth-intent";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { Service } from "@/lib/api/generated/model/service";
@@ -54,6 +56,19 @@ const TIMEZONES = [
   { value: "America/Argentina/Tucuman", label: "Tucumán" },
   { value: "America/Argentina/Ushuaia", label: "Ushuaia / Sur" },
 ];
+
+/** Zona horaria del dispositivo (IANA), o null si el navegador no la informa. */
+function detectTimezone(): string | null {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    // Algunos navegadores informan el alias viejo ("America/Buenos_Aires"): lo llevamos al
+    // nombre actual para que coincida con la lista.
+    const canonical = tz?.replace(/^America\/(?!Argentina\/)/, "America/Argentina/");
+    return TIMEZONES.some((t) => t.value === canonical) ? canonical! : tz;
+  } catch {
+    return null;
+  }
+}
 
 const STEPS = ["Negocio", "Servicios", "Equipo", "Horarios"] as const;
 type Step = 1 | 2 | 3 | 4 | 5;
@@ -81,7 +96,8 @@ export function OnboardingView() {
         {step === 2 && <ServicesStep onNext={() => setStep(3)} />}
         {step === 3 && <StaffStep onNext={() => setStep(4)} />}
         {step === 4 && <ScheduleStep onNext={() => setStep(5)} />}
-        {step === 5 && <DoneStep onFinish={() => router.replace("/app")} />}
+        {/* Si venía de una invitación (u otro `next`), lo devolvemos ahí; si no, al panel. */}
+        {step === 5 && <DoneStep onFinish={() => router.replace(finishOnboardingPath())} />}
       </main>
     </div>
   );
@@ -128,20 +144,43 @@ function StepHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: s
 
 /* ---------- Paso 1: Negocio ---------- */
 function BusinessStep({ onDone }: { onDone: () => void }) {
-  const { refresh } = useAuth();
+  const { renewSession } = useAuth();
   const onboard = useProfessionalsOnboard();
   const [businessName, setBusinessName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [address, setAddress] = useState("");
-  const [timezone, setTimezone] = useState(TIMEZONES[0].value);
+  // La zona horaria se toma del dispositivo en vez de preguntarla; el selector queda por si
+  // la persona configura el negocio desde otro lugar.
+  const [timezone, setTimezone] = useState(() => detectTimezone() ?? TIMEZONES[0].value);
+  const timezoneOptions = TIMEZONES.some((tz) => tz.value === timezone)
+    ? TIMEZONES
+    : [{ value: timezone, label: `${timezone.replace(/_/g, " ")} (la de este dispositivo)` }, ...TIMEZONES];
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!slugTouched) setSlug(toSlug(businessName));
   }, [businessName, slugTouched]);
 
-  const canSubmit = businessName.trim().length > 1 && slug.length > 1;
+  // Chequeo en vivo del enlace: se consulta medio segundo después de dejar de escribir.
+  const [checkedSlug, setCheckedSlug] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setCheckedSlug(slug), 450);
+    return () => clearTimeout(t);
+  }, [slug]);
+  const availability = useSlugAvailability(checkedSlug);
+  const slugSettled = checkedSlug === slug && !availability.isFetching;
+  const slugInfo = slugSettled ? availability.data : undefined;
+  const slugTaken = !!slugInfo && slugInfo.valid && !slugInfo.available;
+
+  function pickSlug(value: string) {
+    setSlugTouched(true);
+    setSlug(value);
+    setError(null);
+  }
+
+  // Si el chequeo falla (red), no se bloquea: el back valida igual al crear el negocio.
+  const canSubmit = businessName.trim().length > 1 && slug.length > 1 && !slugTaken;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -150,7 +189,9 @@ function BusinessStep({ onDone }: { onDone: () => void }) {
       { data: { businessName: businessName.trim(), slug, timezone, address: address.trim() || undefined } },
       {
         onSuccess: async () => {
-          await refresh(); // toma el professionalId nuevo
+          // Renueva los TOKENS (no solo /auth/me): el back resuelve el tenant desde el access
+          // token, y el viejo no trae professionalId → los pasos siguientes darían 403.
+          await renewSession();
           onDone();
         },
         onError: (err) => {
@@ -191,8 +232,40 @@ function BusinessStep({ onDone }: { onDone: () => void }) {
               }}
               placeholder="mi-negocio"
               className="h-10 w-full bg-transparent pr-3 text-sm outline-none"
+              aria-describedby="slug-status"
               required
             />
+          </div>
+          <div id="slug-status" aria-live="polite" className="mt-1.5 min-h-5 text-xs">
+            {slug.length > 1 && !slugSettled && (
+              <span className="text-muted-foreground">Comprobando disponibilidad…</span>
+            )}
+            {slugInfo?.valid && slugInfo.available && (
+              <span className="inline-flex items-center gap-1 font-medium text-success">
+                <Check className="size-3.5" />
+                Disponible
+              </span>
+            )}
+            {slugTaken && (
+              <div className="space-y-1.5">
+                <p className="font-medium text-destructive">Ese enlace ya está en uso.</p>
+                {slugInfo.suggestions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-muted-foreground">Probá con:</span>
+                    {slugInfo.suggestions.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => pickSlug(s)}
+                        className="rounded-md border border-border px-2 py-0.5 font-medium text-foreground hover:border-accent hover:text-accent"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div>
@@ -202,7 +275,7 @@ function BusinessStep({ onDone }: { onDone: () => void }) {
         <div>
           <Label htmlFor="tz">Zona horaria</Label>
           <select id="tz" aria-label="Zona horaria" value={timezone} onChange={(e) => setTimezone(e.target.value)} className="mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            {TIMEZONES.map((tz) => (
+            {timezoneOptions.map((tz) => (
               <option key={tz.value} value={tz.value}>{tz.label}</option>
             ))}
           </select>

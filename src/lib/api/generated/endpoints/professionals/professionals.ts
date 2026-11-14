@@ -28,6 +28,8 @@ import type {
   CreateStaffDto,
   OnboardProfessionalDto,
   Professional,
+  ProfessionalsSlugAvailabilityParams,
+  SlugAvailabilityDto,
   Staff,
   UpdateProfessionalDto,
   UpdateStaffDto
@@ -106,6 +108,100 @@ export const useProfessionalsOnboard = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Mira profesionales y comercios. Si está tomado, sugiere alternativas libres.
+ * @summary Disponibilidad de un enlace público (slug)
+ */
+export const professionalsSlugAvailability = (
+    params: ProfessionalsSlugAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SlugAvailabilityDto>(
+      {url: `/v1/professionals/slug-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProfessionalsSlugAvailabilityQueryKey = (params?: ProfessionalsSlugAvailabilityParams,) => {
+    return [
+    `/v1/professionals/slug-availability`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getProfessionalsSlugAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProfessionalsSlugAvailabilityQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof professionalsSlugAvailability>>> = ({ signal }) => professionalsSlugAvailability(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProfessionalsSlugAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof professionalsSlugAvailability>>>
+export type ProfessionalsSlugAvailabilityQueryError = ErrorType<void>
+
+
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Disponibilidad de un enlace público (slug)
+ */
+
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProfessionalsSlugAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Obtener el professional propio
  */
 export const professionalsGetMine = (

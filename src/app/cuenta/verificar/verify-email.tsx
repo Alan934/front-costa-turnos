@@ -101,6 +101,15 @@ export function VerifyEmail() {
           <Button type="submit" className="w-full" size="lg" loading={requestCode.isPending}>
             {requestCode.isPending ? "Enviando…" : "Enviarme el código"}
           </Button>
+          {/* Al registrarse ya se manda un código: quien lo tiene no necesita pedir otro. */}
+          <button
+            type="button"
+            onClick={() => email && setStep("codigo")}
+            disabled={!email}
+            className="block w-full text-center text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
+          >
+            Ya tengo un código
+          </button>
         </form>
       </AuthShell>
     );

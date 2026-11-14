@@ -19,6 +19,8 @@ export interface AuthMeDto {
   professionalId?: string;
   /** persona (identidad de cliente) de la cuenta; null si aún no tiene */
   personId?: string;
+  /** nombre y apellido de la persona de la cuenta */
+  fullName?: string;
   staffId?: string;
   /** comercios que administra como comercial (+ su comercio-de-uno) */
   comercioIds?: string[];

@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { env } from "@/lib/env";
 
 /** Botón "Continuar con Google". Redirige al endpoint OAuth del backend. */
-export function GoogleButton({ label = "Continuar con Google" }: { label?: string }) {
+export function GoogleButton({
+  label = "Continuar con Google",
+  onBeforeRedirect,
+}: {
+  label?: string;
+  /** Se ejecuta justo antes de salir hacia Google (p. ej. para guardar la intención). */
+  onBeforeRedirect?: () => void;
+}) {
   const [redirecting, setRedirecting] = useState(false);
 
   // Al volver atrás, el navegador puede restaurar la página desde el bfcache con el
@@ -20,6 +27,7 @@ export function GoogleButton({ label = "Continuar con Google" }: { label?: strin
   }, []);
 
   function go() {
+    onBeforeRedirect?.();
     setRedirecting(true); // feedback mientras se va a Google (la página se descarga)
     if (env.mockingEnabled) {
       // En mock no hay OAuth real: simulamos el retorno del backend al /auth/callback.

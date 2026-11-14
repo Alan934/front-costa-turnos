@@ -17,6 +17,7 @@ import {
   getAccessToken,
   setOnSessionExpired,
   initProactiveRefresh,
+  refreshSessionTokens,
 } from "@/lib/api/axios-instance";
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 import type { LoginDto } from "@/lib/api/generated/model/loginDto";
@@ -41,6 +42,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   /** Re-lee /auth/me (tras reclamar cuenta, etc.). */
   refresh: () => Promise<void>;
+  /** Renueva los TOKENS y re-lee /auth/me (cuando cambian roles/tenant firmados en el token). */
+  renewSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -229,6 +232,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await afterAuth();
   }, [afterAuth]);
 
+  const renewSession = useCallback(async () => {
+    await refreshSessionTokens();
+    await afterAuth();
+  }, [afterAuth]);
+
   const roles = user?.roles ?? [];
 
   return (
@@ -245,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registerComercial,
         logout,
         refresh,
+        renewSession,
       }}
     >
       {children}

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LogoMark } from "@/components/logo";
 import { useAuth } from "@/components/auth-provider";
-import { homeForUser } from "@/lib/auth-routing";
+import { resolvePostAuthPath } from "@/lib/auth-intent";
 import { axiosInstance, setAuthTokens } from "@/lib/api/axios-instance";
 
 /**
@@ -46,7 +46,8 @@ export function AuthCallback() {
 
   useEffect(() => {
     if (!user) return;
-    router.replace(homeForUser(user));
+    // Respeta lo que eligió antes de ir a Google ("Soy profesional" → asistente) y el `next`.
+    router.replace(resolvePostAuthPath(user));
   }, [user, router]);
 
   return (
