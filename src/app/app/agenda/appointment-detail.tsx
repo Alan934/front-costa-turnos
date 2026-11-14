@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock, LogIn, Wallet } from "lucide-react";
+import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock, LogIn, Wallet, MessageCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,8 +26,10 @@ import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { CashOutcome } from "@/lib/api/generated/model/cashOutcome";
-import { formatDateLong, formatTime, formatMoney } from "@/lib/format";
-import { whatsAppLink } from "@/lib/whatsapp";
+import { formatDateLong, formatDateShort, formatTime, formatMoney, formatWeekday, isSameDay } from "@/lib/format";
+import { appointmentMessage, whatsAppLink, type AppointmentMessageKind } from "@/lib/whatsapp";
+import { useProfessional } from "@/lib/api/professional";
+import { PUBLIC_HOST } from "@/components/public-page-link";
 import { cn } from "@/lib/utils";
 import type { AxiosError } from "axios";
 import type { Appointment } from "@/lib/api/generated/model/appointment";
@@ -145,6 +147,14 @@ export function AppointmentDetail({
             </p>
           )}
           <DepositSection appointmentId={appointment.id} onChanged={onChanged} />
+          {person.phone && (
+            <WhatsAppShortcuts
+              appointment={appointment}
+              phone={person.phone}
+              clientName={person.name}
+              serviceName={service?.name ?? null}
+            />
+          )}
         </div>
 
         {/* Acciones según estado */}
@@ -255,6 +265,100 @@ export function AppointmentDetail({
       />
     )}
     </>
+  );
+}
+
+/** "hoy a las 15:30", "mañana a las 15:30" o "el martes 18/11 a las 15:30". */
+function whenText(startAt: string): string {
+  const time = formatTime(startAt);
+  const now = new Date();
+  if (isSameDay(startAt, now)) return `hoy a las ${time}`;
+  if (isSameDay(startAt, new Date(now.getTime() + 24 * 3_600_000))) return `mañana a las ${time}`;
+  return `el ${formatWeekday(startAt).toLowerCase()} ${formatDateShort(startAt).slice(0, 5)} a las ${time}`;
+}
+
+const DELAYS = [10, 15, 30];
+
+/**
+ * Mensajes de WhatsApp con un toque: abren WhatsApp con el texto ya escrito y el profesional
+ * toca "Enviar". Se ofrece lo que tiene sentido según el estado del turno: recordarlo o avisar
+ * una demora mientras está vigente, ofrecer otro horario si se canceló.
+ */
+function WhatsAppShortcuts({
+  appointment,
+  phone,
+  clientName,
+  serviceName,
+}: {
+  appointment: Appointment;
+  phone: string;
+  clientName: string;
+  serviceName: string | null;
+}) {
+  const pro = useProfessional();
+  const [delay, setDelay] = useState(false);
+  const status = appointment.status;
+  const upcoming =
+    (status === AppointmentStatus.requested || status === AppointmentStatus.confirmed) &&
+    !appointment.checkedInAt;
+  // El texto dice "tuve que cancelar": solo aplica si no canceló el propio cliente.
+  const cancelled =
+    status === AppointmentStatus.cancelled && appointment.cancellationReason !== "client";
+  if (!upcoming && !cancelled) return null;
+
+  const base = {
+    clientName,
+    whenText: whenText(appointment.startAt),
+    timeText: formatTime(appointment.startAt),
+    serviceName,
+    businessName: pro.data?.businessName ?? null,
+    bookUrl: pro.data?.slug ? `https://${PUBLIC_HOST}/r/${pro.data.slug}` : null,
+  };
+  const href = (kind: AppointmentMessageKind, delayMinutes?: number) =>
+    whatsAppLink(phone, appointmentMessage(kind, { ...base, delayMinutes }));
+  const linkProps = { target: "_blank", rel: "noopener noreferrer" } as const;
+
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <MessageCircle className="size-3.5" />
+        Escribirle por WhatsApp
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {upcoming && (
+          <>
+            <Button size="sm" variant="outline" asChild>
+              <a href={href("reminder")} {...linkProps}>
+                Recordarle el turno
+              </a>
+            </Button>
+            {delay ? (
+              <span className="inline-flex flex-wrap items-center gap-1.5 text-xs">
+                Demora de
+                {DELAYS.map((m) => (
+                  <Button key={m} size="sm" variant="outline" asChild>
+                    <a href={href("delay", m)} {...linkProps} onClick={() => setDelay(false)}>
+                      {m} min
+                    </a>
+                  </Button>
+                ))}
+              </span>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setDelay(true)}>
+                Avisar demora
+              </Button>
+            )}
+          </>
+        )}
+        {cancelled && (
+          <Button size="sm" variant="outline" asChild>
+            <a href={href("rebook")} {...linkProps}>
+              Ofrecerle otro horario
+            </a>
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 

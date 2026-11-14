@@ -136,27 +136,32 @@ function BusinessSection({
  * Avisos al profesional cuando un cliente reserva, cancela o reprograma. Cada canal se guarda
  * al tocarlo. Un canal está activo salvo que figure en false (cuentas viejas: todo activado).
  */
+type NotificationPrefs = { email: boolean; push: boolean; dailySummary: boolean };
+
 function NotificationsSection({
   professional,
 }: {
-  professional: { notificationPrefs?: { email?: boolean; push?: boolean } | null };
+  professional: {
+    notificationPrefs?: { email?: boolean; push?: boolean; dailySummary?: boolean } | null;
+  };
 }) {
   const update = useUpdateProfessional();
-  const [email, setEmail] = useState(professional.notificationPrefs?.email !== false);
-  const [push, setPush] = useState(professional.notificationPrefs?.push !== false);
+  // Cada aviso está activado salvo que se haya apagado explícitamente.
+  const [prefs, setPrefs] = useState<NotificationPrefs>({
+    email: professional.notificationPrefs?.email !== false,
+    push: professional.notificationPrefs?.push !== false,
+    dailySummary: professional.notificationPrefs?.dailySummary !== false,
+  });
 
-  function save(next: { email: boolean; push: boolean }) {
-    setEmail(next.email);
-    setPush(next.push);
+  function toggle(key: keyof NotificationPrefs, value: boolean) {
+    const previous = prefs;
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    // Se mandan siempre las tres: el back guarda el objeto completo.
     update.mutate(
       { notificationPrefs: next },
-      {
-        // Si no se pudo guardar, la pantalla vuelve a mostrar lo que quedó guardado.
-        onError: () => {
-          setEmail(email);
-          setPush(push);
-        },
-      },
+      // Si no se pudo guardar, la pantalla vuelve a mostrar lo que quedó guardado.
+      { onError: () => setPrefs(previous) },
     );
   }
 
@@ -170,8 +175,8 @@ function NotificationsSection({
         <label className="flex cursor-pointer items-start gap-2.5">
           <input
             type="checkbox"
-            checked={email}
-            onChange={(e) => save({ email: e.target.checked, push })}
+            checked={prefs.email}
+            onChange={(e) => toggle("email", e.target.checked)}
             className="mt-0.5 size-4 accent-[var(--color-accent)]"
           />
           <span className="text-sm">
@@ -184,8 +189,8 @@ function NotificationsSection({
         <label className="flex cursor-pointer items-start gap-2.5">
           <input
             type="checkbox"
-            checked={push}
-            onChange={(e) => save({ email, push: e.target.checked })}
+            checked={prefs.push}
+            onChange={(e) => toggle("push", e.target.checked)}
             className="mt-0.5 size-4 accent-[var(--color-accent)]"
           />
           <span className="text-sm">
@@ -196,6 +201,23 @@ function NotificationsSection({
                 la Sala
               </Link>
               , una vez por dispositivo.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-2.5 border-t border-border pt-3">
+          <input
+            type="checkbox"
+            checked={prefs.dailySummary}
+            onChange={(e) => toggle("dailySummary", e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Resumen del día, a las 7 de la mañana
+            <span className="block text-xs text-muted-foreground">
+              La lista de tus turnos de hoy, con horario, servicio y teléfono de cada cliente.
+              Los días sin turnos no te llega nada.
+              {!prefs.email && !prefs.push && prefs.dailySummary &&
+                " Activá el email o el celular para recibirlo."}
             </span>
           </span>
         </label>

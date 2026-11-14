@@ -103,3 +103,48 @@ export function renderWhatsAppMessage(
 export function peopleLabel(n: number): string {
   return `${n} ${n === 1 ? "persona" : "personas"}`;
 }
+
+/* ---------- Mensajes sobre un turno de la agenda ---------- */
+
+/** Para qué se le escribe al cliente desde el detalle del turno. */
+export type AppointmentMessageKind = "reminder" | "delay" | "rebook";
+
+export interface AppointmentMessageInput {
+  /** Nombre completo del cliente: se usa solo el primero. */
+  clientName: string;
+  /** "hoy a las 15:30", "mañana a las 15:30", "el martes 18/11 a las 15:30". */
+  whenText: string;
+  /** Solo la hora: "15:30". */
+  timeText: string;
+  serviceName?: string | null;
+  businessName?: string | null;
+  /** Minutos de demora (solo para "delay"). */
+  delayMinutes?: number;
+  /** Link a la página de reservas (solo para "rebook"). */
+  bookUrl?: string | null;
+}
+
+/** Texto listo para mandar por WhatsApp según la situación del turno. */
+export function appointmentMessage(
+  kind: AppointmentMessageKind,
+  input: AppointmentMessageInput,
+): string {
+  const first = input.clientName.trim().split(/\s+/)[0] || "";
+  const hola = first ? `¡Hola ${first}!` : "¡Hola!";
+  const service = input.serviceName ? ` de ${input.serviceName.toLowerCase()}` : "";
+  const place = input.businessName ? ` en ${input.businessName}` : "";
+  switch (kind) {
+    case "reminder":
+      return `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. ¿Me confirmás que venís?`;
+    case "delay":
+      return (
+        `${hola} Te aviso que vengo con una demora de unos ${input.delayMinutes ?? 15} minutos ` +
+        `para tu turno de las ${input.timeText}. ¡Disculpá!`
+      );
+    case "rebook":
+      return (
+        `${hola} Tuve que cancelar tu turno${service} ${input.whenText}. Disculpá las molestias.` +
+        (input.bookUrl ? ` Podés elegir otro horario acá: ${input.bookUrl}` : " Avisame y te busco otro horario.")
+      );
+  }
+}

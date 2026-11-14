@@ -20,4 +20,5 @@ export const NotificationType = {
   booked: 'booked',
   pro_booked: 'pro_booked',
   pro_cancelled: 'pro_cancelled',
+  daily_summary: 'daily_summary',
 } as const;

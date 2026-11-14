@@ -11,4 +11,6 @@ export interface NotificationPrefsDto {
   email?: boolean;
   /** Avisos en el celular (default: activado) */
   push?: boolean;
+  /** Resumen de los turnos del día, a la mañana (default: activado) */
+  dailySummary?: boolean;
 }
