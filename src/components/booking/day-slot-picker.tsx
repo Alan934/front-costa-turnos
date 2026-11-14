@@ -154,6 +154,8 @@ interface DaySlotPickerProps {
    * muestra donde se explica que ese día no hay turnos.
    */
   walkInAction?: ReactNode;
+  /** Acción a ofrecer cuando el día elegido está completo (p. ej. anotarse en lista de espera). */
+  fullDayAction?: (day: Date) => ReactNode;
 }
 
 /**
@@ -175,6 +177,7 @@ export function DaySlotPicker({
   excludeStartAt,
   pickDisabled,
   walkInAction,
+  fullDayAction,
 }: DaySlotPickerProps) {
   const availByDate = useMemo(() => {
     const map = new Map<string, DayAvailabilityDto>();
@@ -263,7 +266,9 @@ export function DaySlotPicker({
           const active = isSameDay(d, activeDay);
           const bookable = isBookableKind(kind);
           // Un día por orden de llegada no tiene turnos, pero se puede tocar para ver cómo anotarse.
-          const selectable = bookable || kind === "walk_in";
+          // Y un día completo, solo si hay algo que ofrecer en él (lista de espera).
+          const selectable =
+            bookable || kind === "walk_in" || (kind === "full" && !!fullDayAction);
           const style = DAY_KIND_STYLE[kind];
           const subLabel =
             kind === "available"
@@ -364,7 +369,13 @@ export function DaySlotPicker({
                   ? "Todos los turnos de ese día ya están reservados. Probá con otra fecha."
                   : "Probá con otra fecha de la lista.";
             return (
-              <EmptyState icon={<CalendarX2 className="size-5" />} title={title} message={message} />
+              <EmptyState
+                icon={<CalendarX2 className="size-5" />}
+                title={title}
+                message={message}
+                // Día completo (se atiende, pero no quedan turnos): se puede ofrecer lista de espera.
+                action={kind === "full" ? fullDayAction?.(activeDay) : undefined}
+              />
             );
           })()}
         {!isLoading &&

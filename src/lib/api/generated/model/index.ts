@@ -190,6 +190,7 @@ export * from './publicBookingServiceDayAvailabilityParams';
 export * from './publicBookingServiceSlotsParams';
 export * from './publicBookingSlotsFlatParams';
 export * from './publicBookingSlotsParams';
+export * from './publicJoinWaitlistDto';
 export * from './publicProfessionalDetailDto';
 export * from './publicProfessionalDto';
 export * from './publicServiceDto';

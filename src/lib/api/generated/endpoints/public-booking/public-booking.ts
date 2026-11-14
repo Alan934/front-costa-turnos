@@ -41,6 +41,7 @@ import type {
   PublicBookingServiceSlotsParams,
   PublicBookingSlotsFlatParams,
   PublicBookingSlotsParams,
+  PublicJoinWaitlistDto,
   PublicProfessionalDetailDto,
   PublicServiceDto,
   PushSubscriptionDto,
@@ -2211,6 +2212,71 @@ export const useWaitingSpotUnsubscribePush = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getWaitingSpotUnsubscribePushMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Anotarse en la lista de espera de un día
+ */
+export const publicWaitlistJoin = (
+    slug: string,
+    publicJoinWaitlistDto: BodyType<PublicJoinWaitlistDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/r/${slug}/waitlist`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: publicJoinWaitlistDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPublicWaitlistJoinMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext> => {
+
+const mutationKey = ['publicWaitlistJoin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicWaitlistJoin>>, {slug: string;data: BodyType<PublicJoinWaitlistDto>}> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  publicWaitlistJoin(slug,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublicWaitlistJoinMutationResult = NonNullable<Awaited<ReturnType<typeof publicWaitlistJoin>>>
+    export type PublicWaitlistJoinMutationBody = BodyType<PublicJoinWaitlistDto>
+    export type PublicWaitlistJoinMutationError = ErrorType<void>
+
+    /**
+ * @summary Anotarse en la lista de espera de un día
+ */
+export const usePublicWaitlistJoin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publicWaitlistJoin>>,
+        TError,
+        {slug: string;data: BodyType<PublicJoinWaitlistDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPublicWaitlistJoinMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

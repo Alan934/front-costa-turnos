@@ -18,6 +18,7 @@ import {
   Footprints,
   CalendarPlus,
   Download,
+  BellRing,
 } from "lucide-react";
 import { googleCalendarUrl, downloadIcs, mapsUrl, type CalendarEvent } from "@/lib/calendar";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ import {
   useBookProfessionalWithDeposit,
   useBookService,
   useBookServiceWithDeposit,
+  useJoinWaitlist,
 } from "@/lib/api/public-booking";
 import { getPaymentOptions, paymentSummary, baseCents, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
@@ -804,9 +806,113 @@ function SlotStep({
           isError={isError}
           onRetry={() => refetch()}
           walkInAction={<WalkInButton href={walkInHref} />}
+          fullDayAction={(day) => (
+            <WaitlistPrompt
+              // key: al cambiar de día se reinicia el formulario (y el "ya te anotamos").
+              key={day.toDateString()}
+              slug={slug}
+              day={day}
+              serviceId={service.serviceId}
+              membershipIds={
+                isAny
+                  ? service.professionals.map((p) => p.membershipId)
+                  : [professional.membershipId]
+              }
+            />
+          )}
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Lista de espera de un día completo: la persona deja su email y le avisamos si se libera un
+ * turno ese día (alguien cancela o reprograma). No reserva nada: el aviso trae el link para
+ * reservar y se lo queda quien llegue primero.
+ */
+function WaitlistPrompt({
+  slug,
+  day,
+  serviceId,
+  membershipIds,
+}: {
+  slug: string;
+  day: Date;
+  serviceId: string;
+  membershipIds: string[];
+}) {
+  const { user } = useAuth();
+  const join = useJoinWaitlist(slug);
+  const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Mismos datos precargados que en la reserva: los de la cuenta o los de la última vez.
+  useEffect(() => {
+    const saved = loadBookingContact();
+    setFullName((v) => v || user?.fullName || saved?.fullName || "");
+    setEmail((v) => v || user?.email || saved?.email || "");
+    setPhone((v) => v || user?.phone || saved?.phone || "");
+  }, [user]);
+
+  if (join.isSuccess) {
+    return (
+      <p className="mx-auto max-w-xs rounded-xl border border-accent/40 bg-accent/10 p-3 text-sm">
+        Listo: si se libera un turno ese día, te avisamos a{" "}
+        <span className="font-medium">{email}</span>.
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <BellRing className="size-4" />
+        Avisame si se libera un turno
+      </Button>
+    );
+  }
+
+  const canSubmit = fullName.trim().length > 1 && /\S+@\S+\.\S+/.test(email.trim());
+  // Día en formato YYYY-MM-DD según el calendario que ve la persona.
+  const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+
+  return (
+    <form
+      className="mx-auto w-full max-w-xs space-y-2.5 text-left"
+      onSubmit={(e) => {
+        e.preventDefault();
+        join.mutate({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          serviceId,
+          membershipIds,
+          date,
+        });
+      }}
+    >
+      <div>
+        <Label htmlFor="wl-name">Nombre y apellido</Label>
+        <Input id="wl-name" className="mt-1.5" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required />
+      </div>
+      <div>
+        <Label htmlFor="wl-email">Email</Label>
+        <Input id="wl-email" type="email" className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vos@email.com" autoComplete="email" required />
+        <p className="mt-1 text-xs text-muted-foreground">Te avisamos ahí si se libera un turno ese día.</p>
+      </div>
+      {join.isError && (
+        <p className="text-sm text-destructive">
+          {getApiErrorMessage(join.error, "No pudimos anotarte. Probá de nuevo.")}
+        </p>
+      )}
+      <Button type="submit" className="w-full" disabled={!canSubmit || join.isPending}>
+        {join.isPending ? <Spinner /> : <BellRing className="size-4" />}
+        Anotarme en la lista de espera
+      </Button>
+    </form>
   );
 }
 
