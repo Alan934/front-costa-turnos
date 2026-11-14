@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PublicBookingPage } from "./public-booking-page";
 import { comercioBio, getComercioPublicPage } from "@/lib/api/public-page-server";
@@ -41,5 +42,10 @@ export default async function Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <PublicBookingPage slug={slug} />;
+  // Suspense: la página lee ?servicio=&pro= ("Reservar de nuevo") con useSearchParams.
+  return (
+    <Suspense fallback={null}>
+      <PublicBookingPage slug={slug} />
+    </Suspense>
+  );
 }

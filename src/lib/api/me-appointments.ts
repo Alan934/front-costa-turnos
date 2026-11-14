@@ -18,18 +18,44 @@ export function useMyAppointments() {
   });
 }
 
-export function useCancelMyAppointment() {
-  return useMutation({
-    mutationFn: (id: string) =>
-      customInstance({ url: `/v1/me/appointments/${id}/cancel`, method: "POST" }),
+/** Datos extra que el back agrega a `MyAppointmentDto` (link personal para gestionar el turno). */
+export type ManagedAppointment = MyAppointmentDto & { manageToken?: string | null };
+
+/**
+ * Un turno por su link personal (/turno/:token): sin sesión, el token es la credencial.
+ * Lo usa quien reservó como invitado y llega desde el email de confirmación.
+ */
+export function useAppointmentByToken(token: string) {
+  return useQuery({
+    queryKey: ["appointment-by-token", token],
+    queryFn: ({ signal }) =>
+      customInstance<ManagedAppointment>({ url: `/turno/${token}`, method: "GET", signal }),
+    retry: false,
+    refetchOnWindowFocus: true,
   });
 }
 
-export function useRescheduleMyAppointment() {
+/**
+ * Cancelar un turno. Con `manageToken` usa el link personal (sin cuenta); sin él, la sesión.
+ */
+export function useCancelMyAppointment(manageToken?: string | null) {
+  return useMutation({
+    mutationFn: (id: string) =>
+      customInstance({
+        url: manageToken ? `/turno/${manageToken}/cancel` : `/v1/me/appointments/${id}/cancel`,
+        method: "POST",
+      }),
+  });
+}
+
+/** Reprogramar un turno (mismo criterio que cancelar: token del link personal o sesión). */
+export function useRescheduleMyAppointment(manageToken?: string | null) {
   return useMutation({
     mutationFn: ({ id, startAt }: { id: string } & RescheduleMyAppointmentDto) =>
       customInstance({
-        url: `/v1/me/appointments/${id}/reschedule`,
+        url: manageToken
+          ? `/turno/${manageToken}/reschedule`
+          : `/v1/me/appointments/${id}/reschedule`,
         method: "POST",
         data: { startAt } satisfies RescheduleMyAppointmentDto,
       }),

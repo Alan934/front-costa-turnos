@@ -29,6 +29,7 @@ import type {
   AuthTokensDto,
   ClaimAccountDto,
   GoogleExchangeDto,
+  LoginCodeDto,
   LoginDto,
   RefreshDto,
   RegisterComercialDto,
@@ -302,6 +303,135 @@ export const useAuthLogin = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAuthLoginMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Siempre responde { ok: true }: no revela si el email tiene cuenta.
+ * @summary Ingreso sin contraseña: pedir código por email
+ */
+export const authRequestLoginCode = (
+    requestCodeDto: BodyType<RequestCodeDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/auth/request-login-code`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: requestCodeDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAuthRequestLoginCodeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRequestLoginCode>>, TError,{data: BodyType<RequestCodeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authRequestLoginCode>>, TError,{data: BodyType<RequestCodeDto>}, TContext> => {
+
+const mutationKey = ['authRequestLoginCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authRequestLoginCode>>, {data: BodyType<RequestCodeDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authRequestLoginCode(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthRequestLoginCodeMutationResult = NonNullable<Awaited<ReturnType<typeof authRequestLoginCode>>>
+    export type AuthRequestLoginCodeMutationBody = BodyType<RequestCodeDto>
+    export type AuthRequestLoginCodeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Ingreso sin contraseña: pedir código por email
+ */
+export const useAuthRequestLoginCode = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authRequestLoginCode>>, TError,{data: BodyType<RequestCodeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authRequestLoginCode>>,
+        TError,
+        {data: BodyType<RequestCodeDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthRequestLoginCodeMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Ingreso sin contraseña: canjear el código por una sesión
+ */
+export const authLoginCode = (
+    loginCodeDto: BodyType<LoginCodeDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<AuthTokensDto>(
+      {url: `/auth/login-code`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: loginCodeDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAuthLoginCodeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLoginCode>>, TError,{data: BodyType<LoginCodeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof authLoginCode>>, TError,{data: BodyType<LoginCodeDto>}, TContext> => {
+
+const mutationKey = ['authLoginCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authLoginCode>>, {data: BodyType<LoginCodeDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authLoginCode(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthLoginCodeMutationResult = NonNullable<Awaited<ReturnType<typeof authLoginCode>>>
+    export type AuthLoginCodeMutationBody = BodyType<LoginCodeDto>
+    export type AuthLoginCodeMutationError = ErrorType<void>
+
+    /**
+ * @summary Ingreso sin contraseña: canjear el código por una sesión
+ */
+export const useAuthLoginCode = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authLoginCode>>, TError,{data: BodyType<LoginCodeDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authLoginCode>>,
+        TError,
+        {data: BodyType<LoginCodeDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthLoginCodeMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

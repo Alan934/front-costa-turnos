@@ -358,18 +358,21 @@ function BusinessContactLinks({ appt }: { appt: MyAppointmentDto }) {
   );
 }
 
-function AppointmentCard({
+export function AppointmentCard({
   appt,
   past,
   onChanged,
+  manageToken,
 }: {
   appt: MyAppointmentDto;
   past?: boolean;
   onChanged: () => void;
+  /** Si viene, cancelar/reprogramar usan el link personal (/turno/:token) en vez de la sesión. */
+  manageToken?: string | null;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
-  const cancel = useCancelMyAppointment();
+  const cancel = useCancelMyAppointment(manageToken);
 
   // Ventana de cancelación / reprogramación: hasta N horas antes del turno.
   const hoursToStart = (+new Date(appt.startAt) - Date.now()) / 3_600_000;
@@ -461,6 +464,19 @@ function AppointmentCard({
           </Button>
         </div>
       )}
+      {/* Turno ya pasado (o cancelado): un toque para sacar otro igual, eligiendo solo el horario. */}
+      {!active && !manageToken && appt.serviceId && appt.business.slug && (
+        <div className="mt-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href={`/r/${appt.business.slug}?servicio=${appt.serviceId}&pro=${appt.membershipId}`}
+            >
+              <CalendarPlus className="size-4" />
+              Reservar de nuevo
+            </Link>
+          </Button>
+        </div>
+      )}
       {active && !(canCancel && canReschedule) && (
         <div className="mt-2 space-y-2">
           <p className="text-xs text-muted-foreground">
@@ -506,6 +522,7 @@ function AppointmentCard({
         open={rescheduling}
         onOpenChange={setRescheduling}
         onDone={onChanged}
+        manageToken={manageToken}
       />
     </div>
   );
@@ -521,11 +538,13 @@ function RescheduleDialog({
   open,
   onOpenChange,
   onDone,
+  manageToken,
 }: {
   appt: MyAppointmentDto;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onDone: () => void;
+  manageToken?: string | null;
 }) {
   // Próximos 14 días como opciones de fecha.
   const days = useMemo(() => {
@@ -569,7 +588,7 @@ function RescheduleDialog({
     slotsParams,
   );
 
-  const reschedule = useRescheduleMyAppointment();
+  const reschedule = useRescheduleMyAppointment(manageToken);
 
   // Al cerrar, reseteamos el estado local para no arrastrar errores ni el día activo.
   useEffect(() => {

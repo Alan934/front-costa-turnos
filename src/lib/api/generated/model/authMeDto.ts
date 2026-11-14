@@ -21,6 +21,8 @@ export interface AuthMeDto {
   personId?: string;
   /** nombre y apellido de la persona de la cuenta */
   fullName?: string;
+  /** teléfono de la persona (para precargar reservas) */
+  phone?: string;
   staffId?: string;
   /** comercios que administra como comercial (+ su comercio-de-uno) */
   comercioIds?: string[];

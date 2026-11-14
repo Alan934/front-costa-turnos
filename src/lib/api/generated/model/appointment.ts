@@ -47,6 +47,8 @@ export interface Appointment {
   completedAt?: string | null;
   /** @nullable */
   publicToken?: string | null;
+  /** @nullable */
+  manageToken?: string | null;
   createdVia: CreatedVia;
   /** Nombre del cliente del turno */
   personName?: string;

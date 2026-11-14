@@ -130,6 +130,7 @@ export * from './invitationStatus';
 export * from './inviteProfessionalDto';
 export * from './leaveResultDto';
 export * from './listStatusFilter';
+export * from './loginCodeDto';
 export * from './loginDto';
 export * from './markChargePaidDto';
 export * from './markChargePaidDtoMethod';

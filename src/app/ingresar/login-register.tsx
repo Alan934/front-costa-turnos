@@ -12,6 +12,7 @@ import { AuthShell } from "@/components/auth-shell";
 import { GoogleButton } from "@/components/google-button";
 import { useAuth } from "@/components/auth-provider";
 import { useAuthRequestClaimCode } from "@/lib/api/generated/endpoints/auth/auth";
+import { axiosInstance } from "@/lib/api/axios-instance";
 import { resolvePostAuthPath, saveAuthIntent } from "@/lib/auth-intent";
 import { safeNextPath } from "@/lib/safe-redirect";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,7 @@ function toSlug(value: string) {
 export function LoginRegister() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, register, registerComercial } = useAuth();
+  const { login, loginWithCode, register, registerComercial } = useAuth();
 
   const next = safeNextPath(searchParams.get("next"));
 
@@ -80,12 +81,49 @@ export function LoginRegister() {
     );
   }
 
+  // Ingreso sin contraseña: se pide un código por email y se canjea por la sesión.
+  const [codeLogin, setCodeLogin] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [loginCode, setLoginCode] = useState("");
+
+  function toggleCodeLogin(on: boolean) {
+    setCodeLogin(on);
+    setCodeSent(false);
+    setLoginCode("");
+    setError(null);
+    setInfo(null);
+  }
+
+  async function sendLoginCode() {
+    setError(null);
+    setInfo(null);
+    setSubmitting(true);
+    try {
+      await axiosInstance.post("/auth/request-login-code", { email });
+      setCodeSent(true);
+      setInfo(
+        `Si hay una cuenta con ${email}, te mandamos un código de 6 dígitos. Puede tardar un minuto; revisá también el spam.`,
+      );
+    } catch (err) {
+      const status = (err as AxiosError).response?.status;
+      setError(
+        status === 429
+          ? "Pediste muchos códigos seguidos. Esperá un minuto y probá de nuevo."
+          : "No pudimos enviar el código. Revisá el email y tu conexión.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   // El nombre del comercio genera el enlace público automáticamente.
   useEffect(() => {
     if (!slugTouched) setSlug(toSlug(businessName));
   }, [businessName, slugTouched]);
 
   function switchTab(t: Tab) {
+    setCodeLogin(false);
+    setCodeSent(false);
     setTab(t);
     setError(null);
     setInfo(null);
@@ -98,6 +136,7 @@ export function LoginRegister() {
   }
 
   const isRegister = tab === "registro";
+  const isCodeLogin = tab === "login" && codeLogin;
   const isPro = isRegister && regType === "profesional";
   const isCom = isRegister && regType === "comercio";
   // En el registro, primero se elige el tipo de cuenta; recién después aparece el formulario.
@@ -110,6 +149,30 @@ export function LoginRegister() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isCodeLogin) {
+      if (!codeSent) {
+        await sendLoginCode();
+        return;
+      }
+      setError(null);
+      setSubmitting(true);
+      try {
+        const user = await loginWithCode({ email, code: loginCode });
+        router.replace(resolvePostAuthPath(user, next));
+      } catch (err) {
+        const status = (err as AxiosError).response?.status;
+        setError(
+          status === 403
+            ? "Tu cuenta está bloqueada. Escribinos si creés que es un error."
+            : status === 429
+              ? "Demasiados intentos. Esperá un minuto y probá de nuevo."
+              : "El código es incorrecto o venció. Pedí uno nuevo y probá de nuevo.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     setError(null);
     setInfo(null);
     setSubmitting(true);
@@ -334,7 +397,37 @@ export function LoginRegister() {
               )}
             </div>
 
-            <div>
+            {isCodeLogin && codeSent && (
+              <div>
+                <Label htmlFor="loginCode">Código que te enviamos por email</Label>
+                <Input
+                  id="loginCode"
+                  className="mt-1.5 tracking-widest"
+                  value={loginCode}
+                  onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="123456"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  autoFocus
+                  required
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  ¿No llegó?{" "}
+                  <button
+                    type="button"
+                    onClick={sendLoginCode}
+                    disabled={submitting}
+                    className="font-medium text-accent hover:underline disabled:opacity-60"
+                  >
+                    Reenviar código
+                  </button>{" "}
+                  (podés pedir uno nuevo cada minuto).
+                </p>
+              </div>
+            )}
+
+            <div className={isCodeLogin ? "hidden" : undefined}>
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
                 {tab === "login" && (
@@ -354,7 +447,8 @@ export function LoginRegister() {
                 placeholder={isRegister ? "Mínimo 8 caracteres" : "••••••••"}
                 autoComplete={tab === "login" ? "current-password" : "new-password"}
                 minLength={isRegister ? 8 : undefined}
-                required
+                required={!isCodeLogin}
+                disabled={isCodeLogin}
               />
             </div>
 
@@ -464,7 +558,11 @@ export function LoginRegister() {
             )}
 
             <Button type="submit" className="w-full" size="lg" loading={submitting}>
-              {tab === "login"
+              {isCodeLogin
+                ? codeSent
+                  ? "Ingresar"
+                  : "Enviarme un código"
+                : tab === "login"
                 ? "Ingresar"
                 : isPro
                   ? "Crear cuenta y configurar mi negocio"
@@ -472,6 +570,24 @@ export function LoginRegister() {
                     ? "Crear cuenta del comercio"
                     : "Crear cuenta"}
             </Button>
+
+            {/* Alternativa sin contraseña (sirve también para cuentas creadas con Google). */}
+            {tab === "login" && (
+              <button
+                type="button"
+                onClick={() => toggleCodeLogin(!codeLogin)}
+                className="block w-full text-center text-sm text-muted-foreground hover:text-foreground"
+              >
+                {codeLogin ? (
+                  "Ingresar con mi contraseña"
+                ) : (
+                  <>
+                    ¿Sin contraseña?{" "}
+                    <span className="font-medium text-accent">Ingresá con un código por email</span>
+                  </>
+                )}
+              </button>
+            )}
           </form>
         </>
       )}

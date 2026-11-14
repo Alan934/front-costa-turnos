@@ -120,6 +120,8 @@ export interface MeResponse {
   id: string;
   email: string;
   fullName: string;
+  /** Teléfono de la persona de la cuenta (para precargar reservas). `null` si no tiene. */
+  phone?: string | null;
   roles: AccountRole[];
   /** Si es profesional (trabajador), su tenant. */
   professionalId?: string | null;

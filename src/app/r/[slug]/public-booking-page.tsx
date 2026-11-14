@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
@@ -63,6 +64,31 @@ import {
   matchFieldErrors,
 } from "@/lib/api/error-message";
 
+/** Datos de contacto de la última reserva hecha desde este dispositivo. */
+interface BookingContact {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+const CONTACT_KEY = "costa-booking-contact";
+
+function loadBookingContact(): BookingContact | null {
+  try {
+    const raw = localStorage.getItem(CONTACT_KEY);
+    return raw ? (JSON.parse(raw) as BookingContact) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBookingContact(contact: BookingContact) {
+  try {
+    localStorage.setItem(CONTACT_KEY, JSON.stringify(contact));
+  } catch {
+    // almacenamiento no disponible (modo privado): no pasa nada
+  }
+}
+
 /** Opción de profesional: uno concreto o "cualquiera" (el back asigna al de menor carga). */
 type ProfessionalChoice = PublicServiceProfessionalDto | "any";
 
@@ -80,6 +106,8 @@ interface ConfirmedState {
   professionalDisplayName?: string;
   /** Email que dejó al reservar ('' si no dejó). */
   email?: string;
+  /** Token del link personal del turno (/turno/:token), si el back lo devolvió. */
+  manageToken?: string;
 }
 
 export function PublicBookingPage({ slug }: { slug: string }) {
@@ -132,10 +160,19 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
   // Si no viene el campo (backend anterior), asumimos true para no bloquear servicios.
   const mpConnected = (page as ComercioPublicPageDto & { mpConnected?: boolean }).mpConnected ?? true;
 
-  function pickService(service: PublicServiceDto) {
+  // "Reservar de nuevo" desde Mis turnos: llega con ?servicio=&pro= y saltamos directo al
+  // horario con el mismo servicio y profesional de la vez anterior.
+  const searchParams = useSearchParams();
+  const repeatServiceId = searchParams.get("servicio");
+  const repeatMembershipId = searchParams.get("pro");
+
+  function pickService(service: PublicServiceDto, preferMembershipId?: string | null) {
     const profs = service.professionals;
     // Un solo profesional: lo preseleccionamos y pasamos directo al selector de horario.
-    const autoProf = profs.length === 1 ? profs[0] : null;
+    const autoProf =
+      profs.length === 1
+        ? profs[0]
+        : (profs.find((p) => p.membershipId === preferMembershipId) ?? null);
     setSel({ service, professional: autoProf, slot: null });
     setStep(autoProf ? 3 : 2);
   }
@@ -178,6 +215,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
         provisional={confirmed.provisional}
         assignedProName={confirmed.professionalDisplayName}
         email={confirmed.email}
+        manageToken={confirmed.manageToken}
         onReset={reset}
       />
     );
@@ -210,7 +248,15 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           </button>
         ) : null}
 
-        {step === 1 && <ServiceStep slug={slug} onPick={pickService} mpConnected={mpConnected} />}
+        {step === 1 && (
+          <ServiceStep
+            slug={slug}
+            onPick={pickService}
+            mpConnected={mpConnected}
+            repeatServiceId={repeatServiceId}
+            repeatMembershipId={repeatMembershipId}
+          />
+        )}
 
         {step === 2 && sel.service && (
           <ProfessionalStep service={sel.service} onPick={pickProfessional} />
@@ -234,8 +280,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             professional={sel.professional}
             slot={sel.slot}
             mpConnected={mpConnected}
-            onConfirmed={(provisional, professionalDisplayName, email) =>
-              setConfirmed({ provisional, professionalDisplayName, email })
+            onConfirmed={(provisional, professionalDisplayName, email, manageToken) =>
+              setConfirmed({ provisional, professionalDisplayName, email, manageToken })
             }
           />
         )}
@@ -389,12 +435,27 @@ function ServiceStep({
   slug,
   onPick,
   mpConnected,
+  repeatServiceId,
+  repeatMembershipId,
 }: {
   slug: string;
-  onPick: (s: PublicServiceDto) => void;
+  onPick: (s: PublicServiceDto, preferMembershipId?: string | null) => void;
   mpConnected: boolean;
+  repeatServiceId?: string | null;
+  repeatMembershipId?: string | null;
 }) {
   const { data, isLoading, isError, refetch } = usePublicServices(slug);
+
+  // "Reservar de nuevo": una sola vez, al cargar los servicios, elegimos el pedido en la URL
+  // (si sigue existiendo y se puede reservar). Si no, queda la lista normal.
+  const repeated = useRef(false);
+  useEffect(() => {
+    if (repeated.current || !repeatServiceId || !data) return;
+    repeated.current = true;
+    const service = data.find((s) => s.serviceId === repeatServiceId);
+    if (service && (mpConnected || service.allowNoPayment)) onPick(service, repeatMembershipId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, repeatServiceId]);
 
   // Galería ampliada: imágenes del servicio en el que se hizo click, con índice activo.
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
@@ -763,7 +824,12 @@ function ConfirmStep({
   professional: ProfessionalChoice;
   slot: Slot;
   mpConnected: boolean;
-  onConfirmed: (provisional: boolean, professionalDisplayName?: string, email?: string) => void;
+  onConfirmed: (
+    provisional: boolean,
+    professionalDisplayName?: string,
+    email?: string,
+    manageToken?: string,
+  ) => void;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -780,7 +846,18 @@ function ConfirmStep({
     if (!user) return;
     setFullName((v) => v || user.fullName || "");
     setEmail((v) => v || user.email || "");
+    setPhone((v) => v || user.phone || "");
   }, [user]);
+
+  // Sin sesión: recordamos en este dispositivo los datos de la última reserva, para no
+  // volver a tipearlos. (Con sesión mandan los de la cuenta; esto solo completa lo vacío.)
+  useEffect(() => {
+    const saved = loadBookingContact();
+    if (!saved) return;
+    setFullName((v) => v || saved.fullName || "");
+    setPhone((v) => v || saved.phone || "");
+    setEmail((v) => v || saved.email || "");
+  }, []);
 
   const isAny = professional === "any";
   const membershipId = isAny ? "" : professional.membershipId;
@@ -836,12 +913,17 @@ function ConfirmStep({
 
   // Turno confirmado en la app (no redirige a MP): invalidamos la lista del dashboard del
   // cliente para que, al entrar a /mis-turnos, vea el turno recién sacado sin tener que reloguear.
-  function onBooked(provisional: boolean, proName?: string) {
+  function onBooked(provisional: boolean, proName?: string, appointment?: unknown) {
     queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-    onConfirmed(provisional, proName, email.trim());
+    // El turno creado trae el token de su link personal ("gestionar mi turno" sin cuenta).
+    const token = (appointment as { manageToken?: string | null } | null | undefined)?.manageToken;
+    onConfirmed(provisional, proName, email.trim(), token ?? undefined);
   }
 
   function submit(option: PayOption) {
+    // Se guarda al enviar (no al confirmar) para cubrir también el camino de Mercado Pago,
+    // que sale del sitio antes de volver.
+    saveBookingContact({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim() });
     const base = {
       fullName: fullName.trim(),
       phone: phone.trim(),
@@ -856,7 +938,8 @@ function ConfirmStep({
         { ...base, method: option.flow === "transfer" ? "transfer" : "cash" },
         {
           // En cash/transfer el back devuelve el turno creado (con professionalDisplayName si fue "cualquiera").
-          onSuccess: (res) => onBooked(false, res.appointment?.professionalDisplayName),
+          onSuccess: (res) =>
+            onBooked(false, res.appointment?.professionalDisplayName, res.appointment),
         },
       );
     } else if (option.paymentOption) {
@@ -884,7 +967,7 @@ function ConfirmStep({
           const proName = isAny
             ? (appt as { professionalDisplayName?: string } & typeof appt).professionalDisplayName
             : undefined;
-          onBooked(!!appt?.isProvisional, proName);
+          onBooked(!!appt?.isProvisional, proName, appt);
         },
       });
     }
@@ -1051,8 +1134,10 @@ function Confirmation({
   provisional,
   assignedProName,
   email,
+  manageToken,
   onReset,
 }: {
+  manageToken?: string;
   page: ComercioPublicPageDto;
   sel: Selection;
   provisional: boolean;
@@ -1161,6 +1246,19 @@ function Confirmation({
               className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
             >
               Ver mis turnos <ArrowRight className="size-4" />
+            </Link>
+          </>
+        ) : manageToken ? (
+          <>
+            <p className="text-muted-foreground">
+              Si no podés ir, reprogramalo o cancelalo desde el enlace de tu turno
+              {email ? " (también te llegó por email)" : ""}. No hace falta crear una cuenta.
+            </p>
+            <Link
+              href={`/turno/${manageToken}`}
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Gestionar mi turno <ArrowRight className="size-4" />
             </Link>
           </>
         ) : (
