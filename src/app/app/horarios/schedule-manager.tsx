@@ -319,7 +319,8 @@ function RuleChip({
       ) : (
         <Coffee className="size-3" />
       )}
-      {rule.startTime}–{rule.endTime}
+      {/* El back puede devolver "HH:mm:ss": se muestra solo HH:mm (más corto, entra en mobile). */}
+      {rule.startTime.slice(0, 5)}–{rule.endTime.slice(0, 5)}
       {byArrival && <span className="font-medium">· por orden de llegada</span>}
       {scopeLabel && <span className="opacity-80">· {scopeLabel}</span>}
       {onEdit && (
@@ -327,7 +328,7 @@ function RuleChip({
           type="button"
           aria-label="Editar franja"
           onClick={onEdit}
-          className="ml-0.5 opacity-60 hover:opacity-100"
+          className="-my-1.5 grid size-7 place-items-center rounded-full opacity-60 hover:opacity-100"
         >
           <Pencil className="size-3" />
         </button>
@@ -336,7 +337,7 @@ function RuleChip({
         type="button"
         aria-label="Quitar"
         onClick={onRemove}
-        className="ml-0.5 opacity-60 hover:opacity-100"
+        className="-my-1.5 -mr-1.5 grid size-7 place-items-center rounded-full opacity-60 hover:opacity-100"
       >
         <Trash2 className="size-3" />
       </button>

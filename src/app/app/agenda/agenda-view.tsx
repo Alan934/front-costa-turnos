@@ -104,11 +104,17 @@ export function AgendaView() {
       {/* Toolbar */}
       <div className="border-b border-border px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0 flex-1 sm:flex-none">
             <h1 className="font-display text-2xl font-semibold tracking-tight">Agenda</h1>
             <p className="text-sm capitalize text-muted-foreground">{title}</p>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Mobile: la acción principal va junto al título, siempre a la vista. */}
+          <Button size="sm" className="shrink-0 sm:hidden" onClick={() => setCreating(true)}>
+            <Plus className="size-4" />
+            Nuevo turno
+          </Button>
+          {/* Mobile: fila propia a todo el ancho (antes desbordaba y escondía "Nuevo turno"). */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
             <RefreshButton fetching={apptQuery.isFetching} onClick={() => apptQuery.refetch()} />
             <Button variant="outline" size="sm" onClick={() => setDate(new Date())}>
               Hoy
@@ -132,9 +138,9 @@ export function AgendaView() {
               </button>
             </div>
             <ViewToggle view={view} onChange={setView} />
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button size="sm" className="hidden sm:inline-flex" onClick={() => setCreating(true)}>
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Nuevo turno</span>
+              Nuevo turno
             </Button>
           </div>
         </div>
@@ -280,14 +286,15 @@ function ViewToggle({
 }) {
   const labels: Record<ViewMode, string> = { dia: "Día", semana: "Semana", mes: "Mes" };
   return (
-    <div className="flex items-center rounded-lg border border-border p-0.5 text-sm font-medium">
+    <div className="flex min-w-[9.5rem] flex-1 items-center rounded-lg border border-border p-0.5 text-sm font-medium sm:flex-none">
       {(["dia", "semana", "mes"] as const).map((v) => (
         <button
           key={v}
           type="button"
           onClick={() => onChange(v)}
+          aria-pressed={view === v}
           className={cn(
-            "rounded-md px-3 py-1.5 transition-colors",
+            "flex-1 rounded-md px-2 py-1.5 transition-colors sm:flex-none sm:px-3",
             view === v ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground",
           )}
         >

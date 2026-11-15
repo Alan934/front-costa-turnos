@@ -243,7 +243,7 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           <button
             type="button"
             onClick={back}
-            className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="-ml-1.5 -mt-2 mb-2 inline-flex items-center gap-1 rounded-lg py-2 pl-1 pr-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
             Volver

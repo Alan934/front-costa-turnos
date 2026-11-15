@@ -302,7 +302,7 @@ export function DaySlotPicker({
             >
               <span className="text-[11px] uppercase">{chip.weekday}</span>
               <span className="font-display text-base font-semibold tabular-nums">{chip.day}</span>
-              <span className="mt-0.5 max-w-[5rem] truncate text-[9px] font-medium uppercase tracking-wide">
+              <span className="mt-0.5 max-w-[5rem] truncate text-[10px] font-medium uppercase tracking-wide">
                 {subLabel}
               </span>
             </button>

@@ -35,26 +35,38 @@ export function SubscriptionBanner() {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-end p-3 sm:p-4">
         <div
           className={cn(
-            "pointer-events-auto w-full max-w-sm rounded-xl border bg-card p-3.5 shadow-lg",
+            "pointer-events-auto w-full max-w-sm rounded-xl border bg-card p-3 shadow-lg sm:p-3.5",
             style.card,
           )}
           role="status"
         >
-          <div className="flex items-start gap-2.5">
-            <Icon className={cn("mt-0.5 size-5 shrink-0", style.accent)} />
+          {/* Mobile: una sola fila (ícono · texto · botón) para tapar lo mínimo de la pantalla.
+              sm+: el botón va debajo del texto. */}
+          <div className="flex items-center gap-2.5 sm:items-start">
+            <Icon className={cn("size-5 shrink-0 sm:mt-0.5", style.accent)} />
             <div className="min-w-0 flex-1">
-              <p className={cn("text-sm font-semibold", style.accent)}>{info.title}</p>
+              <p className={cn("text-sm font-semibold leading-snug", style.accent)}>{info.title}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{info.detail}</p>
-              <Link
-                href="/app/suscripcion"
-                className="mt-2.5 inline-block rounded-lg bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background transition-opacity hover:opacity-90"
-              >
-                {info.blocked ? "Reactivar" : "Abonar"}
-              </Link>
+              <SubscriptionLink blocked={info.blocked} className="mt-2.5 hidden sm:inline-block" />
             </div>
+            <SubscriptionLink blocked={info.blocked} className="shrink-0 py-2 sm:hidden" />
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+function SubscriptionLink({ blocked, className }: { blocked: boolean; className?: string }) {
+  return (
+    <Link
+      href="/app/suscripcion"
+      className={cn(
+        "rounded-lg bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background transition-opacity hover:opacity-90",
+        className,
+      )}
+    >
+      {blocked ? "Reactivar" : "Abonar"}
+    </Link>
   );
 }
