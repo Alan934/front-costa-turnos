@@ -38,7 +38,11 @@ export function AppointmentChip({
         STATUS_CLASSES[visualKey],
       )}
     >
-      <p className="truncate text-[11px] font-semibold leading-tight">
+      <p
+        className="truncate text-[11px] font-semibold leading-tight"
+        title={appointment.clientConfirmedAt ? "El cliente confirmó que viene" : undefined}
+      >
+        {appointment.clientConfirmedAt && appointment.status !== "cancelled" ? "✓ " : ""}
         {formatTime(appointment.startAt)} · {personName}
       </p>
       {!compact && height > 34 && service && (

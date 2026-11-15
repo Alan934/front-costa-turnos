@@ -1,8 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Check, Play, UserX, Ban, CalendarClock, Banknote, Link2, CircleAlert, Clock, LogIn, Wallet, MessageCircle } from "lucide-react";
+import {
+  Check,
+  Play,
+  UserX,
+  Ban,
+  CalendarClock,
+  CalendarRange,
+  CheckCheck,
+  Banknote,
+  Link2,
+  CircleAlert,
+  Clock,
+  LogIn,
+  Repeat,
+  Wallet,
+  MessageCircle,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,13 +38,19 @@ import {
   useAppointmentsComplete,
   useAppointmentsNoShow,
   useAppointmentsCheckIn,
+  useAppointmentsSetClientConfirmed,
 } from "@/lib/api/generated/endpoints/appointments/appointments";
 import { useCancelAppointment } from "@/lib/api/appointments";
 import { usePayments, useMarkPaymentPaid, useCreatePaymentPreference } from "@/lib/api/billing";
 import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { CashOutcome } from "@/lib/api/generated/model/cashOutcome";
-import { formatDateLong, formatDateShort, formatTime, formatMoney, formatWeekday, isSameDay } from "@/lib/format";
-import { appointmentMessage, whatsAppLink, type AppointmentMessageKind } from "@/lib/whatsapp";
+import { formatDateLong, formatDateTime, formatTime, formatMoney } from "@/lib/format";
+import {
+  appointmentMessage,
+  appointmentWhenText,
+  whatsAppLink,
+  type AppointmentMessageKind,
+} from "@/lib/whatsapp";
 import { useProfessional } from "@/lib/api/professional";
 import { PUBLIC_HOST } from "@/components/public-page-link";
 import { cn } from "@/lib/utils";
@@ -36,6 +59,7 @@ import type { Appointment } from "@/lib/api/generated/model/appointment";
 import type { Service } from "@/lib/api/generated/model/service";
 import type { Payment } from "@/lib/api/generated/model/payment";
 import type { PersonInfo } from "@/lib/api/clients";
+import { RescheduleDialog } from "./reschedule-dialog";
 
 export function AppointmentDetail({
   appointment,
@@ -70,8 +94,16 @@ export function AppointmentDetail({
   const id = appointment.id;
   const run = (m: { mutate: (v: { id: string }, o: object) => void }) =>
     m.mutate({ id }, { onSuccess: onChanged });
-  const doCancel = () =>
-    cancel.mutate({ id, data: {} }, { onSuccess: onChanged });
+  // Lo cancela el profesional desde su agenda (antes quedaba como "canceló el cliente": salía en
+  // las novedades del inicio como cancelación de un cliente y no ofrecía "otro horario").
+  const doCancel = (includeFollowing = false) =>
+    cancel.mutate(
+      { id, data: { reason: "professional", includeFollowing } },
+      { onSuccess: onChanged },
+    );
+  // Turno fijo: al cancelar se pregunta si es solo este o también los siguientes.
+  const [askSeriesCancel, setAskSeriesCancel] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
 
   // Pago en persona (efectivo o transferencia) aún sin cobrar de este turno: al marcar "atendido"
   // pedimos confirmar si lo recibió (collected → pagado) o quedó en un pagaré (deferred → debe).
@@ -104,6 +136,11 @@ export function AppointmentDetail({
     status === AppointmentStatus.requested ||
     status === AppointmentStatus.confirmed ||
     status === AppointmentStatus.in_progress;
+  // Se puede mover mientras no haya llegado ni empezado (y tenga un servicio con horario).
+  const canReschedule =
+    (status === AppointmentStatus.requested || status === AppointmentStatus.confirmed) &&
+    !appointment.checkedInAt &&
+    !!appointment.serviceId;
   const isClosed =
     status === AppointmentStatus.done ||
     status === AppointmentStatus.no_show ||
@@ -111,7 +148,7 @@ export function AppointmentDetail({
 
   return (
     <>
-    <Dialog open onOpenChange={(o) => !o && !charging && onClose()}>
+    <Dialog open={!rescheduling} onOpenChange={(o) => !o && !charging && !rescheduling && onClose()}>
       <DialogContent>
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -130,6 +167,13 @@ export function AppointmentDetail({
             label="Cuándo"
             value={`${formatDateLong(appointment.startAt)} · ${formatTime(appointment.startAt)}–${formatTime(appointment.endAt)}`}
           />
+          {appointment.seriesId && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Repeat className="size-3.5" />
+              Turno fijo: se repite con la misma hora.
+            </p>
+          )}
+          <ClientConfirmation appointment={appointment} />
           {person.phone && (
             <ContactRow
               label="Teléfono"
@@ -220,8 +264,50 @@ export function AppointmentDetail({
             />
           )}
 
+          {canReschedule && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setRescheduling(true)}
+              disabled={busy}
+            >
+              <CalendarRange className="size-4" />
+              Cambiar horario
+            </Button>
+          )}
+
+          {/* Turno fijo: ¿solo este o también los siguientes? */}
+          {askSeriesCancel && (
+            <div className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <p className="text-sm font-medium">Es un turno fijo. ¿Qué querés cancelar?</p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => doCancel(false)} disabled={busy}>
+                  Solo este
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive"
+                  onClick={() => doCancel(true)}
+                  disabled={busy}
+                >
+                  {cancel.isPending ? <Spinner /> : null}
+                  Este y los siguientes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setAskSeriesCancel(false)}
+                  disabled={busy}
+                >
+                  Volver
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Acciones negativas (si el turno sigue vivo y no estamos cerrando el cobro) */}
-          {isLive && !askCash && (
+          {isLive && !askCash && !askSeriesCancel && (
             <div className="flex gap-2">
               <Button
                 variant="ghost"
@@ -235,7 +321,7 @@ export function AppointmentDetail({
               <Button
                 variant="ghost"
                 className="flex-1 text-destructive hover:bg-destructive/10"
-                onClick={doCancel}
+                onClick={() => (appointment.seriesId ? setAskSeriesCancel(true) : doCancel())}
                 disabled={busy}
               >
                 <Ban className="size-4" />
@@ -254,6 +340,20 @@ export function AppointmentDetail({
         </div>
       </DialogContent>
     </Dialog>
+    {rescheduling && (
+      <RescheduleDialog
+        appointment={appointment}
+        clientName={person.name}
+        clientPhone={person.phone}
+        clientEmail={person.email}
+        serviceName={service?.name ?? null}
+        onClose={() => setRescheduling(false)}
+        onDone={() => {
+          setRescheduling(false);
+          onChanged();
+        }}
+      />
+    )}
     {charging && (
       <ChargeDialog
         appointmentId={appointment.id}
@@ -266,15 +366,6 @@ export function AppointmentDetail({
     )}
     </>
   );
-}
-
-/** "hoy a las 15:30", "mañana a las 15:30" o "el martes 18/11 a las 15:30". */
-function whenText(startAt: string): string {
-  const time = formatTime(startAt);
-  const now = new Date();
-  if (isSameDay(startAt, now)) return `hoy a las ${time}`;
-  if (isSameDay(startAt, new Date(now.getTime() + 24 * 3_600_000))) return `mañana a las ${time}`;
-  return `el ${formatWeekday(startAt).toLowerCase()} ${formatDateShort(startAt).slice(0, 5)} a las ${time}`;
 }
 
 const DELAYS = [10, 15, 30];
@@ -308,7 +399,7 @@ function WhatsAppShortcuts({
 
   const base = {
     clientName,
-    whenText: whenText(appointment.startAt),
+    whenText: appointmentWhenText(appointment.startAt),
     timeText: formatTime(appointment.startAt),
     serviceName,
     businessName: pro.data?.businessName ?? null,
@@ -359,6 +450,60 @@ function WhatsAppShortcuts({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * ¿El cliente confirmó que viene? Lo marca él desde el recordatorio ("Confirmo") o el
+ * profesional a mano (p. ej. le respondió por WhatsApp). Solo en turnos que todavía no llegaron.
+ */
+function ClientConfirmation({ appointment }: { appointment: Appointment }) {
+  const qc = useQueryClient();
+  const mark = useAppointmentsSetClientConfirmed();
+  const [confirmedAt, setConfirmedAt] = useState(appointment.clientConfirmedAt ?? null);
+  const upcoming =
+    (appointment.status === AppointmentStatus.requested ||
+      appointment.status === AppointmentStatus.confirmed) &&
+    !appointment.checkedInAt;
+  if (!upcoming && !confirmedAt) return null;
+
+  function toggle(confirmed: boolean) {
+    mark.mutate(
+      { id: appointment.id, data: { confirmed } },
+      {
+        onSuccess: (a) => {
+          setConfirmedAt(a.clientConfirmedAt ?? null);
+          void qc.invalidateQueries({ queryKey: ["appointments"] });
+        },
+      },
+    );
+  }
+
+  return confirmedAt ? (
+    <p className="flex items-center gap-1.5 text-xs text-success">
+      <CheckCheck className="size-3.5" />
+      Confirmó que viene · {formatDateTime(confirmedAt)}
+      {upcoming && (
+        <button
+          type="button"
+          onClick={() => toggle(false)}
+          disabled={mark.isPending}
+          className="ml-1 text-muted-foreground underline-offset-2 hover:underline"
+        >
+          Desmarcar
+        </button>
+      )}
+    </p>
+  ) : (
+    <button
+      type="button"
+      onClick={() => toggle(true)}
+      disabled={mark.isPending}
+      className="flex items-center gap-1.5 text-xs font-medium text-accent hover:underline"
+    >
+      {mark.isPending ? <Spinner /> : <CheckCheck className="size-3.5" />}
+      Marcar que confirmó que viene
+    </button>
   );
 }
 

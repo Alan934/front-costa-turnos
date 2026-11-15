@@ -26,6 +26,7 @@ export interface Professional {
   vatChargedToClient: boolean;
   cancellationWindowHours: number;
   rescheduleWindowHours: number;
+  askConfirmation: boolean;
   publicPageSettings: ProfessionalPublicPageSettings;
   notificationPrefs: ProfessionalNotificationPrefs;
   /** @nullable */

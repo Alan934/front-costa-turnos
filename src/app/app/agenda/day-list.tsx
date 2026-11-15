@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarX2, CalendarOff, Clock } from "lucide-react";
+import { CalendarX2, CalendarOff, CheckCheck, Clock } from "lucide-react";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
@@ -139,6 +139,15 @@ export function DayList({
                     {multiStaff && staffName ? ` · ${staffName}` : ""}
                   </p>
                 </div>
+                {a.clientConfirmedAt && !cancelled && (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-success"
+                    title="El cliente confirmó que viene"
+                  >
+                    <CheckCheck className="size-3.5" />
+                    <span className="hidden sm:inline">Confirmó</span>
+                  </span>
+                )}
                 <AppointmentStatusBadge status={a.status} isProvisional={a.isProvisional} />
               </button>
             </li>

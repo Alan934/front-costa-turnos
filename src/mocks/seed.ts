@@ -72,6 +72,7 @@ export const professional: Professional = {
   vatChargedToClient: true,
   cancellationWindowHours: 24,
   rescheduleWindowHours: 8,
+  askConfirmation: false,
   notificationPrefs: {},
   publicPageSettings: {
     accentColor: "#16707A",
@@ -582,6 +583,7 @@ function adminRow(args: {
     vatChargedToClient: true,
     cancellationWindowHours: 24,
     rescheduleWindowHours: 24,
+    askConfirmation: false,
     notificationPrefs: {},
     publicPageSettings: {},
   };

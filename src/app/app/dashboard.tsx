@@ -30,6 +30,7 @@ import { useMpStatus } from "@/lib/api/billing";
 import { useWaitlistList } from "@/lib/api/generated/endpoints/waitlist/waitlist";
 import { WelcomeSetup } from "@/components/welcome-setup";
 import { ComercioWelcomeBanner } from "./comercio-welcome-banner";
+import { FreeGapsCard } from "./free-gaps-card";
 import { PublicPageLink } from "@/components/public-page-link";
 import { usePersonLookup } from "@/lib/api/clients";
 import { dayRange, isSameLocalDay } from "@/lib/agenda";
@@ -249,6 +250,9 @@ export function Dashboard() {
               <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
             </Link>
           )}
+
+          {/* Huecos libres de hoy y mañana, para compartir */}
+          <FreeGapsCard />
 
           {/* Novedades desde la última visita */}
           {(news.booked.length > 0 || news.cancelled.length > 0) && (

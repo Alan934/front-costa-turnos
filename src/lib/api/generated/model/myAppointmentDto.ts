@@ -37,4 +37,9 @@ export interface MyAppointmentDto {
    * @nullable
    */
   manageToken?: string | null;
+  /**
+   * Cuándo el cliente confirmó que va. null = todavía no confirmó.
+   * @nullable
+   */
+  clientConfirmedAt?: string | null;
 }

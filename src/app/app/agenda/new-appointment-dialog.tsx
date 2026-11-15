@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Search, UserPlus, X } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { CalendarX, Check, Search, UserPlus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,17 +15,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { customInstance } from "@/lib/api/axios-instance";
+import { appointmentsBookSeries } from "@/lib/api/generated/endpoints/appointments/appointments";
+import type { BookSeriesResultDto } from "@/lib/api/generated/model/bookSeriesResultDto";
 import { useClients } from "@/lib/api/clients";
 import {
   getApiErrorMessage,
   getApiValidationMessages,
   matchFieldErrors,
 } from "@/lib/api/error-message";
-import { formatDateLong, formatDuration, formatMoney, formatTime, titleCaseName } from "@/lib/format";
+import {
+  formatDateLong,
+  formatDateShort,
+  formatDuration,
+  formatMoney,
+  formatTime,
+  formatWeekday,
+  titleCaseName,
+} from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import type { Service } from "@/lib/api/generated/model/service";
-import type { EnrichedClient, Slot } from "@/mocks/contract-extensions";
+import type { EnrichedClient } from "@/mocks/contract-extensions";
+import {
+  fromDateInputValue,
+  TimeField,
+  toDateInputValue,
+  useTimeChoice,
+} from "./time-picker";
 
 /** Lo que hace falta de un cliente ya existente para cargarle el turno. */
 export type ClientChoice = Pick<EnrichedClient, "personId" | "fullName" | "phone">;
@@ -49,13 +65,15 @@ function norm(value: string) {
  *   "Otro horario" deja tipear uno a mano (sobreturno, fuera del horario habitual).
  */
 export function NewAppointmentDialog({
-  date,
+  date: initialDate,
   staff,
   services,
   onClose,
   onCreated,
   initialClient,
   initialServiceId,
+  initialStaffId,
+  initialTime,
 }: {
   date: Date;
   staff: Staff[];
@@ -66,53 +84,47 @@ export function NewAppointmentDialog({
   initialClient?: ClientChoice;
   /** Servicio preseleccionado, si existe entre `services`. */
   initialServiceId?: string | null;
+  /** Quién atiende, preseleccionado si existe entre `staff`. */
+  initialStaffId?: string | null;
+  /** Hora preferida "HH:mm": se elige sola si ese día está libre ("darle el mismo turno"). */
+  initialTime?: string | null;
 }) {
   const [serviceId, setServiceId] = useState(
     services.find((s) => s.id === initialServiceId)?.id ?? services[0]?.id ?? "",
   );
-  const [staffId, setStaffId] = useState(staff[0]?.id ?? "");
+  const [staffId, setStaffId] = useState(
+    staff.find((s) => s.id === initialStaffId)?.id ?? staff[0]?.id ?? "",
+  );
+  // El día viene de la agenda, pero se puede cambiar acá mismo.
+  const [date, setDate] = useState(initialDate);
   const service = services.find((s) => s.id === serviceId);
 
   // ---- Hora: horarios libres del día o uno tipeado a mano ----
-  const [slotStart, setSlotStart] = useState<string | null>(null);
-  const [manualTime, setManualTime] = useState(false);
-  const [time, setTime] = useState("10:00");
+  const timeChoice = useTimeChoice(date, staffId, serviceId, initialTime);
 
-  const dayRange = useMemo(() => {
-    const from = new Date(date);
-    from.setHours(0, 0, 0, 0);
-    const to = new Date(date);
-    to.setHours(23, 59, 59, 999);
-    return { from: from.toISOString(), to: to.toISOString() };
-  }, [date]);
-
-  const slots = useQuery({
-    queryKey: ["agenda-free-slots", staffId, serviceId, dayRange.from],
-    queryFn: ({ signal }) =>
-      customInstance<Slot[]>({
-        url: "/v1/availability/slots",
-        method: "GET",
-        params: { staffId, serviceId, from: dayRange.from, to: dayRange.to },
-        signal,
-      }),
-    enabled: !!staffId && !!serviceId,
-  });
-  // No se ofrecen horarios que ya pasaron (si el turno es para hoy).
-  const freeSlots = (slots.data ?? []).filter((s) => +new Date(s.startAt) > Date.now());
-  const useManual = manualTime || slots.isError;
-
-  const startAt = useMemo(() => {
-    if (!useManual) return slotStart ? new Date(slotStart) : null;
-    const [h, m] = time.split(":").map(Number);
-    const d = new Date(date);
-    d.setHours(h || 0, m || 0, 0, 0);
-    return d;
-  }, [useManual, slotStart, time, date]);
+  function pickDate(value: string) {
+    const d = fromDateInputValue(value);
+    if (!d) return;
+    setDate(d);
+    timeChoice.reset();
+  }
+  const startAt = timeChoice.startAt;
 
   function pickService(id: string) {
     setServiceId(id);
-    setSlotStart(null); // los horarios libres dependen del servicio (por su duración)
+    timeChoice.reset(); // los horarios libres dependen del servicio (por su duración)
   }
+
+  // ---- Turno fijo: repetir cada N semanas ----
+  const [everyWeeks, setEveryWeeks] = useState(0); // 0 = no se repite
+  const [count, setCount] = useState("8");
+  const repeatCount = Math.min(52, Math.max(2, Number(count) || 0));
+  const lastDate =
+    everyWeeks > 0 && startAt
+      ? new Date(startAt.getTime() + (repeatCount - 1) * everyWeeks * 7 * 86_400_000)
+      : null;
+  // Resultado de un turno fijo con fechas que no se pudieron dar: se muestra antes de cerrar.
+  const [seriesResult, setSeriesResult] = useState<BookSeriesResultDto | null>(null);
 
   // ---- Cliente: uno existente o uno nuevo ----
   const clients = useClients();
@@ -152,23 +164,29 @@ export function NewAppointmentDialog({
   }
 
   const create = useMutation({
-    mutationFn: () =>
-      customInstance({
-        url: "/v1/appointments",
-        method: "POST",
-        data: {
-          ...(selected
-            ? { personId: selected.personId }
-            : {
-                fullName: fullName.trim() || "Cliente sin nombre",
-                phone: phone.trim() || undefined,
-              }),
-          staffId,
-          serviceId,
-          startAt: startAt!.toISOString(),
-        },
-      }),
-    onSuccess: onCreated,
+    mutationFn: async () => {
+      const data = {
+        ...(selected
+          ? { personId: selected.personId }
+          : {
+              fullName: fullName.trim() || "Cliente sin nombre",
+              phone: phone.trim() || undefined,
+            }),
+        staffId,
+        serviceId,
+        startAt: startAt!.toISOString(),
+      };
+      if (everyWeeks === 0) {
+        await customInstance({ url: "/v1/appointments", method: "POST", data });
+        return null;
+      }
+      return appointmentsBookSeries({ ...data, everyWeeks, count: repeatCount });
+    },
+    onSuccess: (series) => {
+      // Turno fijo con fechas salteadas: se muestran cuáles antes de cerrar.
+      if (series && series.skipped.length > 0) setSeriesResult(series);
+      else onCreated();
+    },
   });
 
   // Errores por campo (cuando es validación 400).
@@ -198,6 +216,52 @@ export function NewAppointmentDialog({
       : getApiErrorMessage(create.error);
 
   const canSubmit = !!serviceId && !!staffId && !!startAt;
+
+  if (seriesResult) {
+    return (
+      <Dialog open onOpenChange={(o) => !o && onCreated()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {seriesResult.created.length === 1
+                ? "Quedó 1 turno"
+                : `Quedaron ${seriesResult.created.length} turnos`}
+            </DialogTitle>
+            <DialogDescription>
+              {seriesResult.skipped.length === 1
+                ? "Esta fecha no se pudo dar:"
+                : `Estas ${seriesResult.skipped.length} fechas no se pudieron dar:`}
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2 px-6">
+            {seriesResult.skipped.map((s) => (
+              <li
+                key={s.startAt}
+                className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3 text-sm"
+              >
+                <CalendarX className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <span>
+                  <span className="font-medium">
+                    {formatWeekday(s.startAt)} {formatDateShort(s.startAt)} ·{" "}
+                    {formatTime(s.startAt)}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{s.reason}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="px-6 text-xs text-muted-foreground">
+            Si querés, dale esas fechas a otra hora con &quot;Nuevo turno&quot;.
+          </p>
+          <div className="p-6 pt-3">
+            <Button className="w-full" onClick={onCreated}>
+              Entendido
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -377,7 +441,7 @@ export function NewAppointmentDialog({
                 value={staffId}
                 onChange={(e) => {
                   setStaffId(e.target.value);
-                  setSlotStart(null);
+                  timeChoice.reset();
                 }}
                 className={cn(
                   "mt-1.5 h-10 w-full rounded-lg border bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -396,74 +460,67 @@ export function NewAppointmentDialog({
             </div>
           )}
 
-          {/* Hora */}
+          {/* Día */}
           <div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor={useManual ? "na-time" : undefined}>
-                Hora <span className="text-destructive">*</span>
-              </Label>
-              {!slots.isError && (
-                <button
-                  type="button"
-                  onClick={() => setManualTime((v) => !v)}
-                  className="text-xs font-medium text-accent hover:underline"
-                >
-                  {manualTime ? "Ver horarios libres" : "Otro horario"}
-                </button>
-              )}
-            </div>
+            <Label htmlFor="na-date">Día</Label>
+            <Input
+              id="na-date"
+              type="date"
+              className="mt-1.5"
+              value={toDateInputValue(date)}
+              onChange={(e) => pickDate(e.target.value)}
+            />
+          </div>
 
-            {useManual ? (
-              <>
+          {/* Hora */}
+          <TimeField choice={timeChoice} inputId="na-time" error={fieldErrors.startAt} />
+          {timeChoice.preferredMissing && !timeChoice.slotStart && !timeChoice.useManual && (
+            <p className="-mt-2 text-xs text-muted-foreground">
+              A las {initialTime} no está libre ese día: elegí otra hora u otro día.
+            </p>
+          )}
+
+          {/* Turno fijo */}
+          <div>
+            <Label htmlFor="na-repeat">Repetir</Label>
+            <select
+              id="na-repeat"
+              value={everyWeeks}
+              onChange={(e) => setEveryWeeks(Number(e.target.value))}
+              className="mt-1.5 h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value={0}>No se repite</option>
+              <option value={1}>Cada semana (turno fijo)</option>
+              <option value={2}>Cada 2 semanas</option>
+              <option value={3}>Cada 3 semanas</option>
+              <option value={4}>Cada 4 semanas</option>
+            </select>
+            {everyWeeks > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <Label htmlFor="na-count" className="font-normal">
+                  Cantidad de turnos
+                </Label>
                 <Input
-                  id="na-time"
-                  type="time"
-                  className={cn("mt-1.5", fieldErrors.startAt && "border-destructive")}
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  id="na-count"
+                  type="number"
+                  inputMode="numeric"
+                  min={2}
+                  max={52}
+                  className="h-9 w-20"
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Cargás la hora a mano. Si se pisa con otro turno, te avisamos al crear.
+                {lastDate && (
+                  <span className="text-xs text-muted-foreground">
+                    El último, el {formatWeekday(lastDate).toLowerCase()}{" "}
+                    {formatDateShort(lastDate)}
+                  </span>
+                )}
+                <p className="w-full text-xs text-muted-foreground">
+                  Si alguna fecha cae en un feriado, en tus vacaciones o ya tenés otro turno a esa
+                  hora, esa se saltea y te avisamos cuál.
                 </p>
-              </>
-            ) : slots.isLoading ? (
-              <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <Spinner /> Buscando horarios libres…
-              </p>
-            ) : freeSlots.length === 0 ? (
-              <p className="mt-1.5 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-                No quedan horarios libres este día para ese servicio. Usá{" "}
-                <button
-                  type="button"
-                  onClick={() => setManualTime(true)}
-                  className="font-medium text-accent hover:underline"
-                >
-                  otro horario
-                </button>{" "}
-                para cargar uno a mano.
-              </p>
-            ) : (
-              <div className="mt-1.5 flex max-h-40 flex-wrap gap-2 overflow-y-auto">
-                {freeSlots.map((s) => (
-                  <button
-                    key={s.startAt}
-                    type="button"
-                    onClick={() => setSlotStart(s.startAt)}
-                    aria-pressed={slotStart === s.startAt}
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-sm font-medium tabular-nums transition-colors",
-                      slotStart === s.startAt
-                        ? "border-accent bg-accent/10 text-accent"
-                        : "border-border hover:border-accent/50",
-                    )}
-                  >
-                    {formatTime(s.startAt)}
-                  </button>
-                ))}
               </div>
-            )}
-            {fieldErrors.startAt && (
-              <p className="mt-1 text-xs text-destructive">{fieldErrors.startAt}</p>
             )}
           </div>
 
@@ -481,9 +538,9 @@ export function NewAppointmentDialog({
             onClick={() => create.mutate()}
           >
             {create.isPending ? <Spinner /> : null}
-            Crear turno
+            {everyWeeks > 0 ? `Crear ${repeatCount} turnos` : "Crear turno"}
             {startAt ? ` · ${formatTime(startAt.toISOString())}` : ""}
-            {service ? ` · ${formatMoney(service.priceCents)}` : ""}
+            {everyWeeks === 0 && service ? ` · ${formatMoney(service.priceCents)}` : ""}
           </Button>
         </div>
       </DialogContent>

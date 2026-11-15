@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import type { MyAppointmentDto } from "@/lib/api/generated/model/myAppointmentDto";
 import type { RescheduleMyAppointmentDto } from "@/lib/api/generated/model/rescheduleMyAppointmentDto";
@@ -45,6 +45,27 @@ export function useCancelMyAppointment(manageToken?: string | null) {
         url: manageToken ? `/turno/${manageToken}/cancel` : `/v1/me/appointments/${id}/cancel`,
         method: "POST",
       }),
+  });
+}
+
+/** "Confirmo que voy" desde el link personal (pedido de confirmación del día anterior). */
+export function useConfirmByToken(manageToken: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      customInstance<ManagedAppointment>({ url: `/turno/${manageToken}/confirm`, method: "POST" }),
+    // A nivel hook (no en cada mutate): se refresca el turno aunque el componente se remonte.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["appointment-by-token", manageToken] }),
+  });
+}
+
+/** "No puedo ir": cancela y libera el horario (si el negocio pide confirmación, sin plazo). */
+export function useDeclineByToken(manageToken: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      customInstance<ManagedAppointment>({ url: `/turno/${manageToken}/decline`, method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["appointment-by-token", manageToken] }),
   });
 }
 

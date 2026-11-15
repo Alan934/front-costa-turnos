@@ -8,7 +8,16 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-export default async function Page({ params }: { params: Promise<{ token: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ r?: string }>;
+}) {
   const { token } = await params;
-  return <ManageAppointmentView token={token} />;
+  const { r } = await searchParams;
+  // ?r=si / ?r=no: llegó desde los botones "Confirmo" / "No puedo ir" del recordatorio.
+  const intent = r === "si" ? "confirm" : r === "no" ? "decline" : null;
+  return <ManageAppointmentView token={token} intent={intent} />;
 }

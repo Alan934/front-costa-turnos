@@ -13,6 +13,7 @@ import { AppointmentStatus } from "@/lib/api/generated/model/appointmentStatus";
 import { googleCalendarUrl, mapsUrl } from "@/lib/calendar";
 import { titleCaseName } from "@/lib/format";
 import { AppointmentCard } from "@/app/mis-turnos/my-appointments-view";
+import { ConfirmAttendance, type AttendanceIntent } from "./confirm-attendance";
 
 const TERMINAL: AppointmentStatus[] = [
   AppointmentStatus.done,
@@ -25,7 +26,13 @@ const TERMINAL: AppointmentStatus[] = [
  * No pide cuenta: el token de la URL es la credencial. Muestra la misma tarjeta que
  * "Mis turnos", con cancelar y reprogramar dentro de las reglas del negocio.
  */
-export function ManageAppointmentView({ token }: { token: string }) {
+export function ManageAppointmentView({
+  token,
+  intent = null,
+}: {
+  token: string;
+  intent?: AttendanceIntent;
+}) {
   const { user } = useAuth();
   const { data: appt, isLoading, isError, refetch } = useAppointmentByToken(token);
 
@@ -54,6 +61,12 @@ export function ManageAppointmentView({ token }: { token: string }) {
 
       {appt && (
         <>
+          {/* Confirmación del día anterior (si el negocio la pide o llegó desde el recordatorio) */}
+          {(appt.business.askConfirmation || intent) && (
+            <div className="mt-6">
+              <ConfirmAttendance appt={appt} token={token} intent={intent} />
+            </div>
+          )}
           <div className="mt-6">
             <AppointmentCard
               appt={appt}

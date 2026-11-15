@@ -49,6 +49,13 @@ export interface Appointment {
   publicToken?: string | null;
   /** @nullable */
   manageToken?: string | null;
+  /**
+   * Serie de turnos fijos
+   * @nullable
+   */
+  seriesId?: string | null;
+  /** @nullable */
+  clientConfirmedAt?: string | null;
   createdVia: CreatedVia;
   /** Nombre del cliente del turno */
   personName?: string;

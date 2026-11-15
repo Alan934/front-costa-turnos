@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
   CalendarPlus,
   Archive,
   FileDown,
+  Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,12 +30,39 @@ import {
   useUpdateFicha,
 } from "@/lib/api/clients";
 import { FichaFieldType } from "@/lib/api/generated/model/fichaFieldType";
-import { formatDateTime } from "@/lib/format";
+import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useServices } from "@/lib/api/catalog";
+import { formatDateShort, formatDateTime, formatTime, formatWeekday, titleCaseName } from "@/lib/format";
+import { NewAppointmentDialog } from "@/app/app/agenda/new-appointment-dialog";
+import type { Staff } from "@/lib/api/generated/model/staff";
 import { cn } from "@/lib/utils";
 import type { FichaField } from "@/lib/api/generated/model/fichaField";
 
+/** Próximo día (desde mañana) que cae el mismo día de la semana que `from`. */
+function nextSameWeekday(from: Date): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() !== from.getDay()) d.setDate(d.getDate() + 1);
+  return d;
+}
+
 export function ClientDetail({ clientId }: { clientId: string }) {
   const client = useClient(clientId);
+  const staffQuery = useProfessionalsListStaff();
+  const servicesQuery = useServices();
+  const staffList = (staffQuery.data ?? [])
+    .filter((s: Staff) => s.isActive)
+    .map((s: Staff) => ({ ...s, displayName: titleCaseName(s.displayName) }));
+  const services = (servicesQuery.data ?? []).map((s) => ({ ...s, name: titleCaseName(s.name) }));
+  // "Darle turno" (null) o "darle el mismo turno" (mismo servicio, día de la semana y hora).
+  const [booking, setBooking] = useState<null | "new" | "same">(null);
+  const [booked, setBooked] = useState(false);
+
+  const last = client.data?.lastAppointmentAt ? new Date(client.data.lastAppointmentAt) : null;
+  const lastService = services.find((s) => s.id === client.data?.lastServiceId);
+  const sameDate = useMemo(() => (last ? nextSameWeekday(last) : null), [last?.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
+  const canBook = staffList.length > 0 && services.length > 0;
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-6 sm:px-8">
@@ -84,17 +112,46 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 </div>
                 {client.data.visitCount != null && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {client.data.visitCount} visitas
+                    {client.data.visitCount} {client.data.visitCount === 1 ? "visita" : "visitas"}
                   </p>
                 )}
               </div>
             </div>
+            {last && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Último turno: {formatWeekday(last).toLowerCase()} {formatDateShort(last)} a las{" "}
+                {formatTime(last)}
+                {lastService ? ` · ${lastService.name}` : ""}
+                {client.data.nextAppointmentAt
+                  ? ` · Próximo: ${formatDateShort(client.data.nextAppointmentAt)} a las ${formatTime(client.data.nextAppointmentAt)}`
+                  : " · No tiene otro reservado"}
+              </p>
+            )}
+            {booked && (
+              <p className="mt-3 rounded-lg border border-success/40 bg-success/10 p-2.5 text-sm text-success">
+                Listo: le diste turno. Lo ves en la agenda.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/app/agenda">
-                  <CalendarPlus className="size-4" />
-                  Nuevo turno
-                </Link>
+              {last && lastService && sameDate && (
+                <Button
+                  size="sm"
+                  onClick={() => setBooking("same")}
+                  disabled={!canBook}
+                  title={`${lastService.name}, ${formatWeekday(last).toLowerCase()} a las ${formatTime(last)}`}
+                >
+                  <Repeat className="size-4" />
+                  Darle el mismo turno
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBooking("new")}
+                disabled={!canBook}
+              >
+                <CalendarPlus className="size-4" />
+                Darle turno
               </Button>
               <Button variant="outline" size="sm" onClick={() => window.print()}>
                 <FileDown className="size-4" />
@@ -123,6 +180,28 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           {/* Notas privadas */}
           <NotesSection clientId={clientId} />
         </div>
+      )}
+
+      {booking && client.data && (
+        <NewAppointmentDialog
+          date={booking === "same" && sameDate ? sameDate : new Date()}
+          staff={staffList}
+          services={services}
+          initialClient={{
+            personId: client.data.personId,
+            fullName: client.data.fullName,
+            phone: client.data.phone,
+          }}
+          initialServiceId={client.data.lastServiceId}
+          initialStaffId={booking === "same" ? client.data.lastStaffId : null}
+          initialTime={booking === "same" && last ? formatTime(last) : null}
+          onClose={() => setBooking(null)}
+          onCreated={() => {
+            setBooking(null);
+            setBooked(true);
+            void client.refetch();
+          }}
+        />
       )}
     </div>
   );
