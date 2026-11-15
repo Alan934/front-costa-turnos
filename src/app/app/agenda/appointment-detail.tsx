@@ -48,6 +48,7 @@ import { formatDateLong, formatDateTime, formatTime, formatMoney } from "@/lib/f
 import {
   appointmentMessage,
   appointmentWhenText,
+  confirmUrl,
   whatsAppLink,
   type AppointmentMessageKind,
 } from "@/lib/whatsapp";
@@ -184,7 +185,13 @@ export function AppointmentDetail({
           {person.email && (
             <ContactRow label="Email" value={person.email} href={`mailto:${person.email}`} />
           )}
-          {service && <Row label="Precio" value={formatMoney(service.priceCents)} />}
+          {service && (
+            <Row
+              label="Precio"
+              // Con adicionales incluidos (el back lo calcula en el listado).
+              value={formatMoney(appointment.priceCents ?? service.priceCents)}
+            />
+          )}
           {appointment.isProvisional && (
             <p className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-xs text-warning-foreground">
               Turno provisional: sin seña, puede ser tomado por quien abone.
@@ -404,6 +411,7 @@ function WhatsAppShortcuts({
     serviceName,
     businessName: pro.data?.businessName ?? null,
     bookUrl: pro.data?.slug ? `https://${PUBLIC_HOST}/r/${pro.data.slug}` : null,
+    confirmUrl: confirmUrl(PUBLIC_HOST, appointment.manageToken),
   };
   const href = (kind: AppointmentMessageKind, delayMinutes?: number) =>
     whatsAppLink(phone, appointmentMessage(kind, { ...base, delayMinutes }));

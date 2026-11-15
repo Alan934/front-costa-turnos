@@ -32,7 +32,8 @@ export function SubscriptionBanner() {
     <>
       {/* Reserva espacio al pie para que la tarjeta fija no tape el contenido final. */}
       <div aria-hidden className="h-24" />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-end p-3 sm:p-4">
+      {/* En el celular va por encima de la barra inferior del panel (4rem + zona segura). */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex justify-end p-3 sm:p-4 lg:bottom-0">
         <div
           className={cn(
             "pointer-events-auto w-full max-w-sm rounded-xl border bg-card p-3 shadow-lg sm:p-3.5",

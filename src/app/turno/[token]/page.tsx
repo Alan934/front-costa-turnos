@@ -17,7 +17,9 @@ export default async function Page({
 }) {
   const { token } = await params;
   const { r } = await searchParams;
-  // ?r=si / ?r=no: llegó desde los botones "Confirmo" / "No puedo ir" del recordatorio.
-  const intent = r === "si" ? "confirm" : r === "no" ? "decline" : null;
+  // ?r=si / ?r=no: llegó desde los botones "Confirmo" / "No puedo ir" del recordatorio por email.
+  // ?r=c: link del recordatorio por WhatsApp; muestra los botones sin confirmar solo (la vista
+  // previa que arma WhatsApp abre el link y no debe confirmar por el cliente).
+  const intent = r === "si" ? "confirm" : r === "no" ? "decline" : r === "c" ? "ask" : null;
   return <ManageAppointmentView token={token} intent={intent} />;
 }

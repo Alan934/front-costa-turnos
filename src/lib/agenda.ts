@@ -302,3 +302,98 @@ export function holidaysAsTimeOff(
       };
     });
 }
+
+/* ---------- Huecos libres del día (para cargar un turno ahí mismo) ---------- */
+
+export interface FreeGap {
+  staffId: string;
+  start: Date;
+  end: Date;
+}
+
+/** Huecos más cortos que esto no se muestran (no entra ni un servicio corto). */
+export const MIN_GAP_MINUTES = 15;
+
+/** Estados que no ocupan el horario. */
+const NOT_BLOCKING: AppointmentStatus[] = [AppointmentStatus.cancelled, AppointmentStatus.no_show];
+
+/** "09:30" / "09:30:00" del día dado, en hora local. */
+function atTime(day: Date, hhmm: string): Date {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = startOfDay(day);
+  d.setHours(h, m || 0, 0, 0);
+  return d;
+}
+
+type Interval = [number, number];
+
+/** Resta los intervalos `busy` de `free` (todos en ms). */
+function subtract(free: Interval[], busy: Interval[]): Interval[] {
+  let out = free;
+  for (const [bs, be] of busy) {
+    out = out.flatMap(([fs, fe]): Interval[] => {
+      if (be <= fs || bs >= fe) return [[fs, fe]];
+      const parts: Interval[] = [];
+      if (bs > fs) parts.push([fs, bs]);
+      if (be < fe) parts.push([be, fe]);
+      return parts;
+    });
+  }
+  return out;
+}
+
+/**
+ * Horarios libres de un día, por quien atiende: sus franjas de trabajo CON TURNO (no las de
+ * "por orden de llegada") menos descansos, turnos activos y bloqueos por horas. Si es hoy, solo
+ * desde ahora. Es una guía para cargar un turno a mano: "Nuevo turno" igual valida contra el
+ * horario real del servicio.
+ */
+export function freeGapsForDay(
+  day: Date,
+  staffIds: string[],
+  rules: ScheduleRule[],
+  appointments: Appointment[],
+  timeOff: TimeOff[],
+  now: Date = new Date(),
+): FreeGap[] {
+  const dow = day.getDay();
+  const dayEnd = startOfDay(day).getTime() + 24 * 3_600_000;
+  if (dayEnd <= now.getTime()) return [];
+  // Desde ahora, redondeado a los 5 minutos siguientes.
+  const fromNow = Math.ceil(now.getTime() / 300_000) * 300_000;
+
+  const blocks: Interval[] = partialTimeOffsForDay(day, timeOff).map((t) => [
+    +new Date(t.startAt),
+    +new Date(t.endAt),
+  ]);
+
+  const gaps: FreeGap[] = [];
+  for (const staffId of staffIds) {
+    const mine = rules.filter((r) => r.staffId === staffId && r.dayOfWeek === dow);
+    const work: Interval[] = mine
+      .filter((r) => r.kind === ScheduleRuleKind.work && r.attendanceMode !== "walk_in")
+      .map((r) => [+atTime(day, r.startTime), +atTime(day, r.endTime)]);
+    if (work.length === 0) continue;
+    const busy: Interval[] = [
+      ...mine
+        .filter((r) => r.kind === ScheduleRuleKind.break)
+        .map((r): Interval => [+atTime(day, r.startTime), +atTime(day, r.endTime)]),
+      ...appointments
+        .filter(
+          (a) =>
+            a.staffId === staffId &&
+            !NOT_BLOCKING.includes(a.status) &&
+            isSameLocalDay(new Date(a.startAt), day),
+        )
+        .map((a): Interval => [+new Date(a.startAt), +new Date(a.endAt)]),
+      ...blocks,
+      [0, fromNow],
+    ];
+    for (const [s, e] of subtract(work, busy)) {
+      if (e - s >= MIN_GAP_MINUTES * 60_000) {
+        gaps.push({ staffId, start: new Date(s), end: new Date(e) });
+      }
+    }
+  }
+  return gaps.sort((x, y) => +x.start - +y.start);
+}

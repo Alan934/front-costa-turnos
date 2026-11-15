@@ -123,11 +123,27 @@ export function useUpdateFicha(clientId: string) {
   });
 }
 
+/** Archivar: sale de la cartera activa (no se borra nada; se puede desarchivar). */
 export function useArchiveClient() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      customInstance({ url: `/v1/clients/${id}`, method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
+      customInstance<EnrichedClient>({ url: `/v1/clients/${id}`, method: "DELETE" }),
+    onSuccess: (c, id) => {
+      qc.setQueryData(["client", id], c);
+      void qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+  });
+}
+
+export function useRestoreClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      customInstance<EnrichedClient>({ url: `/v1/clients/${id}/restore`, method: "POST" }),
+    onSuccess: (c, id) => {
+      qc.setQueryData(["client", id], c);
+      void qc.invalidateQueries({ queryKey: ["clients"] });
+    },
   });
 }

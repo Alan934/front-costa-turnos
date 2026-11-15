@@ -30,6 +30,8 @@ export interface Professional {
   publicPageSettings: ProfessionalPublicPageSettings;
   notificationPrefs: ProfessionalNotificationPrefs;
   /** @nullable */
+  newsSeenAt?: string | null;
+  /** @nullable */
   mpUserId?: string | null;
   /** @nullable */
   mpPublicKey?: string | null;

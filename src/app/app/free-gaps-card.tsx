@@ -113,9 +113,11 @@ export function FreeGapsCard() {
       if (byStaff.length > 0) result.push({ key, label: key === "hoy" ? "Hoy" : "Mañana", byStaff });
     }
     return result;
-    // slotQueries cambia de identidad en cada render: se depende de sus datos.
+    // slotQueries cambia de identidad en cada render: se depende de sus datos. Va unido en un
+    // string (no esparcido): la cantidad de dependencias de un useMemo no puede cambiar, y acá
+    // crece cuando carga el equipo (React lo marcaba como error).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [service, staff.map((s) => s.id).join(), ...slotQueries.map((q) => q.dataUpdatedAt)]);
+  }, [service, staff.map((s) => s.id).join(), slotQueries.map((q) => q.dataUpdatedAt).join()]);
 
   // Lista de espera de hoy y mañana (con email: a esos se les puede avisar).
   const waiting = useMemo(() => {

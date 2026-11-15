@@ -14,11 +14,14 @@ import { LogoutConfirm } from "@/components/logout-confirm";
 import { useActiveComercio } from "@/components/comercio-context";
 import { Avatar } from "@/components/avatar";
 import { useProfessional } from "@/lib/api/professional";
-import { APP_NAV } from "./nav";
+import { APP_NAV_GROUPS, MOBILE_TABS, isNavActive } from "./nav";
 import { cn } from "@/lib/utils";
 import type { PublicPageBranding } from "@/mocks/contract-extensions";
 
-/** Layout del panel del profesional: sidebar en desktop, drawer en mobile. */
+/**
+ * Layout del panel del profesional: sidebar en desktop; en el celular, barra inferior con lo del
+ * día a día (Inicio, Agenda, Sala, Clientes) y "Más", que abre el resto agrupado.
+ */
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
@@ -35,20 +38,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Topbar mobile */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur lg:hidden print:hidden">
         <Logo href="/app" size="md" />
-        <div className="flex items-center gap-1.5">
-          <ThemeToggle />
-          <button
-            type="button"
-            aria-label="Abrir menú"
-            onClick={() => setOpen(true)}
-            className="grid size-9 place-items-center rounded-full border border-border text-muted-foreground hover:bg-muted"
-          >
-            <Menu className="size-4" />
-          </button>
-        </div>
+        <ThemeToggle />
       </header>
 
-      {/* Drawer mobile */}
+      {/* "Más" (mobile): todas las secciones agrupadas, la cuenta y el selector de comercio */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -57,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="absolute inset-0 bg-foreground/40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-card shadow-lg">
+          <div className="absolute left-0 top-0 flex h-full w-72 flex-col overflow-y-auto bg-card shadow-lg">
             <div className="flex items-center justify-between">
               <Brand />
               <button
@@ -76,7 +69,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      <main className="min-w-0">
+      {/* Barra inferior (mobile) */}
+      <MobileTabBar onMore={() => setOpen(true)} moreOpen={open} />
+
+      {/* En el celular deja lugar para la barra inferior fija. */}
+      <main className="min-w-0 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0 print:pb-0">
         <div className="print:hidden">
           <VerifyEmailBanner />
           <SetupChecklist />
@@ -135,30 +132,81 @@ function ComercioSwitcher() {
 function NavList({ onNavigate }: { onNavigate: () => void }) {
   const pathname = usePathname();
   return (
-    <nav className="flex-1 space-y-0.5 px-3 py-2">
-      {APP_NAV.map((item) => {
-        const active =
-          item.href === "/app"
-            ? pathname === "/app"
-            : pathname.startsWith(item.href);
+    <nav className="flex-1 overflow-y-auto px-3 py-2">
+      {APP_NAV_GROUPS.map((group) => (
+        <div key={group.label ?? "main"} className={group.label ? "mt-4" : undefined}>
+          {group.label && (
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {group.label}
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const active = isNavActive(item.href, pathname);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-accent/10 text-accent"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                  aria-current={active ? "page" : undefined}
+                >
+                  <item.icon className="size-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+/** Barra inferior del celular: las 4 secciones del día a día + "Más" (abre el resto). */
+function MobileTabBar({ onMore, moreOpen }: { onMore: () => void; moreOpen: boolean }) {
+  const pathname = usePathname();
+  const inTabs = MOBILE_TABS.some((t) => isNavActive(t.href, pathname));
+  const tabClass = (active: boolean) =>
+    cn(
+      "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
+      active ? "text-accent" : "text-muted-foreground hover:text-foreground",
+    );
+
+  return (
+    <nav
+      aria-label="Secciones principales"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-[calc(4rem+env(safe-area-inset-bottom))] border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden print:hidden"
+    >
+      {MOBILE_TABS.map((t) => {
+        const active = !moreOpen && isNavActive(t.href, pathname);
         return (
           <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              active
-                ? "bg-accent/10 text-accent"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
+            key={t.href}
+            href={t.href}
+            className={tabClass(active)}
             aria-current={active ? "page" : undefined}
           >
-            <item.icon className="size-4 shrink-0" />
-            {item.label}
+            <t.icon className="size-5" />
+            {t.label}
           </Link>
         );
       })}
+      <button
+        type="button"
+        onClick={onMore}
+        className={tabClass(moreOpen || !inTabs)}
+        aria-label="Más secciones"
+        aria-expanded={moreOpen}
+      >
+        <Menu className="size-5" />
+        Más
+      </button>
     </nav>
   );
 }

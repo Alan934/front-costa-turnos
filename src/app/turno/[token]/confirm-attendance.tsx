@@ -12,7 +12,8 @@ import {
 } from "@/lib/api/me-appointments";
 import { formatDateLong, formatTime } from "@/lib/format";
 
-export type AttendanceIntent = "confirm" | "decline" | null;
+/** confirm/decline: botones del email. ask: link del recordatorio por WhatsApp (solo muestra los botones). */
+export type AttendanceIntent = "confirm" | "decline" | "ask" | null;
 
 /**
  * Pedido de confirmación del día anterior: "Confirmo" o "No puedo ir".

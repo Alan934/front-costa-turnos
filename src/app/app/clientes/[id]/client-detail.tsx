@@ -11,6 +11,7 @@ import {
   Save,
   CalendarPlus,
   Archive,
+  ArchiveRestore,
   FileDown,
   Repeat,
 } from "lucide-react";
@@ -28,6 +29,8 @@ import {
   useFichaFields,
   useAddClientNote,
   useUpdateFicha,
+  useArchiveClient,
+  useRestoreClient,
 } from "@/lib/api/clients";
 import { FichaFieldType } from "@/lib/api/generated/model/fichaFieldType";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
@@ -37,6 +40,57 @@ import { NewAppointmentDialog } from "@/app/app/agenda/new-appointment-dialog";
 import type { Staff } from "@/lib/api/generated/model/staff";
 import { cn } from "@/lib/utils";
 import type { FichaField } from "@/lib/api/generated/model/fichaField";
+
+/**
+ * Archivar (con confirmación) o desarchivar. Archivar no borra nada: la ficha, las notas y el
+ * historial quedan; solo sale de la lista y de la búsqueda al dar turno.
+ */
+function ArchiveButton({ clientId, archived }: { clientId: string; archived: boolean }) {
+  const archive = useArchiveClient();
+  const restore = useRestoreClient();
+  const [confirming, setConfirming] = useState(false);
+  const busy = archive.isPending || restore.isPending;
+
+  if (archived) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => restore.mutate(clientId)} disabled={busy}>
+        {busy ? <Spinner /> : <ArchiveRestore className="size-4" />}
+        Desarchivar
+      </Button>
+    );
+  }
+  if (confirming) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        ¿Archivarlo?
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => archive.mutate(clientId, { onSettled: () => setConfirming(false) })}
+          disabled={busy}
+        >
+          {busy ? <Spinner /> : null}
+          Sí, archivar
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+          No
+        </Button>
+      </span>
+    );
+  }
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-muted-foreground"
+      onClick={() => setConfirming(true)}
+      title="Sale de tu lista de clientes. No se borra nada y lo podés desarchivar."
+    >
+      <Archive className="size-4" />
+      Archivar
+    </Button>
+  );
+}
 
 /** Próximo día (desde mañana) que cae el mismo día de la semana que `from`. */
 function nextSameWeekday(from: Date): Date {
@@ -96,6 +150,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 <h1 className="font-display text-2xl font-semibold tracking-tight">
                   {client.data.fullName?.trim() || "Cliente sin nombre"}
                 </h1>
+                {client.data.status === "archived" && (
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    <Archive className="size-3" />
+                    Archivado: no aparece en tu lista ni al buscar para darle turno
+                  </p>
+                )}
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   {client.data.phone && (
                     <span className="inline-flex items-center gap-1.5">
@@ -157,16 +217,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 <FileDown className="size-4" />
                 Exportar ficha
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground"
-                disabled
-                title="Próximamente"
-              >
-                <Archive className="size-4" />
-                Archivar
-              </Button>
+              <ArchiveButton clientId={clientId} archived={client.data.status === "archived"} />
             </div>
           </div>
 

@@ -71,6 +71,11 @@ export interface Appointment {
   personEmail?: string | null;
   /** Nombre del servicio del turno */
   serviceName?: string;
+  /**
+   * Precio estimado del turno en centavos: precio del servicio + adicionales (con su descuento; gratis = 0). Null si no tiene servicio asignado. Solo en el listado.
+   * @nullable
+   */
+  priceCents?: number | null;
   /** Nombre del profesional asignado (se completa al reservar con "cualquiera"). */
   professionalDisplayName?: string;
 }

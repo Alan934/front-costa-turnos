@@ -117,6 +117,14 @@ export function appointmentWhenText(startAt: string | Date): string {
   return `el ${formatWeekday(startAt).toLowerCase()} ${formatDateShort(startAt).slice(0, 5)} a las ${time}`;
 }
 
+/**
+ * Link que va en el recordatorio por WhatsApp: abre "gestionar mi turno" con los botones Confirmo /
+ * No puedo ir (`?r=c`: no confirma solo al abrirse, así la vista previa de WhatsApp no confirma).
+ */
+export function confirmUrl(publicHost: string, manageToken?: string | null): string | null {
+  return manageToken ? `https://${publicHost}/turno/${manageToken}?r=c` : null;
+}
+
 /** Para qué se le escribe al cliente desde el detalle del turno. */
 export type AppointmentMessageKind = "reminder" | "delay" | "rebook" | "moved";
 
@@ -150,6 +158,8 @@ export interface AppointmentMessageInput {
   delayMinutes?: number;
   /** Link a la página de reservas (solo para "rebook"). */
   bookUrl?: string | null;
+  /** Link para que confirme o avise que no va (solo para "reminder"). Ver `confirmUrl`. */
+  confirmUrl?: string | null;
 }
 
 /** Texto listo para mandar por WhatsApp según la situación del turno. */
@@ -163,7 +173,9 @@ export function appointmentMessage(
   const place = input.businessName ? ` en ${input.businessName}` : "";
   switch (kind) {
     case "reminder":
-      return `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. ¿Me confirmás que venís?`;
+      return input.confirmUrl
+        ? `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. Confirmá que venís (o avisá si no podés) acá: ${input.confirmUrl}`
+        : `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. ¿Me confirmás que venís?`;
     case "delay":
       return (
         `${hola} Te aviso que vengo con una demora de unos ${input.delayMinutes ?? 15} minutos ` +

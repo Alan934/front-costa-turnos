@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
   Clock3,
@@ -23,6 +24,7 @@ import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import { RefreshButton } from "@/components/refresh-button";
 import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/components/auth-provider";
+import { useActiveComercio } from "@/components/comercio-context";
 import { useAppointments } from "@/lib/api/appointments";
 import { useProfessional } from "@/lib/api/professional";
 import { useServices } from "@/lib/api/catalog";
@@ -31,6 +33,10 @@ import { useWaitlistList } from "@/lib/api/generated/endpoints/waitlist/waitlist
 import { WelcomeSetup } from "@/components/welcome-setup";
 import { ComercioWelcomeBanner } from "./comercio-welcome-banner";
 import { FreeGapsCard } from "./free-gaps-card";
+import { TomorrowRemindersCard } from "./tomorrow-reminders-card";
+import { useToday } from "@/lib/use-today";
+import { useProfessionalsMarkNewsSeen } from "@/lib/api/generated/endpoints/professionals/professionals";
+import type { Professional } from "@/lib/api/generated/model/professional";
 import { PublicPageLink } from "@/components/public-page-link";
 import { usePersonLookup } from "@/lib/api/clients";
 import { dayRange, isSameLocalDay } from "@/lib/agenda";
@@ -45,12 +51,24 @@ const ACTIVE: AppointmentStatus[] = [
   AppointmentStatus.in_progress,
 ];
 
+const INCOME_STATUSES: AppointmentStatus[] = [
+  AppointmentStatus.confirmed,
+  AppointmentStatus.in_progress,
+  AppointmentStatus.done,
+];
+
 /** Máximo de novedades listadas de cada tipo; el resto se resume en una línea. */
 const NEWS_MAX = 5;
 
 export function Dashboard() {
   const { user } = useAuth();
-  const today = useMemo(() => new Date(), []);
+  const qc = useQueryClient();
+  // Con varios comercios, el Inicio muestra todos y cada turno dice de cuál es.
+  const { options: comercios } = useActiveComercio();
+  const comercioName = (a: Appointment) =>
+    comercios.length > 1 ? comercios.find((c) => c.comercioId === a.comercioId)?.name : undefined;
+  // Se actualiza sola a la medianoche (pantalla abierta todo el día en el local).
+  const today = useToday();
   const range = useMemo(() => dayRange(today), [today]);
   const appts = useAppointments(range);
   const services = useServices();
@@ -62,16 +80,18 @@ export function Dashboard() {
   const logoFileId = (pro.data?.publicPageSettings as PublicPageBranding | undefined)?.logoFileId;
 
   const todays = (appts.data ?? []).filter((a) => isSameLocalDay(new Date(a.startAt), today));
+  // Precio con adicionales (viene en el turno); el del servicio solo como respaldo.
   const priceOf = (a: Appointment) =>
-    services.data?.find((s) => s.id === a.serviceId)?.priceCents ?? 0;
+    a.priceCents ?? services.data?.find((s) => s.id === a.serviceId)?.priceCents ?? 0;
 
   const upcoming = todays
     .filter((a) => ACTIVE.includes(a.status))
     .sort((x, y) => +new Date(x.startAt) - +new Date(y.startAt));
   const inProgress = todays.filter((a) => a.status === AppointmentStatus.in_progress).length;
   const done = todays.filter((a) => a.status === AppointmentStatus.done).length;
+  // Solo lo que está firme: confirmados, en atención y atendidos (no los que esperan la seña).
   const estIncome = todays
-    .filter((a) => a.status !== AppointmentStatus.cancelled && a.status !== AppointmentStatus.no_show)
+    .filter((a) => INCOME_STATUSES.includes(a.status))
     .reduce((s, a) => s + priceOf(a), 0);
   const provisional = todays.filter((a) => a.isProvisional && ACTIVE.includes(a.status));
   const mpNotConnected = !mp.isLoading && mp.data?.connected === false;
@@ -106,20 +126,16 @@ export function Dashboard() {
   }, [nextAppts.data, nextRange]);
 
   // ---- Novedades desde la última visita: reservas y cancelaciones hechas por clientes ----
-  const seenKey = user ? `costa-dash-seen:${user.id}` : null;
-  const [since, setSince] = useState<number | null>(null);
-  useEffect(() => {
-    if (!seenKey) return;
+  // "Visto hasta" se guarda en el servidor: lo que marcaste en el celular no reaparece en la PC.
+  const markSeen = useProfessionalsMarkNewsSeen();
+  const seenAt = pro.data?.newsSeenAt;
+  const since = useMemo(() => {
+    if (!pro.data) return null;
     const floor = Date.now() - 7 * 24 * 3_600_000; // nunca más de una semana hacia atrás
-    let stored = NaN;
-    try {
-      stored = Number(localStorage.getItem(seenKey));
-    } catch {
-      // sin almacenamiento: se usa el valor por defecto
-    }
-    // Primera vez en este dispositivo: mostramos lo de las últimas 24 h.
-    setSince(Math.max(Number.isFinite(stored) && stored > 0 ? stored : Date.now() - 86_400_000, floor));
-  }, [seenKey]);
+    // Nunca las marcó: mostramos lo de las últimas 24 h.
+    const seen = seenAt ? +new Date(seenAt) : Date.now() - 86_400_000;
+    return Math.max(seen, floor);
+  }, [pro.data, seenAt]);
 
   const news = useMemo(() => {
     if (since == null) return { booked: [] as Appointment[], cancelled: [] as Appointment[] };
@@ -143,14 +159,22 @@ export function Dashboard() {
   }, [appts.data, nextAppts.data, since]);
 
   function markNewsSeen() {
-    const now = Date.now();
-    setSince(now);
-    try {
-      if (seenKey) localStorage.setItem(seenKey, String(now));
-    } catch {
-      // idem
-    }
+    // Se ocultan en el acto; el back devuelve el profesional con `newsSeenAt` actualizado.
+    qc.setQueryData<Professional>(["professional-me"], (p) =>
+      p ? { ...p, newsSeenAt: new Date().toISOString() } : p,
+    );
+    markSeen.mutate(undefined, {
+      onSuccess: (p) => qc.setQueryData(["professional-me"], p),
+      onError: () => void qc.invalidateQueries({ queryKey: ["professional-me"] }),
+    });
   }
+
+  // ---- Mañana: para mandar los recordatorios ----
+  const tomorrowAppts = useMemo(() => {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return (nextAppts.data ?? []).filter((a) => isSameLocalDay(new Date(a.startAt), tomorrow));
+  }, [nextAppts.data, today]);
 
   const serviceName = (a: Appointment) =>
     titleCaseName(a.serviceName ?? services.data?.find((s) => s.id === a.serviceId)?.name ?? "") ||
@@ -251,6 +275,9 @@ export function Dashboard() {
             </Link>
           )}
 
+          {/* Recordatorios por WhatsApp de los turnos de mañana */}
+          <TomorrowRemindersCard appointments={tomorrowAppts} />
+
           {/* Huecos libres de hoy y mañana, para compartir */}
           <FreeGapsCard />
 
@@ -341,7 +368,8 @@ export function Dashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{lookupPerson(a.personId, { name: a.personName }).name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {titleCaseName(a.serviceName ?? services.data?.find((s) => s.id === a.serviceId)?.name ?? "") || "Servicio"}
+                        {serviceName(a)}
+                        {comercioName(a) ? ` · ${comercioName(a)}` : ""}
                       </p>
                     </div>
                     <AppointmentStatusBadge status={a.status} isProvisional={a.isProvisional} />

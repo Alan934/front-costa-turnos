@@ -357,6 +357,69 @@ export const useProfessionalsUpdateMine = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Setea `newsSeenAt` en ahora. Vale para todos los dispositivos del profesional.
+ * @summary Marcar las novedades del Inicio como vistas
+ */
+export const professionalsMarkNewsSeen = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Professional>(
+      {url: `/v1/professionals/me/news-seen`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getProfessionalsMarkNewsSeenMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext> => {
+
+const mutationKey = ['professionalsMarkNewsSeen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, void> = () => {
+          
+
+          return  professionalsMarkNewsSeen(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProfessionalsMarkNewsSeenMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>>
+    
+    export type ProfessionalsMarkNewsSeenMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar las novedades del Inicio como vistas
+ */
+export const useProfessionalsMarkNewsSeen = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof professionalsMarkNewsSeen>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getProfessionalsMarkNewsSeenMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Listar el staff del professional
  */
 export const professionalsListStaff = (

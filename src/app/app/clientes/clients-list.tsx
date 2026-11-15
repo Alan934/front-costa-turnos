@@ -34,6 +34,9 @@ import { comebackMessage, whatsAppLink } from "@/lib/whatsapp";
 import { formatDateShort } from "@/lib/format";
 import type { EnrichedClient } from "@/mocks/contract-extensions";
 
+/** Valor del selector "Mostrar" para ver los clientes archivados. */
+const ARCHIVED = -1;
+
 export function ClientsList() {
   const [q, setQ] = useState("");
   const [creating, setCreating] = useState(false);
@@ -56,9 +59,11 @@ export function ClientsList() {
   );
 
   // ---- "No vienen hace más de X semanas": tuvieron turno y no tienen ninguno reservado ----
-  const [awayWeeks, setAwayWeeks] = useState(0); // 0 = todos
+  const [awayWeeks, setAwayWeeks] = useState(0); // 0 = todos · ARCHIVED = los archivados
+  const archivedAll = (data ?? []).filter((c) => c.status === "archived" && !isSelf(c));
+  const archived = archivedAll.filter((c) => matchesClient(c, q));
   const away = useMemo(() => {
-    if (awayWeeks === 0) return [];
+    if (awayWeeks <= 0) return [];
     const limit = Date.now() - awayWeeks * 7 * 86_400_000;
     return active
       .filter(
@@ -69,7 +74,7 @@ export function ClientsList() {
       )
       .sort((a, b) => +new Date(b.lastAppointmentAt!) - +new Date(a.lastAppointmentAt!));
   }, [active, awayWeeks]);
-  const clients = awayWeeks === 0 ? active : away;
+  const clients = awayWeeks === 0 ? active : awayWeeks === ARCHIVED ? archived : away;
 
   const pro = useProfessional();
   const bookUrl = pro.data?.slug ? `https://${PUBLIC_HOST}/r/${pro.data.slug}` : null;
@@ -116,8 +121,18 @@ export function ClientsList() {
           <option value={6}>Los que no vienen hace más de 6 semanas</option>
           <option value={8}>Los que no vienen hace más de 8 semanas</option>
           <option value={12}>Los que no vienen hace más de 3 meses</option>
+          {(archivedAll.length > 0 || awayWeeks === ARCHIVED) && (
+            <option value={ARCHIVED}>Archivados ({archivedAll.length})</option>
+          )}
         </select>
       </div>
+      {awayWeeks === ARCHIVED && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {archived.length === 0
+            ? "No hay clientes archivados que coincidan."
+            : "No aparecen en tu lista ni al buscar para darle turno. Entrá a la ficha para desarchivarlo."}
+        </p>
+      )}
       {awayWeeks > 0 && data && (
         <p className="mt-2 text-xs text-muted-foreground">
           {away.length === 0
