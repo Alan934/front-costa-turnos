@@ -31,13 +31,17 @@ import type {
   AppointmentsWaitingRoomStatsParams,
   AssignServiceDto,
   BookAppointmentDto,
+  BookSeriesDto,
+  BookSeriesResultDto,
   BookWithDepositDto,
   BookWithDepositResultDto,
   CancelAppointmentDto,
   CompleteAppointmentDto,
   CreateWalkInDto,
   MoveInQueueDto,
+  RescheduleAppointmentDto,
   SendToBackDto,
+  SetClientConfirmedDto,
   SetPriorityDto,
   WaitingRoomDto,
   WaitingRoomStatsDto
@@ -52,6 +56,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Con `from`/`to` devuelve los turnos que empiezan en ese rango (máx. 100 días). Sin rango, los próximos desde hoy (zona del profesional).
  * @summary Listar turnos del tenant
  */
 export const appointmentsList = (
@@ -205,6 +210,71 @@ export const useAppointmentsBook = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAppointmentsBookMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Crea `count` turnos separados por `everyWeeks` semanas. Las fechas que no se pueden dar (feriado, vacaciones, bloqueo u otro turno) se devuelven en `skipped` con el motivo.
+ * @summary Turno fijo: el mismo turno cada N semanas
+ */
+export const appointmentsBookSeries = (
+    bookSeriesDto: BodyType<BookSeriesDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<BookSeriesResultDto>(
+      {url: `/v1/appointments/series`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bookSeriesDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsBookSeriesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsBookSeries>>, TError,{data: BodyType<BookSeriesDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsBookSeries>>, TError,{data: BodyType<BookSeriesDto>}, TContext> => {
+
+const mutationKey = ['appointmentsBookSeries'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsBookSeries>>, {data: BodyType<BookSeriesDto>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  appointmentsBookSeries(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsBookSeriesMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsBookSeries>>>
+    export type AppointmentsBookSeriesMutationBody = BodyType<BookSeriesDto>
+    export type AppointmentsBookSeriesMutationError = ErrorType<void>
+
+    /**
+ * @summary Turno fijo: el mismo turno cada N semanas
+ */
+export const useAppointmentsBookSeries = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsBookSeries>>, TError,{data: BodyType<BookSeriesDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsBookSeries>>,
+        TError,
+        {data: BodyType<BookSeriesDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsBookSeriesMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }
@@ -1330,6 +1400,136 @@ export const useAppointmentsNoShow = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getAppointmentsNoShowMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Marcar que el cliente confirmó que va (o desmarcarlo)
+ */
+export const appointmentsSetClientConfirmed = (
+    id: string,
+    setClientConfirmedDto: BodyType<SetClientConfirmedDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/client-confirmed`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: setClientConfirmedDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsSetClientConfirmedMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>, TError,{id: string;data: BodyType<SetClientConfirmedDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>, TError,{id: string;data: BodyType<SetClientConfirmedDto>}, TContext> => {
+
+const mutationKey = ['appointmentsSetClientConfirmed'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>, {id: string;data: BodyType<SetClientConfirmedDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsSetClientConfirmed(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsSetClientConfirmedMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>>
+    export type AppointmentsSetClientConfirmedMutationBody = BodyType<SetClientConfirmedDto>
+    export type AppointmentsSetClientConfirmedMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar que el cliente confirmó que va (o desmarcarlo)
+ */
+export const useAppointmentsSetClientConfirmed = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>, TError,{id: string;data: BodyType<SetClientConfirmedDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsSetClientConfirmed>>,
+        TError,
+        {id: string;data: BodyType<SetClientConfirmedDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsSetClientConfirmedMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Cambiar el horario de un turno (lo hace el profesional)
+ */
+export const appointmentsReschedule = (
+    id: string,
+    rescheduleAppointmentDto: BodyType<RescheduleAppointmentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Appointment>(
+      {url: `/v1/appointments/${id}/reschedule`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: rescheduleAppointmentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getAppointmentsRescheduleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsReschedule>>, TError,{id: string;data: BodyType<RescheduleAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsReschedule>>, TError,{id: string;data: BodyType<RescheduleAppointmentDto>}, TContext> => {
+
+const mutationKey = ['appointmentsReschedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsReschedule>>, {id: string;data: BodyType<RescheduleAppointmentDto>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsReschedule(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsRescheduleMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsReschedule>>>
+    export type AppointmentsRescheduleMutationBody = BodyType<RescheduleAppointmentDto>
+    export type AppointmentsRescheduleMutationError = ErrorType<void>
+
+    /**
+ * @summary Cambiar el horario de un turno (lo hace el profesional)
+ */
+export const useAppointmentsReschedule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsReschedule>>, TError,{id: string;data: BodyType<RescheduleAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsReschedule>>,
+        TError,
+        {id: string;data: BodyType<RescheduleAppointmentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsRescheduleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

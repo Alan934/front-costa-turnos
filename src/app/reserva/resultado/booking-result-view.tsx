@@ -17,7 +17,7 @@ const CFG: Record<
     cls: "border-success/40 bg-success/10 text-success",
     icon: <CheckCircle2 className="size-7 shrink-0" />,
     title: "¡Turno confirmado!",
-    text: "Tu pago se acreditó y tu turno quedó reservado. Te enviamos los detalles por email.",
+    text: "Tu pago se acreditó y tu turno quedó reservado. Si dejaste tu email, ahí te mandamos los detalles y un recordatorio el día anterior.",
   },
   pending: {
     cls: "border-warning/45 bg-warning/10 text-warning-foreground",

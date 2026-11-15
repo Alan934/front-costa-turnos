@@ -3,6 +3,8 @@
  * abre WhatsApp con el mensaje escrito y el profesional toca "Enviar".
  */
 
+import { formatDateShort, formatTime, formatWeekday, isSameDay } from "@/lib/format";
+
 /**
  * Los celulares se guardan como 10 dígitos argentinos (característica + número, sin 0/15/+54), pero
  * `wa.me` necesita el número internacional: 54 9 + los 10 dígitos. Sin eso el link no encuentra
@@ -102,4 +104,89 @@ export function renderWhatsAppMessage(
 /** "1 persona" / "3 personas": va en `{personas}` para que el texto concuerde. */
 export function peopleLabel(n: number): string {
   return `${n} ${n === 1 ? "persona" : "personas"}`;
+}
+
+/* ---------- Mensajes sobre un turno de la agenda ---------- */
+
+/** "hoy a las 15:30", "mañana a las 15:30" o "el martes 18/11 a las 15:30". */
+export function appointmentWhenText(startAt: string | Date): string {
+  const time = formatTime(startAt);
+  const now = new Date();
+  if (isSameDay(startAt, now)) return `hoy a las ${time}`;
+  if (isSameDay(startAt, new Date(now.getTime() + 24 * 3_600_000))) return `mañana a las ${time}`;
+  return `el ${formatWeekday(startAt).toLowerCase()} ${formatDateShort(startAt).slice(0, 5)} a las ${time}`;
+}
+
+/**
+ * Link que va en el recordatorio por WhatsApp: abre "gestionar mi turno" con los botones Confirmo /
+ * No puedo ir (`?r=c`: no confirma solo al abrirse, así la vista previa de WhatsApp no confirma).
+ */
+export function confirmUrl(publicHost: string, manageToken?: string | null): string | null {
+  return manageToken ? `https://${publicHost}/turno/${manageToken}?r=c` : null;
+}
+
+/** Para qué se le escribe al cliente desde el detalle del turno. */
+export type AppointmentMessageKind = "reminder" | "delay" | "rebook" | "moved";
+
+/** Invitar a volver a un cliente que hace un tiempo no viene, con el link para reservar. */
+export function comebackMessage(input: {
+  clientName: string;
+  businessName?: string | null;
+  bookUrl?: string | null;
+}): string {
+  const first = input.clientName.trim().split(/\s+/)[0] || "";
+  const hola = first ? `¡Hola ${first}!` : "¡Hola!";
+  const place = input.businessName ? ` por ${input.businessName}` : "";
+  return (
+    `${hola} ¿Cómo andás? Hace un tiempo que no te vemos${place}.` +
+    (input.bookUrl
+      ? ` Cuando quieras, reservá tu próximo turno acá: ${input.bookUrl}`
+      : " Cuando quieras, escribime y te busco un turno.")
+  );
+}
+
+export interface AppointmentMessageInput {
+  /** Nombre completo del cliente: se usa solo el primero. */
+  clientName: string;
+  /** "hoy a las 15:30", "mañana a las 15:30", "el martes 18/11 a las 15:30". */
+  whenText: string;
+  /** Solo la hora: "15:30". */
+  timeText: string;
+  serviceName?: string | null;
+  businessName?: string | null;
+  /** Minutos de demora (solo para "delay"). */
+  delayMinutes?: number;
+  /** Link a la página de reservas (solo para "rebook"). */
+  bookUrl?: string | null;
+  /** Link para que confirme o avise que no va (solo para "reminder"). Ver `confirmUrl`. */
+  confirmUrl?: string | null;
+}
+
+/** Texto listo para mandar por WhatsApp según la situación del turno. */
+export function appointmentMessage(
+  kind: AppointmentMessageKind,
+  input: AppointmentMessageInput,
+): string {
+  const first = input.clientName.trim().split(/\s+/)[0] || "";
+  const hola = first ? `¡Hola ${first}!` : "¡Hola!";
+  const service = input.serviceName ? ` de ${input.serviceName.toLowerCase()}` : "";
+  const place = input.businessName ? ` en ${input.businessName}` : "";
+  switch (kind) {
+    case "reminder":
+      return input.confirmUrl
+        ? `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. Confirmá que venís (o avisá si no podés) acá: ${input.confirmUrl}`
+        : `${hola} Te recuerdo tu turno${service} ${input.whenText}${place}. ¿Me confirmás que venís?`;
+    case "delay":
+      return (
+        `${hola} Te aviso que vengo con una demora de unos ${input.delayMinutes ?? 15} minutos ` +
+        `para tu turno de las ${input.timeText}. ¡Disculpá!`
+      );
+    case "moved":
+      return `${hola} Te cambié el turno${service}${place}: ahora es ${input.whenText}. ¿Te queda bien?`;
+    case "rebook":
+      return (
+        `${hola} Tuve que cancelar tu turno${service} ${input.whenText}. Disculpá las molestias.` +
+        (input.bookUrl ? ` Podés elegir otro horario acá: ${input.bookUrl}` : " Avisame y te busco otro horario.")
+      );
+  }
 }

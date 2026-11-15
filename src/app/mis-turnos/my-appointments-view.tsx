@@ -14,6 +14,8 @@ import {
   ArrowDownUp,
   MessageCircle,
   Mail,
+  Store,
+  ArrowRight,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -237,6 +239,26 @@ export function MyAppointmentsView() {
           </>
         )
       )}
+
+      {/* Camino para que una cuenta de cliente pase a ser profesional (p. ej. quien entró
+          con Google sin elegir tipo, o dejó el asistente a medias en otro dispositivo). */}
+      {user && !user.professionalId && !user.roles.includes("comercial") && !user.roles.includes("admin") && (
+        <Link
+          href="/onboarding"
+          className="mt-10 flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-accent/60"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+            <Store className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">¿Atendés clientes? Ofrecé tus servicios</span>
+            <span className="block text-xs text-muted-foreground">
+              Armá tu agenda y tu página de reservas en un par de minutos. 15 días gratis.
+            </span>
+          </span>
+          <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
+        </Link>
+      )}
     </div>
   );
 }
@@ -336,18 +358,21 @@ function BusinessContactLinks({ appt }: { appt: MyAppointmentDto }) {
   );
 }
 
-function AppointmentCard({
+export function AppointmentCard({
   appt,
   past,
   onChanged,
+  manageToken,
 }: {
   appt: MyAppointmentDto;
   past?: boolean;
   onChanged: () => void;
+  /** Si viene, cancelar/reprogramar usan el link personal (/turno/:token) en vez de la sesión. */
+  manageToken?: string | null;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
-  const cancel = useCancelMyAppointment();
+  const cancel = useCancelMyAppointment(manageToken);
 
   // Ventana de cancelación / reprogramación: hasta N horas antes del turno.
   const hoursToStart = (+new Date(appt.startAt) - Date.now()) / 3_600_000;
@@ -439,6 +464,19 @@ function AppointmentCard({
           </Button>
         </div>
       )}
+      {/* Turno ya pasado (o cancelado): un toque para sacar otro igual, eligiendo solo el horario. */}
+      {!active && !manageToken && appt.serviceId && appt.business.slug && (
+        <div className="mt-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link
+              href={`/r/${appt.business.slug}?servicio=${appt.serviceId}&pro=${appt.membershipId}`}
+            >
+              <CalendarPlus className="size-4" />
+              Reservar de nuevo
+            </Link>
+          </Button>
+        </div>
+      )}
       {active && !(canCancel && canReschedule) && (
         <div className="mt-2 space-y-2">
           <p className="text-xs text-muted-foreground">
@@ -484,6 +522,7 @@ function AppointmentCard({
         open={rescheduling}
         onOpenChange={setRescheduling}
         onDone={onChanged}
+        manageToken={manageToken}
       />
     </div>
   );
@@ -499,11 +538,13 @@ function RescheduleDialog({
   open,
   onOpenChange,
   onDone,
+  manageToken,
 }: {
   appt: MyAppointmentDto;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onDone: () => void;
+  manageToken?: string | null;
 }) {
   // Próximos 14 días como opciones de fecha.
   const days = useMemo(() => {
@@ -547,7 +588,7 @@ function RescheduleDialog({
     slotsParams,
   );
 
-  const reschedule = useRescheduleMyAppointment();
+  const reschedule = useRescheduleMyAppointment(manageToken);
 
   // Al cerrar, reseteamos el estado local para no arrastrar errores ni el día activo.
   useEffect(() => {

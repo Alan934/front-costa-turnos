@@ -28,6 +28,8 @@ import type {
   CreateStaffDto,
   OnboardProfessionalDto,
   Professional,
+  ProfessionalsSlugAvailabilityParams,
+  SlugAvailabilityDto,
   Staff,
   UpdateProfessionalDto,
   UpdateStaffDto
@@ -106,6 +108,100 @@ export const useProfessionalsOnboard = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Mira profesionales y comercios. Si está tomado, sugiere alternativas libres.
+ * @summary Disponibilidad de un enlace público (slug)
+ */
+export const professionalsSlugAvailability = (
+    params: ProfessionalsSlugAvailabilityParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<SlugAvailabilityDto>(
+      {url: `/v1/professionals/slug-availability`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getProfessionalsSlugAvailabilityQueryKey = (params?: ProfessionalsSlugAvailabilityParams,) => {
+    return [
+    `/v1/professionals/slug-availability`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getProfessionalsSlugAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProfessionalsSlugAvailabilityQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof professionalsSlugAvailability>>> = ({ signal }) => professionalsSlugAvailability(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProfessionalsSlugAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof professionalsSlugAvailability>>>
+export type ProfessionalsSlugAvailabilityQueryError = ErrorType<void>
+
+
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof professionalsSlugAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Disponibilidad de un enlace público (slug)
+ */
+
+export function useProfessionalsSlugAvailability<TData = Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError = ErrorType<void>>(
+ params: ProfessionalsSlugAvailabilityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof professionalsSlugAvailability>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProfessionalsSlugAvailabilityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Obtener el professional propio
  */
 export const professionalsGetMine = (
@@ -257,6 +353,69 @@ export const useProfessionalsUpdateMine = <TError = ErrorType<void>,
       > => {
 
       const mutationOptions = getProfessionalsUpdateMineMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Setea `newsSeenAt` en ahora. Vale para todos los dispositivos del profesional.
+ * @summary Marcar las novedades del Inicio como vistas
+ */
+export const professionalsMarkNewsSeen = (
+    
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<Professional>(
+      {url: `/v1/professionals/me/news-seen`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getProfessionalsMarkNewsSeenMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext> => {
+
+const mutationKey = ['professionalsMarkNewsSeen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, void> = () => {
+          
+
+          return  professionalsMarkNewsSeen(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProfessionalsMarkNewsSeenMutationResult = NonNullable<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>>
+    
+    export type ProfessionalsMarkNewsSeenMutationError = ErrorType<void>
+
+    /**
+ * @summary Marcar las novedades del Inicio como vistas
+ */
+export const useProfessionalsMarkNewsSeen = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof professionalsMarkNewsSeen>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof professionalsMarkNewsSeen>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getProfessionalsMarkNewsSeenMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

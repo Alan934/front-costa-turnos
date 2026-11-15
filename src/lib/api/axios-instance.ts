@@ -204,7 +204,20 @@ async function runRefresh(): Promise<string | null> {
   }
 }
 
-type RetriableConfig = AxiosRequestConfig & { _retry?: boolean };
+/**
+ * Fuerza una renovación de tokens ahora (misma cola que el 401). Sirve cuando cambian los
+ * datos que van firmados en el access token (p. ej. al crear el negocio en el onboarding el
+ * token viejo no trae `professionalId`, y el back resuelve el tenant desde el token).
+ * Devuelve false si no se pudo renovar; NO cierra la sesión.
+ */
+export async function refreshSessionTokens(): Promise<boolean> {
+  refreshing = refreshing ?? runRefresh().finally(() => {
+    refreshing = null;
+  });
+  return (await refreshing) != null;
+}
+
+type RetriableConfig =AxiosRequestConfig & { _retry?: boolean };
 
 axiosInstance.interceptors.response.use(
   (res) => res,

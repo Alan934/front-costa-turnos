@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarX2, CalendarOff, Clock } from "lucide-react";
+import { CalendarX2, CalendarOff, CheckCheck, Clock, Plus } from "lucide-react";
 import { EmptyState } from "@/components/state-views";
 import { AppointmentStatusBadge } from "@/components/appointment-status-badge";
 import {
@@ -8,6 +8,8 @@ import {
   closedWeekdays,
   dayOffStatus,
   partialTimeOffsForDay,
+  freeGapsForDay,
+  type FreeGap,
 } from "@/lib/agenda";
 import type { PersonInfo, EmbeddedPerson } from "@/lib/api/clients";
 import { formatTime } from "@/lib/format";
@@ -31,6 +33,7 @@ export function DayList({
   timeOff,
   lookupPerson,
   onSelect,
+  onCreateAt,
 }: {
   date: Date;
   appointments: Appointment[];
@@ -40,6 +43,8 @@ export function DayList({
   timeOff: TimeOff[];
   lookupPerson: (personId: string, embedded?: EmbeddedPerson) => PersonInfo;
   onSelect: (a: Appointment) => void;
+  /** Tocar un hueco libre: carga un turno para esa persona a esa hora. */
+  onCreateAt?: (staffId: string, start: Date) => void;
 }) {
   const items = appointments
     .filter((a) => isSameLocalDay(new Date(a.startAt), date))
@@ -50,6 +55,15 @@ export function DayList({
   const off = dayOffStatus(date, closedWeekdays(scheduleRules), timeOff);
   // Bloqueos por horas: se listan como aviso, sin cerrar el día entero.
   const partials = off ? [] : partialTimeOffsForDay(date, timeOff);
+  // Huecos libres (hoy desde ahora, o días futuros) para cargar un turno ahí con un toque.
+  const gaps =
+    off || !onCreateAt
+      ? []
+      : freeGapsForDay(date, staff.map((s) => s.id), scheduleRules, appointments, timeOff);
+  const rows: Row[] = [
+    ...items.map((a): Row => ({ kind: "appt", at: +new Date(a.startAt), appt: a })),
+    ...gaps.map((g): Row => ({ kind: "gap", at: +g.start, gap: g })),
+  ].sort((x, y) => x.at - y.at || (x.kind === "appt" ? -1 : 1));
 
   // Día sin atención y sin turnos: solo el aviso de por qué no se atiende.
   if (off && items.length === 0) {
@@ -68,7 +82,7 @@ export function DayList({
     );
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && gaps.length === 0) {
     return (
       <div className="mx-auto max-w-2xl p-4 sm:p-6">
         {partials.length > 0 && <PartialBlocksNotice blocks={partials} />}
@@ -104,7 +118,33 @@ export function DayList({
         {active === 1 ? "turno" : "turnos"} este día
       </p>
       <ul className="space-y-2">
-        {items.map((a) => {
+        {rows.map((row) => {
+          if (row.kind === "gap") {
+            const g = row.gap;
+            const who = multiStaff ? staff.find((s) => s.id === g.staffId)?.displayName : null;
+            return (
+              <li key={`gap-${g.staffId}-${+g.start}`}>
+                <button
+                  type="button"
+                  onClick={() => onCreateAt?.(g.staffId, g.start)}
+                  className="group flex w-full items-center gap-3 rounded-xl border border-dashed border-border px-3.5 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:border-accent hover:text-accent"
+                >
+                  <span className="w-14 shrink-0 text-center font-display font-semibold tabular-nums">
+                    {formatTime(g.start)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">
+                    Libre hasta las {formatTime(g.end)} · {gapLength(g)}
+                    {who ? ` · ${who}` : ""}
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium">
+                    <Plus className="size-3.5" />
+                    Cargar turno
+                  </span>
+                </button>
+              </li>
+            );
+          }
+          const a = row.appt;
           const service = services.find((s) => s.id === a.serviceId);
           const staffName = staff.find((s) => s.id === a.staffId)?.displayName;
           const person = lookupPerson(a.personId, {
@@ -139,6 +179,15 @@ export function DayList({
                     {multiStaff && staffName ? ` · ${staffName}` : ""}
                   </p>
                 </div>
+                {a.clientConfirmedAt && !cancelled && (
+                  <span
+                    className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-success"
+                    title="El cliente confirmó que viene"
+                  >
+                    <CheckCheck className="size-3.5" />
+                    <span className="hidden sm:inline">Confirmó</span>
+                  </span>
+                )}
                 <AppointmentStatusBadge status={a.status} isProvisional={a.isProvisional} />
               </button>
             </li>
@@ -147,6 +196,19 @@ export function DayList({
       </ul>
     </div>
   );
+}
+
+type Row =
+  | { kind: "appt"; at: number; appt: Appointment }
+  | { kind: "gap"; at: number; gap: FreeGap };
+
+/** "45 min", "1 h", "2 h 30 min". */
+function gapLength(g: FreeGap): string {
+  const min = Math.round((+g.end - +g.start) / 60_000);
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
 }
 
 /** Aviso de los bloqueos por horas del día (no cierran el día entero, solo ese rango). */

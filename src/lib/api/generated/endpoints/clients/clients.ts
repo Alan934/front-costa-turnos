@@ -700,6 +700,68 @@ export const useClientsUpdateFicha = <TError = ErrorType<void>,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * @summary Desarchivar un cliente (vuelve a la cartera activa)
+ */
+export const clientsRestoreClient = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<EnrichedClientDto>(
+      {url: `/v1/clients/${id}/restore`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getClientsRestoreClientMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsRestoreClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof clientsRestoreClient>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['clientsRestoreClient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof clientsRestoreClient>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  clientsRestoreClient(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClientsRestoreClientMutationResult = NonNullable<Awaited<ReturnType<typeof clientsRestoreClient>>>
+    
+    export type ClientsRestoreClientMutationError = ErrorType<void>
+
+    /**
+ * @summary Desarchivar un cliente (vuelve a la cartera activa)
+ */
+export const useClientsRestoreClient = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof clientsRestoreClient>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof clientsRestoreClient>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getClientsRestoreClientMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Listar notas privadas de un cliente
  */
 export const clientsListNotes = (

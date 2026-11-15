@@ -120,6 +120,8 @@ export interface MeResponse {
   id: string;
   email: string;
   fullName: string;
+  /** Teléfono de la persona de la cuenta (para precargar reservas). `null` si no tiene. */
+  phone?: string | null;
   roles: AccountRole[];
   /** Si es profesional (trabajador), su tenant. */
   professionalId?: string | null;
@@ -257,4 +259,11 @@ export interface EnrichedClient {
   /** Resumen para la lista (también de enriquecimiento; opcional). */
   visitCount?: number;
   lastVisitAt?: string | null;
+  /** Último turno que ya pasó (no cancelado ni ausente), aunque no esté marcado atendido. */
+  lastAppointmentAt?: string | null;
+  /** Servicio y quién atendió ese último turno ("darle el mismo turno"). */
+  lastServiceId?: string | null;
+  lastStaffId?: string | null;
+  /** Próximo turno pendiente (null = no tiene ninguno reservado). */
+  nextAppointmentAt?: string | null;
 }

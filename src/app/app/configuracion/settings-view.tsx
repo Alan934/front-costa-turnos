@@ -40,6 +40,10 @@ export function SettingsView() {
         <div className="mt-7 space-y-8">
           <BusinessSection professional={pro.data} />
           <Separator />
+          <ConfirmationSection askConfirmation={pro.data.askConfirmation} />
+          <Separator />
+          <NotificationsSection professional={pro.data} />
+          <Separator />
           <VatSection professional={pro.data} />
           <Separator />
           <BrandingSection professional={pro.data} />
@@ -130,6 +134,145 @@ function BusinessSection({
  * acreditación de Checkout (que varía según el plazo de cobro). Cada servicio puede tener su propio
  * IVA; si no, hereda este valor. Efectivo y transferencia nunca llevan IVA.
  */
+/**
+ * Avisos al profesional cuando un cliente reserva, cancela o reprograma. Cada canal se guarda
+ * al tocarlo. Un canal está activo salvo que figure en false (cuentas viejas: todo activado).
+ */
+type NotificationPrefs = { email: boolean; push: boolean; dailySummary: boolean };
+
+/**
+ * Confirmación del día anterior (opcional, apagada por defecto): el recordatorio le pide al
+ * cliente "Confirmo / No puedo ir" y en la agenda se ve quién confirmó. Se guarda al tocarla.
+ */
+function ConfirmationSection({ askConfirmation }: { askConfirmation: boolean }) {
+  const update = useUpdateProfessional();
+  const [on, setOn] = useState(askConfirmation);
+
+  function toggle(value: boolean) {
+    setOn(value);
+    update.mutate({ askConfirmation: value }, { onError: () => setOn(!value) });
+  }
+
+  return (
+    <section>
+      <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">
+        Confirmación de turnos
+      </h2>
+      <label className="flex cursor-pointer items-start gap-2.5">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(e) => toggle(e.target.checked)}
+          className="mt-0.5 size-4 accent-[var(--color-accent)]"
+        />
+        <span className="text-sm">
+          Pedir que confirmen el día anterior
+          <span className="block text-xs text-muted-foreground">
+            El recordatorio por email que le llega al cliente 24 h antes trae dos botones:
+            &quot;Confirmo&quot; y &quot;No puedo ir&quot;. Si no puede, el turno se cancela
+            (aunque falte menos que tu plazo de cancelación), el horario queda libre y te
+            avisamos. En la agenda vas a ver un ✓ en los que confirmaron.
+          </span>
+        </span>
+      </label>
+      {update.isError && (
+        <p className="mt-2 text-xs text-destructive">No pudimos guardar el cambio. Probá de nuevo.</p>
+      )}
+    </section>
+  );
+}
+
+function NotificationsSection({
+  professional,
+}: {
+  professional: {
+    notificationPrefs?: { email?: boolean; push?: boolean; dailySummary?: boolean } | null;
+  };
+}) {
+  const update = useUpdateProfessional();
+  // Cada aviso está activado salvo que se haya apagado explícitamente.
+  const [prefs, setPrefs] = useState<NotificationPrefs>({
+    email: professional.notificationPrefs?.email !== false,
+    push: professional.notificationPrefs?.push !== false,
+    dailySummary: professional.notificationPrefs?.dailySummary !== false,
+  });
+
+  function toggle(key: keyof NotificationPrefs, value: boolean) {
+    const previous = prefs;
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    // Se mandan siempre las tres: el back guarda el objeto completo.
+    update.mutate(
+      { notificationPrefs: next },
+      // Si no se pudo guardar, la pantalla vuelve a mostrar lo que quedó guardado.
+      { onError: () => setPrefs(previous) },
+    );
+  }
+
+  return (
+    <section>
+      <h2 className="mb-3 font-display text-sm font-semibold text-muted-foreground">Avisos</h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        Te avisamos cuando un cliente reserva, cancela o reprograma un turno desde tu página.
+      </p>
+      <div className="space-y-3">
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={prefs.email}
+            onChange={(e) => toggle("email", e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Por email
+            <span className="block text-xs text-muted-foreground">
+              Al email con el que ingresás a tu cuenta.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            checked={prefs.push}
+            onChange={(e) => toggle("push", e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Notificación en el celular
+            <span className="block text-xs text-muted-foreground">
+              Llega a los dispositivos donde activaste las notificaciones. Se activan desde{" "}
+              <Link href="/app/sala" className="font-medium text-accent hover:underline">
+                la Sala
+              </Link>
+              , una vez por dispositivo.
+            </span>
+          </span>
+        </label>
+        <label className="flex cursor-pointer items-start gap-2.5 border-t border-border pt-3">
+          <input
+            type="checkbox"
+            checked={prefs.dailySummary}
+            onChange={(e) => toggle("dailySummary", e.target.checked)}
+            className="mt-0.5 size-4 accent-[var(--color-accent)]"
+          />
+          <span className="text-sm">
+            Resumen del día, a las 7 de la mañana
+            <span className="block text-xs text-muted-foreground">
+              La lista de tus turnos de hoy, con horario, servicio y teléfono de cada cliente.
+              Los días sin turnos no te llega nada.
+              {!prefs.email && !prefs.push && prefs.dailySummary &&
+                " Activá el email o el celular para recibirlo."}
+            </span>
+          </span>
+        </label>
+        {update.isError && (
+          <p className="text-xs text-destructive">No pudimos guardar el cambio. Probá de nuevo.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function VatSection({
   professional,
 }: {

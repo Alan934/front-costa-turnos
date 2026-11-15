@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/state-views";
 import { RefreshButton } from "@/components/refresh-button";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
-import { useAppointments } from "@/lib/api/appointments";
+import { useAppointments, usePrefetchAppointments } from "@/lib/api/appointments";
 import { useServices } from "@/lib/api/catalog";
 import { usePersonLookup } from "@/lib/api/clients";
 import { useActiveComercio } from "@/components/comercio-context";
@@ -41,13 +41,16 @@ export function AgendaView() {
   const [activeStaffId, setActiveStaffId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [creating, setCreating] = useState(false);
+  // Al tocar un hueco libre: quién atiende y a qué hora ("HH:mm") se precargan en "Nuevo turno".
+  const [preset, setPreset] = useState<{ staffId: string; time: string } | null>(null);
   const [dayList, setDayList] = useState<Date | null>(null);
 
   const staffQuery = useProfessionalsListStaff();
   const servicesQuery = useServices();
   // Resuelve el personId de cada turno al nombre/contacto real del cliente (no el id).
   const lookupPerson = usePersonLookup();
-  const { activeId } = useActiveComercio();
+  const { activeId, active, options: comercios } = useActiveComercio();
+  const multiComercio = comercios.length > 1;
   // Horario semanal y bloqueos del comercio activo: para marcar en el calendario los días
   // que el profesional no atiende y por qué (cerrado habitual / feriado / vacaciones).
   const scheduleQuery = useComercioSchedule(activeId ?? undefined);
@@ -82,7 +85,21 @@ export function AgendaView() {
     ...range,
     staffId: view === "semana" ? weekStaffId : (activeStaffId ?? undefined),
   });
-  const appointments = apptQuery.data ?? [];
+  // Con varios comercios, la agenda muestra el comercio activo (el selector del menú): así los
+  // turnos coinciden con los horarios, días cerrados y bloqueos que se marcan, que son de ese comercio.
+  const appointments = (apptQuery.data ?? []).filter(
+    (a) => !multiComercio || !activeId || a.comercioId === activeId,
+  );
+
+  // Rango anterior y siguiente precargados: las flechas responden al instante.
+  const staffParam = view === "semana" ? weekStaffId : (activeStaffId ?? undefined);
+  const neighbor = (dir: -1 | 1) => {
+    const d =
+      view === "dia" ? addDays(date, dir) : view === "semana" ? addDays(date, dir * 7) : addMonths(date, dir);
+    const r = view === "dia" ? dayRange(d) : view === "semana" ? weekRange(d) : monthGridRange(d);
+    return { ...r, staffId: staffParam };
+  };
+  usePrefetchAppointments([neighbor(-1), neighbor(1)]);
 
   const title = useMemo(() => {
     if (view === "dia") return formatDateLong(date);
@@ -104,11 +121,17 @@ export function AgendaView() {
       {/* Toolbar */}
       <div className="border-b border-border px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+          <div className="min-w-0 flex-1 sm:flex-none">
             <h1 className="font-display text-2xl font-semibold tracking-tight">Agenda</h1>
             <p className="text-sm capitalize text-muted-foreground">{title}</p>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Mobile: la acción principal va junto al título, siempre a la vista. */}
+          <Button size="sm" className="shrink-0 sm:hidden" onClick={() => setCreating(true)}>
+            <Plus className="size-4" />
+            Nuevo turno
+          </Button>
+          {/* Mobile: fila propia a todo el ancho (antes desbordaba y escondía "Nuevo turno"). */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
             <RefreshButton fetching={apptQuery.isFetching} onClick={() => apptQuery.refetch()} />
             <Button variant="outline" size="sm" onClick={() => setDate(new Date())}>
               Hoy
@@ -132,12 +155,19 @@ export function AgendaView() {
               </button>
             </div>
             <ViewToggle view={view} onChange={setView} />
-            <Button size="sm" onClick={() => setCreating(true)}>
+            <Button size="sm" className="hidden sm:inline-flex" onClick={() => setCreating(true)}>
               <Plus className="size-4" />
-              <span className="hidden sm:inline">Nuevo turno</span>
+              Nuevo turno
             </Button>
           </div>
         </div>
+
+        {multiComercio && active && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Turnos de <span className="font-medium text-foreground">{active.name}</span>. Para ver
+            los de otro comercio, cambialo en el menú.
+          </p>
+        )}
 
         {/* Selector de staff */}
         {staffList.length > 1 && (
@@ -188,6 +218,13 @@ export function AgendaView() {
             timeOff={timeOff}
             lookupPerson={lookupPerson}
             onSelect={setSelected}
+            onCreateAt={(staffId, start) => {
+              setPreset({
+                staffId,
+                time: toHHmm(start),
+              });
+              setCreating(true);
+            }}
           />
         ) : view === "semana" ? (
           <WeekGrid
@@ -260,15 +297,26 @@ export function AgendaView() {
           date={date}
           staff={staffList}
           services={services}
-          onClose={() => setCreating(false)}
+          initialStaffId={preset?.staffId}
+          initialTime={preset?.time}
+          onClose={() => {
+            setCreating(false);
+            setPreset(null);
+          }}
           onCreated={() => {
             apptQuery.refetch();
             setCreating(false);
+            setPreset(null);
           }}
         />
       )}
     </div>
   );
+}
+
+/** "09:05" en hora local. */
+function toHHmm(d: Date): string {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function ViewToggle({
@@ -280,14 +328,15 @@ function ViewToggle({
 }) {
   const labels: Record<ViewMode, string> = { dia: "Día", semana: "Semana", mes: "Mes" };
   return (
-    <div className="flex items-center rounded-lg border border-border p-0.5 text-sm font-medium">
+    <div className="flex min-w-[9.5rem] flex-1 items-center rounded-lg border border-border p-0.5 text-sm font-medium sm:flex-none">
       {(["dia", "semana", "mes"] as const).map((v) => (
         <button
           key={v}
           type="button"
           onClick={() => onChange(v)}
+          aria-pressed={view === v}
           className={cn(
-            "rounded-md px-3 py-1.5 transition-colors",
+            "flex-1 rounded-md px-2 py-1.5 transition-colors sm:flex-none sm:px-3",
             view === v ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground",
           )}
         >

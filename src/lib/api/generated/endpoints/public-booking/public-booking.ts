@@ -31,6 +31,7 @@ import type {
   ComercioPublicPageDto,
   DayAvailabilityDto,
   LeaveResultDto,
+  MyAppointmentDto,
   MyWaitingSpotDto,
   PublicBookDto,
   PublicBookWithDepositDto,
@@ -40,9 +41,11 @@ import type {
   PublicBookingServiceSlotsParams,
   PublicBookingSlotsFlatParams,
   PublicBookingSlotsParams,
+  PublicJoinWaitlistDto,
   PublicProfessionalDetailDto,
   PublicServiceDto,
   PushSubscriptionDto,
+  RescheduleMyAppointmentDto,
   SelfCheckInDto,
   SelfCheckInResultDto,
   WaitingRoomDto
@@ -2209,6 +2212,415 @@ export const useWaitingSpotUnsubscribePush = <TError = ErrorType<unknown>,
       > => {
 
       const mutationOptions = getWaitingSpotUnsubscribePushMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Anotarse en la lista de espera de un día
+ */
+export const publicWaitlistJoin = (
+    slug: string,
+    publicJoinWaitlistDto: BodyType<PublicJoinWaitlistDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/r/${slug}/waitlist`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: publicJoinWaitlistDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getPublicWaitlistJoinMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext> => {
+
+const mutationKey = ['publicWaitlistJoin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicWaitlistJoin>>, {slug: string;data: BodyType<PublicJoinWaitlistDto>}> = (props) => {
+          const {slug,data} = props ?? {};
+
+          return  publicWaitlistJoin(slug,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublicWaitlistJoinMutationResult = NonNullable<Awaited<ReturnType<typeof publicWaitlistJoin>>>
+    export type PublicWaitlistJoinMutationBody = BodyType<PublicJoinWaitlistDto>
+    export type PublicWaitlistJoinMutationError = ErrorType<void>
+
+    /**
+ * @summary Anotarse en la lista de espera de un día
+ */
+export const usePublicWaitlistJoin = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicWaitlistJoin>>, TError,{slug: string;data: BodyType<PublicJoinWaitlistDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publicWaitlistJoin>>,
+        TError,
+        {slug: string;data: BodyType<PublicJoinWaitlistDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getPublicWaitlistJoinMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Ver un turno por su link personal
+ */
+export const manageAppointmentGet = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/turno/${token}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getManageAppointmentGetQueryKey = (token?: string,) => {
+    return [
+    `/v1/turno/${token}`
+    ] as const;
+    }
+
+    
+export const getManageAppointmentGetQueryOptions = <TData = Awaited<ReturnType<typeof manageAppointmentGet>>, TError = ErrorType<void>>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getManageAppointmentGetQueryKey(token);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof manageAppointmentGet>>> = ({ signal }) => manageAppointmentGet(token, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ManageAppointmentGetQueryResult = NonNullable<Awaited<ReturnType<typeof manageAppointmentGet>>>
+export type ManageAppointmentGetQueryError = ErrorType<void>
+
+
+export function useManageAppointmentGet<TData = Awaited<ReturnType<typeof manageAppointmentGet>>, TError = ErrorType<void>>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof manageAppointmentGet>>,
+          TError,
+          Awaited<ReturnType<typeof manageAppointmentGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useManageAppointmentGet<TData = Awaited<ReturnType<typeof manageAppointmentGet>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof manageAppointmentGet>>,
+          TError,
+          Awaited<ReturnType<typeof manageAppointmentGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useManageAppointmentGet<TData = Awaited<ReturnType<typeof manageAppointmentGet>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Ver un turno por su link personal
+ */
+
+export function useManageAppointmentGet<TData = Awaited<ReturnType<typeof manageAppointmentGet>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof manageAppointmentGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getManageAppointmentGetQueryOptions(token,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
+ * @summary Cancelar un turno por su link personal (dentro de la ventana)
+ */
+export const manageAppointmentCancel = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/turno/${token}/cancel`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getManageAppointmentCancelMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentCancel>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentCancel>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['manageAppointmentCancel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof manageAppointmentCancel>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  manageAppointmentCancel(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ManageAppointmentCancelMutationResult = NonNullable<Awaited<ReturnType<typeof manageAppointmentCancel>>>
+    
+    export type ManageAppointmentCancelMutationError = ErrorType<void>
+
+    /**
+ * @summary Cancelar un turno por su link personal (dentro de la ventana)
+ */
+export const useManageAppointmentCancel = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentCancel>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof manageAppointmentCancel>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getManageAppointmentCancelMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Confirmar asistencia (pedido de confirmación del día anterior)
+ */
+export const manageAppointmentConfirm = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/turno/${token}/confirm`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getManageAppointmentConfirmMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentConfirm>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentConfirm>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['manageAppointmentConfirm'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof manageAppointmentConfirm>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  manageAppointmentConfirm(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ManageAppointmentConfirmMutationResult = NonNullable<Awaited<ReturnType<typeof manageAppointmentConfirm>>>
+    
+    export type ManageAppointmentConfirmMutationError = ErrorType<void>
+
+    /**
+ * @summary Confirmar asistencia (pedido de confirmación del día anterior)
+ */
+export const useManageAppointmentConfirm = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentConfirm>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof manageAppointmentConfirm>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getManageAppointmentConfirmMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * Si el negocio pide confirmación, se acepta aunque esté dentro de la ventana de cancelación.
+ * @summary "No puedo ir": cancela y libera el horario
+ */
+export const manageAppointmentDecline = (
+    token: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/turno/${token}/decline`, method: 'POST', signal
+    },
+      options);
+    }
+  
+
+
+export const getManageAppointmentDeclineMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentDecline>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentDecline>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['manageAppointmentDecline'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof manageAppointmentDecline>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  manageAppointmentDecline(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ManageAppointmentDeclineMutationResult = NonNullable<Awaited<ReturnType<typeof manageAppointmentDecline>>>
+    
+    export type ManageAppointmentDeclineMutationError = ErrorType<void>
+
+    /**
+ * @summary "No puedo ir": cancela y libera el horario
+ */
+export const useManageAppointmentDecline = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentDecline>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof manageAppointmentDecline>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getManageAppointmentDeclineMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
+ * @summary Reprogramar un turno por su link personal (dentro de la ventana)
+ */
+export const manageAppointmentReschedule = (
+    token: string,
+    rescheduleMyAppointmentDto: BodyType<RescheduleMyAppointmentDto>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MyAppointmentDto>(
+      {url: `/v1/turno/${token}/reschedule`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: rescheduleMyAppointmentDto, signal
+    },
+      options);
+    }
+  
+
+
+export const getManageAppointmentRescheduleMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentReschedule>>, TError,{token: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentReschedule>>, TError,{token: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext> => {
+
+const mutationKey = ['manageAppointmentReschedule'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof manageAppointmentReschedule>>, {token: string;data: BodyType<RescheduleMyAppointmentDto>}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  manageAppointmentReschedule(token,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ManageAppointmentRescheduleMutationResult = NonNullable<Awaited<ReturnType<typeof manageAppointmentReschedule>>>
+    export type ManageAppointmentRescheduleMutationBody = BodyType<RescheduleMyAppointmentDto>
+    export type ManageAppointmentRescheduleMutationError = ErrorType<void>
+
+    /**
+ * @summary Reprogramar un turno por su link personal (dentro de la ventana)
+ */
+export const useManageAppointmentReschedule = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof manageAppointmentReschedule>>, TError,{token: string;data: BodyType<RescheduleMyAppointmentDto>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof manageAppointmentReschedule>>,
+        TError,
+        {token: string;data: BodyType<RescheduleMyAppointmentDto>},
+        TContext
+      > => {
+
+      const mutationOptions = getManageAppointmentRescheduleMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -9,4 +9,6 @@ import type { CancelAppointmentDtoReason } from './cancelAppointmentDtoReason';
 
 export interface CancelAppointmentDto {
   reason?: CancelAppointmentDtoReason;
+  /** Turno fijo: cancela también los turnos siguientes de la misma serie */
+  includeFollowing?: boolean;
 }

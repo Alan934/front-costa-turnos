@@ -17,6 +17,7 @@ import {
   getAccessToken,
   setOnSessionExpired,
   initProactiveRefresh,
+  refreshSessionTokens,
 } from "@/lib/api/axios-instance";
 import type { AuthTokensDto } from "@/lib/api/generated/model/authTokensDto";
 import type { LoginDto } from "@/lib/api/generated/model/loginDto";
@@ -33,6 +34,8 @@ interface AuthContextValue {
   roles: AccountRole[];
   hasRole: (r: AccountRole) => boolean;
   login: (dto: LoginDto) => Promise<MeResponse>;
+  /** Ingreso sin contraseña: email + código de un solo uso que llegó por mail. */
+  loginWithCode: (dto: { email: string; code: string }) => Promise<MeResponse>;
   register: (dto: RegisterDto) => Promise<MeResponse>;
   /** Registro de profesional self-service (crea cuenta + profesional + comercio-de-uno + trial). */
   registerProfessional: (dto: RegisterProfessionalDto) => Promise<MeResponse>;
@@ -41,6 +44,8 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   /** Re-lee /auth/me (tras reclamar cuenta, etc.). */
   refresh: () => Promise<void>;
+  /** Renueva los TOKENS y re-lee /auth/me (cuando cambian roles/tenant firmados en el token). */
+  renewSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -99,6 +104,7 @@ function normalizeMe(raw: Record<string, unknown>): MeResponse {
     id: String(raw.id ?? raw.sub ?? ""),
     email: String(raw.email ?? ""),
     fullName: String(raw.fullName ?? raw.name ?? ""),
+    phone: typeof raw.phone === "string" && raw.phone ? raw.phone : null,
     roles,
     professionalId,
     personId,
@@ -157,6 +163,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (dto: LoginDto) => {
       const tokens = await customInstance<AuthTokensDto>({
         url: "/auth/login",
+        method: "POST",
+        data: dto,
+      });
+      setAuthTokens(tokens);
+      const u = await afterAuth();
+      if (!u) throw new Error("No se pudo cargar la sesión");
+      return u;
+    },
+    [afterAuth],
+  );
+
+  const loginWithCode = useCallback(
+    async (dto: { email: string; code: string }) => {
+      const tokens = await customInstance<AuthTokensDto>({
+        url: "/auth/login-code",
         method: "POST",
         data: dto,
       });
@@ -229,6 +250,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await afterAuth();
   }, [afterAuth]);
 
+  const renewSession = useCallback(async () => {
+    await refreshSessionTokens();
+    await afterAuth();
+  }, [afterAuth]);
+
   const roles = user?.roles ?? [];
 
   return (
@@ -240,11 +266,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         hasRole: (r) => roles.includes(r),
         login,
+        loginWithCode,
         register,
         registerProfessional,
         registerComercial,
         logout,
         refresh,
+        renewSession,
       }}
     >
       {children}

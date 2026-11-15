@@ -5,10 +5,12 @@
  * API del turnero SaaS multi-tenant
  * OpenAPI spec version: 1.0
  */
+import type { NotificationPrefsDto } from './notificationPrefsDto';
 import type { UpdateProfessionalDtoDefaultDepositMode } from './updateProfessionalDtoDefaultDepositMode';
 import type { UpdateProfessionalDtoPublicPageSettings } from './updateProfessionalDtoPublicPageSettings';
 
 export interface UpdateProfessionalDto {
+  notificationPrefs?: NotificationPrefsDto;
   businessName?: string;
   timezone?: string;
   address?: string;
@@ -20,6 +22,8 @@ export interface UpdateProfessionalDto {
   cancellationWindowHours?: number;
   /** Horas mínimas antes del turno hasta las que el cliente puede reprogramar. 0 = sin restricción. */
   rescheduleWindowHours?: number;
+  /** El recordatorio del día anterior le pide al cliente que confirme o avise que no va. */
+  askConfirmation?: boolean;
   /** Branding de la página pública (logoFileId, primaryColor, description, bio, phone, etc.). Se reemplaza completo. */
   publicPageSettings?: UpdateProfessionalDtoPublicPageSettings;
 }

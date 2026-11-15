@@ -13,6 +13,7 @@ export interface MyAppointmentBusinessDto {
   address?: string | null;
   cancellationWindowHours: number;
   rescheduleWindowHours: number;
+  askConfirmation: boolean;
   /** @nullable */
   phone?: string | null;
   /** @nullable */

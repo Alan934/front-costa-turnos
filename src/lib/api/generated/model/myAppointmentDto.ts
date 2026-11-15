@@ -32,4 +32,14 @@ export interface MyAppointmentDto {
    * @nullable
    */
   publicToken?: string | null;
+  /**
+   * Token del link "gestionar mi turno" (/turno/{token}): ver, cancelar y reprogramar sin cuenta. null en turnos anteriores a esta función y en entradas de sala.
+   * @nullable
+   */
+  manageToken?: string | null;
+  /**
+   * Cuándo el cliente confirmó que va. null = todavía no confirmó.
+   * @nullable
+   */
+  clientConfirmedAt?: string | null;
 }

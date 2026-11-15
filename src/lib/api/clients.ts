@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customInstance } from "@/lib/api/axios-instance";
 import { personDisplayName } from "@/lib/agenda";
@@ -39,8 +39,6 @@ export function useClient(id: string) {
 export interface PersonInfo {
   /** Nombre y apellido reales del cliente (o un fallback derivado del id). */
   name: string;
-  /** Id del cliente del profesional, si existe (para enlazar a su ficha). */
-  clientId?: string;
   phone?: string;
   email?: string;
 }
@@ -53,30 +51,24 @@ export interface EmbeddedPerson {
 }
 
 /**
- * Resuelve el `personId` de un turno a datos humanos (nombre, teléfono, email). Cada campo se
- * resuelve por separado, priorizando lo que el back embebe en el turno (`Appointment.personName`/
- * `personPhone`/`personEmail`) y cayendo al cruce con la lista de clientes del profesional:
- *   - `name`: embebido → cliente → fallback genérico ("Cliente", nunca el UUID crudo).
- *   - `phone`/`email`: embebido → cliente. Así el profesional ve el contacto incluso de quien
- *     reservó por la web y aún no es cliente suyo (su `professional_client` puede no existir).
+ * Resuelve el `personId` de un turno a datos humanos (nombre, teléfono, email) con lo que el back
+ * ya embebe en el turno (`Appointment.personName`/`personPhone`/`personEmail`, leídos de la misma
+ * persona). Sin nombre cae a un fallback genérico ("Cliente", nunca el UUID crudo).
+ *
+ * Ya NO cruza con `GET /clients`: la agenda y el Inicio pedían toda la cartera (con visitas) solo
+ * para repetir datos que el turno ya trae.
  *
  * Devuelve una función estable para usar en cualquier vista de la agenda.
  */
 export function usePersonLookup() {
-  const { data: clients } = useClients();
-  return useMemo(() => {
-    const byPerson = new Map<string, EnrichedClient>();
-    for (const c of clients ?? []) byPerson.set(c.personId, c);
-    return (personId: string, embedded?: EmbeddedPerson): PersonInfo => {
-      const c = byPerson.get(personId);
-      return {
-        name: embedded?.name?.trim() || c?.fullName?.trim() || personDisplayName(personId),
-        clientId: c?.id,
-        phone: embedded?.phone?.trim() || c?.phone || undefined,
-        email: embedded?.email?.trim() || c?.email || undefined,
-      };
-    };
-  }, [clients]);
+  return useCallback(
+    (personId: string, embedded?: EmbeddedPerson): PersonInfo => ({
+      name: embedded?.name?.trim() || personDisplayName(personId),
+      phone: embedded?.phone?.trim() || undefined,
+      email: embedded?.email?.trim() || undefined,
+    }),
+    [],
+  );
 }
 
 export function useFichaFields() {
@@ -131,11 +123,27 @@ export function useUpdateFicha(clientId: string) {
   });
 }
 
+/** Archivar: sale de la cartera activa (no se borra nada; se puede desarchivar). */
 export function useArchiveClient() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      customInstance({ url: `/v1/clients/${id}`, method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["clients"] }),
+      customInstance<EnrichedClient>({ url: `/v1/clients/${id}`, method: "DELETE" }),
+    onSuccess: (c, id) => {
+      qc.setQueryData(["client", id], c);
+      void qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+  });
+}
+
+export function useRestoreClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      customInstance<EnrichedClient>({ url: `/v1/clients/${id}/restore`, method: "POST" }),
+    onSuccess: (c, id) => {
+      qc.setQueryData(["client", id], c);
+      void qc.invalidateQueries({ queryKey: ["clients"] });
+    },
   });
 }

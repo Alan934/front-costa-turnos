@@ -25,4 +25,21 @@ export interface EnrichedClientDto {
   visitCount: number;
   /** @nullable */
   lastVisitAt?: string | null;
+  /** @nullable */
+  lastAppointmentAt?: string | null;
+  /**
+   * Servicio de ese último turno (para "darle el mismo turno")
+   * @nullable
+   */
+  lastServiceId?: string | null;
+  /**
+   * Quién lo atendió
+   * @nullable
+   */
+  lastStaffId?: string | null;
+  /**
+   * Próximo turno pendiente (null = no tiene ninguno reservado)
+   * @nullable
+   */
+  nextAppointmentAt?: string | null;
 }

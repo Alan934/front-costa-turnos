@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MapPin,
@@ -15,7 +16,11 @@ import {
   ArrowRight,
   Users,
   Footprints,
+  CalendarPlus,
+  Download,
+  BellRing,
 } from "lucide-react";
+import { googleCalendarUrl, downloadIcs, mapsUrl, type CalendarEvent } from "@/lib/calendar";
 import { Button } from "@/components/ui/button";
 import { formatWalkInWindows } from "@/lib/attendance";
 import type { PublicProfessionalDto } from "@/lib/api/generated/model/publicProfessionalDto";
@@ -37,6 +42,7 @@ import {
   useBookProfessionalWithDeposit,
   useBookService,
   useBookServiceWithDeposit,
+  useJoinWaitlist,
 } from "@/lib/api/public-booking";
 import { getPaymentOptions, paymentSummary, baseCents, type PayOption } from "@/lib/deposit";
 import { env } from "@/lib/env";
@@ -60,6 +66,31 @@ import {
   matchFieldErrors,
 } from "@/lib/api/error-message";
 
+/** Datos de contacto de la última reserva hecha desde este dispositivo. */
+interface BookingContact {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+const CONTACT_KEY = "costa-booking-contact";
+
+function loadBookingContact(): BookingContact | null {
+  try {
+    const raw = localStorage.getItem(CONTACT_KEY);
+    return raw ? (JSON.parse(raw) as BookingContact) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveBookingContact(contact: BookingContact) {
+  try {
+    localStorage.setItem(CONTACT_KEY, JSON.stringify(contact));
+  } catch {
+    // almacenamiento no disponible (modo privado): no pasa nada
+  }
+}
+
 /** Opción de profesional: uno concreto o "cualquiera" (el back asigna al de menor carga). */
 type ProfessionalChoice = PublicServiceProfessionalDto | "any";
 
@@ -75,6 +106,10 @@ interface ConfirmedState {
   provisional: boolean;
   /** Nombre del profesional asignado por el back cuando se eligió "cualquiera". */
   professionalDisplayName?: string;
+  /** Email que dejó al reservar ('' si no dejó). */
+  email?: string;
+  /** Token del link personal del turno (/turno/:token), si el back lo devolvió. */
+  manageToken?: string;
 }
 
 export function PublicBookingPage({ slug }: { slug: string }) {
@@ -127,10 +162,19 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
   // Si no viene el campo (backend anterior), asumimos true para no bloquear servicios.
   const mpConnected = (page as ComercioPublicPageDto & { mpConnected?: boolean }).mpConnected ?? true;
 
-  function pickService(service: PublicServiceDto) {
+  // "Reservar de nuevo" desde Mis turnos: llega con ?servicio=&pro= y saltamos directo al
+  // horario con el mismo servicio y profesional de la vez anterior.
+  const searchParams = useSearchParams();
+  const repeatServiceId = searchParams.get("servicio");
+  const repeatMembershipId = searchParams.get("pro");
+
+  function pickService(service: PublicServiceDto, preferMembershipId?: string | null) {
     const profs = service.professionals;
     // Un solo profesional: lo preseleccionamos y pasamos directo al selector de horario.
-    const autoProf = profs.length === 1 ? profs[0] : null;
+    const autoProf =
+      profs.length === 1
+        ? profs[0]
+        : (profs.find((p) => p.membershipId === preferMembershipId) ?? null);
     setSel({ service, professional: autoProf, slot: null });
     setStep(autoProf ? 3 : 2);
   }
@@ -172,6 +216,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
         sel={sel}
         provisional={confirmed.provisional}
         assignedProName={confirmed.professionalDisplayName}
+        email={confirmed.email}
+        manageToken={confirmed.manageToken}
         onReset={reset}
       />
     );
@@ -197,14 +243,22 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
           <button
             type="button"
             onClick={back}
-            className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="-ml-1.5 -mt-2 mb-2 inline-flex items-center gap-1 rounded-lg py-2 pl-1 pr-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
             Volver
           </button>
         ) : null}
 
-        {step === 1 && <ServiceStep slug={slug} onPick={pickService} mpConnected={mpConnected} />}
+        {step === 1 && (
+          <ServiceStep
+            slug={slug}
+            onPick={pickService}
+            mpConnected={mpConnected}
+            repeatServiceId={repeatServiceId}
+            repeatMembershipId={repeatMembershipId}
+          />
+        )}
 
         {step === 2 && sel.service && (
           <ProfessionalStep service={sel.service} onPick={pickProfessional} />
@@ -228,8 +282,8 @@ function BookingShell({ slug, page }: { slug: string; page: ComercioPublicPageDt
             professional={sel.professional}
             slot={sel.slot}
             mpConnected={mpConnected}
-            onConfirmed={(provisional, professionalDisplayName) =>
-              setConfirmed({ provisional, professionalDisplayName })
+            onConfirmed={(provisional, professionalDisplayName, email, manageToken) =>
+              setConfirmed({ provisional, professionalDisplayName, email, manageToken })
             }
           />
         )}
@@ -383,12 +437,27 @@ function ServiceStep({
   slug,
   onPick,
   mpConnected,
+  repeatServiceId,
+  repeatMembershipId,
 }: {
   slug: string;
-  onPick: (s: PublicServiceDto) => void;
+  onPick: (s: PublicServiceDto, preferMembershipId?: string | null) => void;
   mpConnected: boolean;
+  repeatServiceId?: string | null;
+  repeatMembershipId?: string | null;
 }) {
   const { data, isLoading, isError, refetch } = usePublicServices(slug);
+
+  // "Reservar de nuevo": una sola vez, al cargar los servicios, elegimos el pedido en la URL
+  // (si sigue existiendo y se puede reservar). Si no, queda la lista normal.
+  const repeated = useRef(false);
+  useEffect(() => {
+    if (repeated.current || !repeatServiceId || !data) return;
+    repeated.current = true;
+    const service = data.find((s) => s.serviceId === repeatServiceId);
+    if (service && (mpConnected || service.allowNoPayment)) onPick(service, repeatMembershipId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, repeatServiceId]);
 
   // Galería ampliada: imágenes del servicio en el que se hizo click, con índice activo.
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
@@ -737,9 +806,113 @@ function SlotStep({
           isError={isError}
           onRetry={() => refetch()}
           walkInAction={<WalkInButton href={walkInHref} />}
+          fullDayAction={(day) => (
+            <WaitlistPrompt
+              // key: al cambiar de día se reinicia el formulario (y el "ya te anotamos").
+              key={day.toDateString()}
+              slug={slug}
+              day={day}
+              serviceId={service.serviceId}
+              membershipIds={
+                isAny
+                  ? service.professionals.map((p) => p.membershipId)
+                  : [professional.membershipId]
+              }
+            />
+          )}
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Lista de espera de un día completo: la persona deja su email y le avisamos si se libera un
+ * turno ese día (alguien cancela o reprograma). No reserva nada: el aviso trae el link para
+ * reservar y se lo queda quien llegue primero.
+ */
+function WaitlistPrompt({
+  slug,
+  day,
+  serviceId,
+  membershipIds,
+}: {
+  slug: string;
+  day: Date;
+  serviceId: string;
+  membershipIds: string[];
+}) {
+  const { user } = useAuth();
+  const join = useJoinWaitlist(slug);
+  const [open, setOpen] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Mismos datos precargados que en la reserva: los de la cuenta o los de la última vez.
+  useEffect(() => {
+    const saved = loadBookingContact();
+    setFullName((v) => v || user?.fullName || saved?.fullName || "");
+    setEmail((v) => v || user?.email || saved?.email || "");
+    setPhone((v) => v || user?.phone || saved?.phone || "");
+  }, [user]);
+
+  if (join.isSuccess) {
+    return (
+      <p className="mx-auto max-w-xs rounded-xl border border-accent/40 bg-accent/10 p-3 text-sm">
+        Listo: si se libera un turno ese día, te avisamos a{" "}
+        <span className="font-medium">{email}</span>.
+      </p>
+    );
+  }
+
+  if (!open) {
+    return (
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <BellRing className="size-4" />
+        Avisame si se libera un turno
+      </Button>
+    );
+  }
+
+  const canSubmit = fullName.trim().length > 1 && /\S+@\S+\.\S+/.test(email.trim());
+  // Día en formato YYYY-MM-DD según el calendario que ve la persona.
+  const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+
+  return (
+    <form
+      className="mx-auto w-full max-w-xs space-y-2.5 text-left"
+      onSubmit={(e) => {
+        e.preventDefault();
+        join.mutate({
+          fullName: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          serviceId,
+          membershipIds,
+          date,
+        });
+      }}
+    >
+      <div>
+        <Label htmlFor="wl-name">Nombre y apellido</Label>
+        <Input id="wl-name" className="mt-1.5" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required />
+      </div>
+      <div>
+        <Label htmlFor="wl-email">Email</Label>
+        <Input id="wl-email" type="email" className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vos@email.com" autoComplete="email" required />
+        <p className="mt-1 text-xs text-muted-foreground">Te avisamos ahí si se libera un turno ese día.</p>
+      </div>
+      {join.isError && (
+        <p className="text-sm text-destructive">
+          {getApiErrorMessage(join.error, "No pudimos anotarte. Probá de nuevo.")}
+        </p>
+      )}
+      <Button type="submit" className="w-full" disabled={!canSubmit || join.isPending}>
+        {join.isPending ? <Spinner /> : <BellRing className="size-4" />}
+        Anotarme en la lista de espera
+      </Button>
+    </form>
   );
 }
 
@@ -757,7 +930,12 @@ function ConfirmStep({
   professional: ProfessionalChoice;
   slot: Slot;
   mpConnected: boolean;
-  onConfirmed: (provisional: boolean, professionalDisplayName?: string) => void;
+  onConfirmed: (
+    provisional: boolean,
+    professionalDisplayName?: string,
+    email?: string,
+    manageToken?: string,
+  ) => void;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -774,7 +952,18 @@ function ConfirmStep({
     if (!user) return;
     setFullName((v) => v || user.fullName || "");
     setEmail((v) => v || user.email || "");
+    setPhone((v) => v || user.phone || "");
   }, [user]);
+
+  // Sin sesión: recordamos en este dispositivo los datos de la última reserva, para no
+  // volver a tipearlos. (Con sesión mandan los de la cuenta; esto solo completa lo vacío.)
+  useEffect(() => {
+    const saved = loadBookingContact();
+    if (!saved) return;
+    setFullName((v) => v || saved.fullName || "");
+    setPhone((v) => v || saved.phone || "");
+    setEmail((v) => v || saved.email || "");
+  }, []);
 
   const isAny = professional === "any";
   const membershipId = isAny ? "" : professional.membershipId;
@@ -830,12 +1019,17 @@ function ConfirmStep({
 
   // Turno confirmado en la app (no redirige a MP): invalidamos la lista del dashboard del
   // cliente para que, al entrar a /mis-turnos, vea el turno recién sacado sin tener que reloguear.
-  function onBooked(provisional: boolean, proName?: string) {
+  function onBooked(provisional: boolean, proName?: string, appointment?: unknown) {
     queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
-    onConfirmed(provisional, proName);
+    // El turno creado trae el token de su link personal ("gestionar mi turno" sin cuenta).
+    const token = (appointment as { manageToken?: string | null } | null | undefined)?.manageToken;
+    onConfirmed(provisional, proName, email.trim(), token ?? undefined);
   }
 
   function submit(option: PayOption) {
+    // Se guarda al enviar (no al confirmar) para cubrir también el camino de Mercado Pago,
+    // que sale del sitio antes de volver.
+    saveBookingContact({ fullName: fullName.trim(), phone: phone.trim(), email: email.trim() });
     const base = {
       fullName: fullName.trim(),
       phone: phone.trim(),
@@ -850,7 +1044,8 @@ function ConfirmStep({
         { ...base, method: option.flow === "transfer" ? "transfer" : "cash" },
         {
           // En cash/transfer el back devuelve el turno creado (con professionalDisplayName si fue "cualquiera").
-          onSuccess: (res) => onBooked(false, res.appointment?.professionalDisplayName),
+          onSuccess: (res) =>
+            onBooked(false, res.appointment?.professionalDisplayName, res.appointment),
         },
       );
     } else if (option.paymentOption) {
@@ -878,7 +1073,7 @@ function ConfirmStep({
           const proName = isAny
             ? (appt as { professionalDisplayName?: string } & typeof appt).professionalDisplayName
             : undefined;
-          onBooked(!!appt?.isProvisional, proName);
+          onBooked(!!appt?.isProvisional, proName, appt);
         },
       });
     }
@@ -961,6 +1156,9 @@ function ConfirmStep({
           <Label htmlFor="email">
             Email <span className="text-muted-foreground">(opcional)</span>
           </Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Ahí te mandamos la confirmación y un recordatorio el día anterior.
+          </p>
           <Input
             id="email"
             type="email"
@@ -1041,18 +1239,45 @@ function Confirmation({
   sel,
   provisional,
   assignedProName,
+  email,
+  manageToken,
   onReset,
 }: {
+  manageToken?: string;
   page: ComercioPublicPageDto;
   sel: Selection;
   provisional: boolean;
   assignedProName?: string;
+  /** Email que dejó al reservar ('' si no dejó): ahí van la confirmación y el recordatorio. */
+  email?: string;
   onReset: () => void;
 }) {
+  const { user } = useAuth();
   const proDisplay =
     sel.professional === "any"
       ? assignedProName ?? "un profesional disponible"
       : sel.professional?.displayName ?? "";
+
+  // Misma regla que el back: el recordatorio sale 24 h antes, salvo que falten menos de ~26 h.
+  const [willRemind] = useState(
+    () => !!sel.slot && +new Date(sel.slot.startAt) - Date.now() >= 26 * 3_600_000,
+  );
+
+  // Dónde es: la dirección propia del profesional elegido o, si no, la del comercio.
+  const address =
+    (sel.professional && sel.professional !== "any" ? sel.professional.address : null) ||
+    page.address ||
+    null;
+  const event: CalendarEvent | null =
+    sel.service && sel.slot
+      ? {
+          title: `${sel.service.name} en ${page.name}`,
+          startAt: sel.slot.startAt,
+          endAt: sel.slot.endAt,
+          location: [page.name, address].filter(Boolean).join(", "),
+          description: proDisplay ? `Con ${proDisplay}.` : null,
+        }
+      : null;
 
   return (
     <div className="py-8 text-center">
@@ -1080,10 +1305,87 @@ function Confirmation({
           los datos para asegurarlo.
         </p>
       )}
-      <p className="mt-4 text-sm text-muted-foreground">
-        Te avisaremos por WhatsApp. {page.name} te espera.
+      {/* Solo se promete lo que el sistema hace: confirmación y recordatorio van por email. */}
+      <p className="mx-auto mt-4 max-w-sm text-sm text-muted-foreground">
+        {email ? (
+          <>
+            Te mandamos la confirmación a <span className="font-medium text-foreground">{email}</span>
+            {willRemind ? " y te lo recordamos el día anterior." : "."}
+          </>
+        ) : (
+          "No dejaste un email, así que no vas a recibir recordatorio: guardalo en tu calendario."
+        )}{" "}
+        {page.name} te espera.
       </p>
-      <Button variant="outline" className="mt-6" onClick={onReset}>
+
+      {event && (
+        <div className="mx-auto mt-6 max-w-sm space-y-2.5">
+          <Button asChild className="w-full">
+            <a href={googleCalendarUrl(event)} target="_blank" rel="noopener noreferrer">
+              <CalendarPlus className="size-4" />
+              Agregar a Google Calendar
+            </a>
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => downloadIcs(event)}>
+            <Download className="size-4" />
+            Otro calendario (iPhone, Outlook)
+          </Button>
+          {address && (
+            <Button asChild variant="outline" className="w-full">
+              <a href={mapsUrl(address)} target="_blank" rel="noopener noreferrer">
+                <MapPin className="size-4" />
+                Cómo llegar
+              </a>
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="mx-auto mt-6 max-w-sm rounded-xl border border-border bg-card p-4 text-sm">
+        {user ? (
+          <>
+            <p className="text-muted-foreground">
+              Si no podés ir, reprogramalo o cancelalo desde tus turnos.
+            </p>
+            <Link
+              href="/mis-turnos"
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Ver mis turnos <ArrowRight className="size-4" />
+            </Link>
+          </>
+        ) : manageToken ? (
+          <>
+            <p className="text-muted-foreground">
+              Si no podés ir, reprogramalo o cancelalo desde el enlace de tu turno
+              {email ? " (también te llegó por email)" : ""}. No hace falta crear una cuenta.
+            </p>
+            <Link
+              href={`/turno/${manageToken}`}
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Gestionar mi turno <ArrowRight className="size-4" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground">
+              ¿Querés poder reprogramarlo o cancelarlo vos?{" "}
+              {email
+                ? "Creá tu cuenta con ese mismo email y el turno aparece solo."
+                : "Creá tu cuenta gratis."}
+            </p>
+            <Link
+              href="/ingresar?registro=cliente&next=%2Fmis-turnos"
+              className="mt-2 inline-flex items-center gap-1 font-medium text-accent hover:underline"
+            >
+              Crear mi cuenta <ArrowRight className="size-4" />
+            </Link>
+          </>
+        )}
+      </div>
+
+      <Button variant="ghost" className="mt-4" onClick={onReset}>
         Reservar otro turno
       </Button>
     </div>

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useClients } from "@/lib/api/clients";
+import { matchesClient } from "@/lib/client-search";
 import { useAppointmentsWalkIn } from "@/lib/api/generated/endpoints/appointments/appointments";
 import {
   getApiErrorMessage,
@@ -50,14 +51,9 @@ export function AddToQueueDialog({
 
   const clientsQuery = useClients();
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 2) return [];
+    if (query.trim().length < 2) return [];
     return (clientsQuery.data ?? [])
-      .filter((c) => c.status === "active")
-      .filter(
-        (c) =>
-          (c.fullName ?? "").toLowerCase().includes(q) || (c.phone ?? "").includes(q),
-      )
+      .filter((c) => c.status === "active" && matchesClient(c, query))
       .slice(0, 6);
   }, [clientsQuery.data, query]);
 

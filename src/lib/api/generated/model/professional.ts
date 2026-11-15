@@ -7,6 +7,7 @@
  */
 import type { DepositMode } from './depositMode';
 import type { ProfessionalPublicPageSettings } from './professionalPublicPageSettings';
+import type { ProfessionalNotificationPrefs } from './professionalNotificationPrefs';
 
 export interface Professional {
   id: string;
@@ -25,7 +26,11 @@ export interface Professional {
   vatChargedToClient: boolean;
   cancellationWindowHours: number;
   rescheduleWindowHours: number;
+  askConfirmation: boolean;
   publicPageSettings: ProfessionalPublicPageSettings;
+  notificationPrefs: ProfessionalNotificationPrefs;
+  /** @nullable */
+  newsSeenAt?: string | null;
   /** @nullable */
   mpUserId?: string | null;
   /** @nullable */

@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { AuthShell } from "@/components/auth-shell";
 import { useAuth } from "@/components/auth-provider";
 import { useAcceptInvitation, useInvitationPreview } from "@/lib/api/comercios";
+import { saveAuthIntent } from "@/lib/auth-intent";
 import { titleCaseName } from "@/lib/format";
 import type { AxiosError } from "axios";
 
@@ -174,10 +175,21 @@ export function AcceptInvitation() {
         <Result
           icon={<Store className="size-6" />}
           tone="info"
-          message="Tu cuenta no es de profesional. Registrate como profesional con este mismo email y volvé a abrir el enlace de la invitación."
+          message="Tu cuenta todavía no tiene perfil de profesional. Armalo en un par de minutos y te traemos de vuelta para aceptar la invitación."
           action={
             <Button asChild className="w-full">
-              <Link href={registerHref}>Crear cuenta de profesional</Link>
+              <Link
+                href="/onboarding"
+                onClick={() =>
+                  saveAuthIntent({
+                    role: "profesional",
+                    next: backHere,
+                    email: user.email.toLowerCase(),
+                  })
+                }
+              >
+                Crear mi perfil de profesional
+              </Link>
             </Button>
           }
         />

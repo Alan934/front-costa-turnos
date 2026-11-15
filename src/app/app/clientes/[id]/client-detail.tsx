@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -11,7 +11,9 @@ import {
   Save,
   CalendarPlus,
   Archive,
+  ArchiveRestore,
   FileDown,
+  Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,14 +29,94 @@ import {
   useFichaFields,
   useAddClientNote,
   useUpdateFicha,
+  useArchiveClient,
+  useRestoreClient,
 } from "@/lib/api/clients";
 import { FichaFieldType } from "@/lib/api/generated/model/fichaFieldType";
-import { formatDateTime } from "@/lib/format";
+import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
+import { useServices } from "@/lib/api/catalog";
+import { formatDateShort, formatDateTime, formatTime, formatWeekday, titleCaseName } from "@/lib/format";
+import { NewAppointmentDialog } from "@/app/app/agenda/new-appointment-dialog";
+import type { Staff } from "@/lib/api/generated/model/staff";
 import { cn } from "@/lib/utils";
 import type { FichaField } from "@/lib/api/generated/model/fichaField";
 
+/**
+ * Archivar (con confirmación) o desarchivar. Archivar no borra nada: la ficha, las notas y el
+ * historial quedan; solo sale de la lista y de la búsqueda al dar turno.
+ */
+function ArchiveButton({ clientId, archived }: { clientId: string; archived: boolean }) {
+  const archive = useArchiveClient();
+  const restore = useRestoreClient();
+  const [confirming, setConfirming] = useState(false);
+  const busy = archive.isPending || restore.isPending;
+
+  if (archived) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => restore.mutate(clientId)} disabled={busy}>
+        {busy ? <Spinner /> : <ArchiveRestore className="size-4" />}
+        Desarchivar
+      </Button>
+    );
+  }
+  if (confirming) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-sm">
+        ¿Archivarlo?
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => archive.mutate(clientId, { onSettled: () => setConfirming(false) })}
+          disabled={busy}
+        >
+          {busy ? <Spinner /> : null}
+          Sí, archivar
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+          No
+        </Button>
+      </span>
+    );
+  }
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-muted-foreground"
+      onClick={() => setConfirming(true)}
+      title="Sale de tu lista de clientes. No se borra nada y lo podés desarchivar."
+    >
+      <Archive className="size-4" />
+      Archivar
+    </Button>
+  );
+}
+
+/** Próximo día (desde mañana) que cae el mismo día de la semana que `from`. */
+function nextSameWeekday(from: Date): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() !== from.getDay()) d.setDate(d.getDate() + 1);
+  return d;
+}
+
 export function ClientDetail({ clientId }: { clientId: string }) {
   const client = useClient(clientId);
+  const staffQuery = useProfessionalsListStaff();
+  const servicesQuery = useServices();
+  const staffList = (staffQuery.data ?? [])
+    .filter((s: Staff) => s.isActive)
+    .map((s: Staff) => ({ ...s, displayName: titleCaseName(s.displayName) }));
+  const services = (servicesQuery.data ?? []).map((s) => ({ ...s, name: titleCaseName(s.name) }));
+  // "Darle turno" (null) o "darle el mismo turno" (mismo servicio, día de la semana y hora).
+  const [booking, setBooking] = useState<null | "new" | "same">(null);
+  const [booked, setBooked] = useState(false);
+
+  const last = client.data?.lastAppointmentAt ? new Date(client.data.lastAppointmentAt) : null;
+  const lastService = services.find((s) => s.id === client.data?.lastServiceId);
+  const sameDate = useMemo(() => (last ? nextSameWeekday(last) : null), [last?.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
+  const canBook = staffList.length > 0 && services.length > 0;
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-6 sm:px-8">
@@ -68,6 +150,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 <h1 className="font-display text-2xl font-semibold tracking-tight">
                   {client.data.fullName?.trim() || "Cliente sin nombre"}
                 </h1>
+                {client.data.status === "archived" && (
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                    <Archive className="size-3" />
+                    Archivado: no aparece en tu lista ni al buscar para darle turno
+                  </p>
+                )}
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   {client.data.phone && (
                     <span className="inline-flex items-center gap-1.5">
@@ -84,32 +172,52 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 </div>
                 {client.data.visitCount != null && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {client.data.visitCount} visitas
+                    {client.data.visitCount} {client.data.visitCount === 1 ? "visita" : "visitas"}
                   </p>
                 )}
               </div>
             </div>
+            {last && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Último turno: {formatWeekday(last).toLowerCase()} {formatDateShort(last)} a las{" "}
+                {formatTime(last)}
+                {lastService ? ` · ${lastService.name}` : ""}
+                {client.data.nextAppointmentAt
+                  ? ` · Próximo: ${formatDateShort(client.data.nextAppointmentAt)} a las ${formatTime(client.data.nextAppointmentAt)}`
+                  : " · No tiene otro reservado"}
+              </p>
+            )}
+            {booked && (
+              <p className="mt-3 rounded-lg border border-success/40 bg-success/10 p-2.5 text-sm text-success">
+                Listo: le diste turno. Lo ves en la agenda.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/app/agenda">
-                  <CalendarPlus className="size-4" />
-                  Nuevo turno
-                </Link>
+              {last && lastService && sameDate && (
+                <Button
+                  size="sm"
+                  onClick={() => setBooking("same")}
+                  disabled={!canBook}
+                  title={`${lastService.name}, ${formatWeekday(last).toLowerCase()} a las ${formatTime(last)}`}
+                >
+                  <Repeat className="size-4" />
+                  Darle el mismo turno
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBooking("new")}
+                disabled={!canBook}
+              >
+                <CalendarPlus className="size-4" />
+                Darle turno
               </Button>
               <Button variant="outline" size="sm" onClick={() => window.print()}>
                 <FileDown className="size-4" />
                 Exportar ficha
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground"
-                disabled
-                title="Próximamente"
-              >
-                <Archive className="size-4" />
-                Archivar
-              </Button>
+              <ArchiveButton clientId={clientId} archived={client.data.status === "archived"} />
             </div>
           </div>
 
@@ -123,6 +231,28 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           {/* Notas privadas */}
           <NotesSection clientId={clientId} />
         </div>
+      )}
+
+      {booking && client.data && (
+        <NewAppointmentDialog
+          date={booking === "same" && sameDate ? sameDate : new Date()}
+          staff={staffList}
+          services={services}
+          initialClient={{
+            personId: client.data.personId,
+            fullName: client.data.fullName,
+            phone: client.data.phone,
+          }}
+          initialServiceId={client.data.lastServiceId}
+          initialStaffId={booking === "same" ? client.data.lastStaffId : null}
+          initialTime={booking === "same" && last ? formatTime(last) : null}
+          onClose={() => setBooking(null)}
+          onCreated={() => {
+            setBooking(null);
+            setBooked(true);
+            void client.refetch();
+          }}
+        />
       )}
     </div>
   );

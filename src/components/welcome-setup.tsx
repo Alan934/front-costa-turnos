@@ -11,12 +11,14 @@ import {
   Clock,
   ExternalLink,
   Sparkles,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useServices } from "@/lib/api/catalog";
 import { useProfessionalsListStaff } from "@/lib/api/generated/endpoints/professionals/professionals";
 import { useAvailabilityListSchedule } from "@/lib/api/generated/endpoints/availability/availability";
 import { useProfessional } from "@/lib/api/professional";
+import { useMpStatus } from "@/lib/api/billing";
 import { ScheduleRuleKind } from "@/lib/api/generated/model/scheduleRuleKind";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,7 @@ export function WelcomeSetup() {
   const pro = useProfessional();
   const services = useServices();
   const staff = useProfessionalsListStaff();
+  const mp = useMpStatus();
 
   const activeServices = (services.data ?? []).filter((s) => s.isActive);
   const activeStaff = (staff.data ?? []).filter((s) => s.isActive);
@@ -83,6 +86,7 @@ export function WelcomeSetup() {
   if (steps.every((s) => s.done)) return null;
 
   const doneCount = steps.filter((s) => s.done).length;
+  const mpNotConnected = !mp.isLoading && mp.data?.connected === false;
   const slug = pro.data?.slug;
 
   return (
@@ -159,6 +163,28 @@ export function WelcomeSetup() {
           </div>
         ))}
       </div>
+
+      {/* Opcional: cobros online. No cuenta para completar la bienvenida (se puede atender sin MP). */}
+      {mpNotConnected && (
+        <div className="flex items-start gap-4 border-t border-border px-5 py-4">
+          <Wallet className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">
+              Cobrá señas con Mercado Pago{" "}
+              <span className="font-normal text-muted-foreground">(opcional)</span>
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Pedir una seña al reservar reduce las ausencias. La plata entra directo a tu cuenta.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild className="shrink-0">
+            <Link href="/app/cobros">
+              Conectar
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {/* Pie: ver la página pública */}
       {slug && (

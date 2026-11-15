@@ -257,3 +257,26 @@ export function useSelfCheckIn(slug: string, membershipId: string) {
       }),
   });
 }
+
+/** Datos para anotarse en la lista de espera de un día completo. */
+export interface JoinWaitlistInput {
+  fullName: string;
+  email: string;
+  phone?: string;
+  serviceId: string;
+  /** Una membresía, o varias si se eligió "cualquier profesional". */
+  membershipIds: string[];
+  /** Día deseado, 'YYYY-MM-DD'. */
+  date: string;
+}
+
+/**
+ * Lista de espera pública: si se libera un turno ese día (cancelación o reprogramación), el
+ * back avisa por email con el link para reservar. No reserva el lugar.
+ */
+export function useJoinWaitlist(slug: string) {
+  return useMutation({
+    mutationFn: (data: JoinWaitlistInput) =>
+      customInstance<{ ok: true }>({ url: `/r/${slug}/waitlist`, method: "POST", data }),
+  });
+}

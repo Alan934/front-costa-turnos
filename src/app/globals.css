@@ -312,6 +312,27 @@
   .delay-5 { animation-delay: 290ms; }
   .delay-6 { animation-delay: 360ms; }
 
+  /* En celulares, los campos con letra < 16px hacen que iOS Safari haga zoom al tocarlos (y la
+     página queda agrandada). Acá se fuerzan a 16px en pantallas táctiles/chicas; los que ya
+     usan letra más grande (text-base/lg/xl…) no se tocan. Va en `utilities` y con más
+     especificidad que `.text-sm` para ganarle. */
+  @media (pointer: coarse), (max-width: 639px) {
+    :is(
+        input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]),
+        select,
+        textarea
+      ):not(
+        [class*="text-base"],
+        [class*="text-lg"],
+        [class*="text-xl"],
+        [class*="text-2xl"],
+        [class*="text-3xl"],
+        [class*="text-4xl"]
+      ) {
+      font-size: 16px;
+    }
+  }
+
   /* Rayado diagonal sutil para marcar días sin atención en la agenda (sobre el fondo del elemento). */
   .bg-off {
     background-image: repeating-linear-gradient(
