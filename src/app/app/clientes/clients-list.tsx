@@ -27,6 +27,7 @@ import {
 import { ErrorState, EmptyState } from "@/components/state-views";
 import { useAuth } from "@/components/auth-provider";
 import { useClients, useCreateClient } from "@/lib/api/clients";
+import { matchesClient } from "@/lib/client-search";
 import { useProfessional } from "@/lib/api/professional";
 import { PUBLIC_HOST } from "@/components/public-page-link";
 import { comebackMessage, whatsAppLink } from "@/lib/whatsapp";
@@ -37,7 +38,9 @@ export function ClientsList() {
   const [q, setQ] = useState("");
   const [creating, setCreating] = useState(false);
   const { user } = useAuth();
-  const { data, isLoading, isError, refetch } = useClients(q);
+  // Cartera entera una vez (misma caché que los diálogos de turno/sala) y búsqueda local:
+  // sin un pedido por tecla, e ignora tildes ("maria" encuentra a "María").
+  const { data, isLoading, isError, refetch } = useClients();
 
   // El back puede listar al propio profesional como cliente (su persona quedó vinculada como
   // professional_client). El back ya lo excluye por account_id, pero filtramos también del lado
@@ -48,7 +51,9 @@ export function ClientsList() {
   const isSelf = (c: EnrichedClient) =>
     (selfPersonId != null && c.personId === selfPersonId) ||
     (!!selfEmail && c.email?.trim().toLowerCase() === selfEmail);
-  const active = (data ?? []).filter((c) => c.status === "active" && !isSelf(c));
+  const active = (data ?? []).filter(
+    (c) => c.status === "active" && !isSelf(c) && matchesClient(c, q),
+  );
 
   // ---- "No vienen hace más de X semanas": tuvieron turno y no tienen ninguno reservado ----
   const [awayWeeks, setAwayWeeks] = useState(0); // 0 = todos

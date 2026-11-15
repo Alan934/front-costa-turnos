@@ -18,6 +18,7 @@ import { customInstance } from "@/lib/api/axios-instance";
 import { appointmentsBookSeries } from "@/lib/api/generated/endpoints/appointments/appointments";
 import type { BookSeriesResultDto } from "@/lib/api/generated/model/bookSeriesResultDto";
 import { useClients } from "@/lib/api/clients";
+import { matchesClient } from "@/lib/client-search";
 import {
   getApiErrorMessage,
   getApiValidationMessages,
@@ -45,14 +46,6 @@ import {
 
 /** Lo que hace falta de un cliente ya existente para cargarle el turno. */
 export type ClientChoice = Pick<EnrichedClient, "personId" | "fullName" | "phone">;
-
-/** Sin acentos ni mayúsculas, para buscar clientes por nombre. */
-function norm(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-}
 
 /**
  * Crea un turno desde la agenda (carga manual del profesional).
@@ -135,16 +128,9 @@ export function NewAppointmentDialog({
   const [phone, setPhone] = useState("");
 
   const matches = useMemo(() => {
-    const q = norm(query.trim());
-    if (q.length < 2) return [];
-    const digits = q.replace(/\D/g, "");
+    if (query.trim().length < 2) return [];
     return (clients.data ?? [])
-      .filter((c) => c.status !== "archived")
-      .filter(
-        (c) =>
-          norm(c.fullName ?? "").includes(q) ||
-          (digits.length >= 3 && (c.phone ?? "").replace(/\D/g, "").includes(digits)),
-      )
+      .filter((c) => c.status !== "archived" && matchesClient(c, query))
       .slice(0, 6);
   }, [clients.data, query]);
 
