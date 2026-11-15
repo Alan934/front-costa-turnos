@@ -56,6 +56,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Con `from`/`to` devuelve los turnos que empiezan en ese rango (máx. 100 días). Sin rango, los próximos desde hoy (zona del profesional).
  * @summary Listar turnos del tenant
  */
 export const appointmentsList = (

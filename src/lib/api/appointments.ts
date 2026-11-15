@@ -12,8 +12,8 @@ export interface AppointmentsQuery {
 }
 
 /**
- * Lista turnos por staff y rango. `from`/`to` son una extensión del front sobre el
- * contrato (ver API-GAPS §2b); el mock ya los respeta.
+ * Lista turnos por staff y rango (`from`/`to` = inicio del turno, ISO, inclusive; máx. 100
+ * días). Pasá siempre el rango: sin él el back devuelve solo desde hace 24 h en adelante.
  */
 export function useAppointments(params: AppointmentsQuery) {
   return useQuery({

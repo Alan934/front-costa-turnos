@@ -7,5 +7,16 @@
  */
 
 export type AppointmentsListParams = {
+/**
+ * Solo los turnos de este staff
+ */
 staffId?: string;
+/**
+ * Turnos que empiezan desde este instante (ISO 8601, inclusive)
+ */
+from?: string;
+/**
+ * Turnos que empiezan hasta este instante (ISO 8601, inclusive)
+ */
+to?: string;
 };
